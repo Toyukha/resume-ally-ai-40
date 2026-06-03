@@ -5,14 +5,14 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return await file.text();
   }
   if (name.endsWith(".docx")) {
+    // @ts-expect-error - browser build has no types
     const mammoth = await import("mammoth/mammoth.browser");
     const arrayBuffer = await file.arrayBuffer();
     const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
+    return value as string;
   }
   if (name.endsWith(".pdf")) {
     const pdfjs = await import("pdfjs-dist");
-    // Use the bundled worker via Vite ?url import
     const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
     pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -22,7 +22,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      text += content.items.map((it: { str?: string }) => it.str ?? "").join(" ") + "\n";
+      text += content.items.map((it) => ("str" in it ? it.str : "")).join(" ") + "\n";
     }
     return text;
   }
