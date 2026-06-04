@@ -192,8 +192,9 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       throw new Error(`Analysis failed: ${message}`);
     }
 
-    // Persist to database
-    const { data: saved, error } = await supabase
+    // Persist to database via admin client so the row is always recorded
+    // (otherwise a silent RLS failure would let free users bypass the monthly limit).
+    const { data: saved, error } = await supabaseAdmin
       .from("analyses")
       .insert({
         user_id: userId,
@@ -211,7 +212,10 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       .select("id")
       .single();
 
-    if (error) console.error("Failed to save analysis:", error);
+    if (error) {
+      console.error("Failed to save analysis:", error);
+      throw new Error(`Failed to save analysis: ${error.message}`);
+    }
     return { ...result, id: saved?.id ?? null, plan };
   });
 
