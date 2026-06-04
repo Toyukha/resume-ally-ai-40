@@ -1,19 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
-import { analyzeResume, type AnalysisResult } from "@/lib/analyze.functions";
+import { analyzeResume, getUserPlan, type AnalysisResult } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { toast } from "sonner";
 
@@ -21,6 +20,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Get That Job" }] }),
   component: Dashboard,
 });
+
+const LOCKED_MESSAGE = "🔒 Upgrade to Pro to unlock optimized resume generation and tailored cover letters.";
 
 function Dashboard() {
   const [resumeText, setResumeText] = useState("");
