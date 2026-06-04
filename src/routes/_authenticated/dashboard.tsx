@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-const LOCKED_MESSAGE = "🔒 Upgrade to Pro to unlock optimized resume generation and tailored cover letters.";
+
 
 function Dashboard() {
   const [resumeText, setResumeText] = useState("");
