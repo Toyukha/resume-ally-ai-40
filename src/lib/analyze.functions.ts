@@ -75,6 +75,7 @@ export const getUserPlan = createServerFn({ method: "GET" })
     const { count } = await supabase
       .from("analyses")
       .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
       .gte("created_at", monthStart.toISOString());
 
     return {
