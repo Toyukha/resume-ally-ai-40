@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { listAnalyses, deleteAnalysis } from "@/lib/analyze.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/history")({
+export const Route = createFileRoute("/_authenticated/history/")({
   head: () => ({ meta: [{ title: "History — Get That Job" }] }),
   component: HistoryPage,
 });
