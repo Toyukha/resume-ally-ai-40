@@ -52,16 +52,6 @@ function AuthPage() {
     else toast.success("Check your email to confirm your account.");
   };
 
-  const signInGoogle = async () => {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/dashboard",
-    });
-    if (result.error) {
-      toast.error("Google sign-in failed");
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
