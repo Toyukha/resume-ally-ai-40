@@ -12,7 +12,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — ResumeForge" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Get That Job" }] }),
   component: AuthPage,
 });
 
@@ -82,7 +82,7 @@ function AuthPage() {
               <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-hero shadow-glow">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="font-display text-2xl font-bold">Welcome to ResumeForge</h1>
+              <h1 className="font-display text-2xl font-bold">Welcome to Get That Job</h1>
               <p className="mt-1 text-sm text-muted-foreground">Sign in to start optimizing</p>
             </div>
 

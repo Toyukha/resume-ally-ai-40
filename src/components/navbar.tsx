@@ -30,7 +30,7 @@ export function Navbar() {
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-hero shadow-glow">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span>ResumeForge</span>
+          <span>Get That Job</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

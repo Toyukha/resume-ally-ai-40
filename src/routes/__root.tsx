@@ -62,9 +62,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ResumeForge — AI Resume Optimizer" },
+      { title: "Get That Job — AI Resume Optimizer" },
       { name: "description", content: "Optimize your resume and generate tailored cover letters with AI. Beat the ATS and land more interviews." },
-      { property: "og:title", content: "ResumeForge — AI Resume Optimizer" },
+      { property: "og:title", content: "Get That Job — AI Resume Optimizer" },
       { property: "og:description", content: "Optimize your resume and generate tailored cover letters with AI." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
