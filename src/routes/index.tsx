@@ -179,7 +179,7 @@ function Landing() {
             <AccordionItem value="q6">
               <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
               <AccordionContent>
-                Starter gives you 3 analyses per month with basic optimization. Pro unlocks unlimited analyses, full AI rewrites, cover letters, and priority AI models. Career adds team seats, bulk analysis, and API access for coaches and agencies.
+                Free gives you 1 CV analysis per month with a basic ATS score. Pro unlocks unlimited CV analyses, ATS optimization, unlimited cover letters, missing keyword recommendations, CV rewrite suggestions, and full analysis history.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
