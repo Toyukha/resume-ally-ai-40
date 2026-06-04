@@ -44,16 +44,6 @@ function resolvePlanStatus(profile: PlanRow | null) {
   return { rawPlan, effectivePlan, proActive, proExpired, expiresAt, startedAt: profile?.pro_started_at ?? null };
 }
 
-type PlanRow = { plan: string | null; pro_started_at: string | null; pro_expires_at: string | null };
-
-function resolvePlanStatus(profile: PlanRow | null) {
-  const rawPlan = (profile?.plan ?? "free") as "free" | "pro";
-  const expiresAt = profile?.pro_expires_at ? new Date(profile.pro_expires_at) : null;
-  const proActive = rawPlan === "pro" && expiresAt !== null && expiresAt.getTime() > Date.now();
-  const proExpired = rawPlan === "pro" && !proActive;
-  const effectivePlan: "free" | "pro" = proActive ? "pro" : "free";
-  return { rawPlan, effectivePlan, proActive, proExpired, expiresAt, startedAt: profile?.pro_started_at ?? null };
-}
 
 async function isAdminUser(supabase: { from: (t: string) => { select: (c: string) => { eq: (col: string, v: string) => { eq: (col: string, v: boolean) => { limit: (n: number) => { maybeSingle: () => Promise<{ data: unknown }> } } } } } }, userId: string) {
   const { data } = await supabase
