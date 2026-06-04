@@ -30,9 +30,8 @@ const FEATURES = [
 ];
 
 const PRICING = [
-  { name: "Starter", price: "Free", period: "forever", desc: "Try the magic.", features: ["3 analyses / month", "ATS match score", "Basic optimization"], cta: "Get started", variant: "outline" as const },
-  { name: "Pro", price: "$19", period: "/ month", desc: "For active job seekers.", features: ["Unlimited analyses", "Full AI rewrite", "Cover letter generator", "Priority models", "Export to PDF"], cta: "Start Pro trial", variant: "hero" as const, featured: true },
-  { name: "Career", price: "$49", period: "/ month", desc: "For coaches & teams.", features: ["Everything in Pro", "5 team seats", "Bulk analysis", "Personal job coach prompts", "API access"], cta: "Contact sales", variant: "gold" as const },
+  { name: "Free", price: "₦0", period: "", desc: "Get started with basic insights.", features: ["1 CV analysis / month", "Basic ATS score", "No optimized resume generation", "No cover letter generation"], cta: "Get started", variant: "outline" as const },
+  { name: "Pro", price: "₦5,000", period: "/ month", desc: "For serious job seekers.", features: ["Unlimited CV analyses", "ATS optimization", "Unlimited cover letters", "Missing keyword recommendations", "CV rewrite suggestions", "Analysis history"], cta: "Start Pro trial", variant: "hero" as const, featured: true },
 ];
 
 function Landing() {
@@ -105,7 +104,7 @@ function Landing() {
           <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Simple plans. Real results.</h2>
           <p className="mt-4 text-muted-foreground">Start free. Upgrade when you're ready to job-hunt seriously.</p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-5xl gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-2">
           {PRICING.map((p) => (
             <Card
               key={p.name}
@@ -168,7 +167,7 @@ function Landing() {
             <AccordionItem value="q4">
               <AccordionTrigger>Can I export the optimized resume?</AccordionTrigger>
               <AccordionContent>
-                Yes. Pro and Career plans let you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text.
+                Yes. Pro plan lets you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5">
@@ -180,7 +179,7 @@ function Landing() {
             <AccordionItem value="q6">
               <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
               <AccordionContent>
-                Starter gives you 3 analyses per month with basic optimization. Pro unlocks unlimited analyses, full AI rewrites, cover letters, and priority AI models. Career adds team seats, bulk analysis, and API access for coaches and agencies.
+                Free gives you 1 CV analysis per month with a basic ATS score. Pro unlocks unlimited CV analyses, ATS optimization, unlimited cover letters, missing keyword recommendations, CV rewrite suggestions, and full analysis history.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
