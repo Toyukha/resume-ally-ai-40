@@ -19,8 +19,10 @@ export function WhatsAppButton({
   prefill,
   icon = true,
 }: WhatsAppButtonProps) {
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
     trackWhatsAppClick(location);
+    window.open(getWhatsAppUrl(prefill), "_blank", "noopener,noreferrer");
   };
 
   if (variant === "fab") {
