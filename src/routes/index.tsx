@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
-  CheckCircle2, ArrowRight, Star,
+  CheckCircle2, ArrowRight, Star, HelpCircle, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Navbar } from "@/components/navbar";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -132,6 +134,76 @@ function Landing() {
               </Button>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="container mx-auto px-4 py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-medium text-primary-glow">FAQ</p>
+          <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Questions? Answered.</h2>
+          <p className="mt-4 text-muted-foreground">Everything you need to know about Get That Job.</p>
+        </div>
+        <div className="mx-auto mt-12 max-w-3xl">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="q1">
+              <AccordionTrigger>What file formats can I upload?</AccordionTrigger>
+              <AccordionContent>
+                We support PDF and DOCX files. Make sure your resume is text-based (not a scanned image) so our AI can read and optimize it accurately.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q2">
+              <AccordionTrigger>How does the AI match score work?</AccordionTrigger>
+              <AccordionContent>
+                Our AI compares your resume against the job description, analyzing keyword overlap, skills alignment, experience relevance, and formatting quality. The score is a percentage — higher is better — and comes with specific improvement suggestions.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q3">
+              <AccordionTrigger>Is my data private and secure?</AccordionTrigger>
+              <AccordionContent>
+                Absolutely. Your documents are encrypted in transit and at rest. They are tied to your account and never shared with third parties. We do not use your resume to train models.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q4">
+              <AccordionTrigger>Can I export the optimized resume?</AccordionTrigger>
+              <AccordionContent>
+                Yes. Pro and Career plans let you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q5">
+              <AccordionTrigger>How long does an analysis take?</AccordionTrigger>
+              <AccordionContent>
+                Most analyses complete in under 60 seconds. Complex resumes or very detailed job descriptions may take a minute or two at most.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q6">
+              <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
+              <AccordionContent>
+                Starter gives you 3 analyses per month with basic optimization. Pro unlocks unlimited analyses, full AI rewrites, cover letters, and priority AI models. Career adds team seats, bulk analysis, and API access for coaches and agencies.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section id="contact" className="container mx-auto px-4 py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+            <MessageCircle className="h-3 w-3 text-gold" />
+            We are here to help
+          </div>
+          <h2 className="font-display text-4xl font-bold md:text-5xl">You can reach out to us</h2>
+          <p className="mt-4 text-muted-foreground">
+            Have a question, feedback, or need help with your account? Drop us a message on WhatsApp and we will get back to you quickly.
+          </p>
+          <Button size="lg" variant="hero" className="mt-8" asChild>
+            <a href="https://wa.me/2348138908924" target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Chat on WhatsApp
+            </a>
+          </Button>
+          <p className="mt-3 text-sm text-muted-foreground">+234 813 890 8924</p>
         </div>
       </section>
 

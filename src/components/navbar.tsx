@@ -36,6 +36,8 @@ export function Navbar() {
         <nav className="hidden items-center gap-8 md:flex">
           <a href="/#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
           <a href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</a>
+          <a href="/#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
+          <a href="/#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
           {user && (
             <>
               <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
