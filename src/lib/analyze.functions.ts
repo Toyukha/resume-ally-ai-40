@@ -141,7 +141,8 @@ export const analyzeResume = createServerFn({ method: "POST" })
     const plan: "free" | "pro" = admin ? "pro" : status.effectivePlan;
 
     const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-2.5-flash");
+    const PRIMARY_MODEL = "google/gemini-2.5-flash";
+    const FALLBACK_MODEL = "google/gemini-2.5-pro";
 
     const isFree = plan === "free";
 
