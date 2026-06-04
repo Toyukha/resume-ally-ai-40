@@ -167,7 +167,7 @@ function Landing() {
             <AccordionItem value="q4">
               <AccordionTrigger>Can I export the optimized resume?</AccordionTrigger>
               <AccordionContent>
-                Yes. Pro and Career plans let you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text.
+                Yes. Pro plan lets you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q5">
