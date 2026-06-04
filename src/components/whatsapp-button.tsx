@@ -7,7 +7,6 @@ interface WhatsAppButtonProps {
   variant?: "inline" | "fab";
   label?: string;
   location: string;
-  prefill?: string;
   icon?: boolean;
 }
 
@@ -16,24 +15,21 @@ export function WhatsAppButton({
   variant = "inline",
   label = "Contact via WhatsApp",
   location,
-  prefill,
   icon = true,
 }: WhatsAppButtonProps) {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const handleClick = () => {
     trackWhatsAppClick(location);
-    window.open(getWhatsAppUrl(prefill), "_blank", "noopener,noreferrer");
   };
 
   if (variant === "fab") {
     return (
       <a
-        href={getWhatsAppUrl(prefill)}
+        href={getWhatsAppUrl()}
         target="_blank"
         rel="noopener noreferrer"
         onClick={handleClick}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl animate-fade-in",
+          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl animate-fade-in sm:bottom-6 sm:right-6",
           "bg-[#25D366] text-white",
           className,
         )}
@@ -57,7 +53,7 @@ export function WhatsAppButton({
 
   return (
     <a
-      href={getWhatsAppUrl(prefill)}
+      href={getWhatsAppUrl()}
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
@@ -72,3 +68,4 @@ export function WhatsAppButton({
     </a>
   );
 }
+
