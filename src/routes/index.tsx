@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
   CheckCircle2, ArrowRight, Star, HelpCircle, MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
