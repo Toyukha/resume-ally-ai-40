@@ -3,6 +3,8 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { Tables } from "@/integrations/supabase/types";
+
 
 const InputSchema = z.object({
   resumeText: z.string().min(50, "Resume text is too short").max(50000),
