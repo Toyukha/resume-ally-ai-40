@@ -15,8 +15,8 @@ const InputSchema = z.object({
 export const AnalysisSchema = z.object({
   matchScore: z.number().min(0).max(100),
   summary: z.string(),
-  strengths: z.array(z.string()).min(1).max(10),
-  weaknesses: z.array(z.string()).min(1).max(10),
+  strengths: z.array(z.string()).max(10),
+  weaknesses: z.array(z.string()).max(10),
   missingKeywords: z.array(z.string()).max(25),
   optimizedResume: z.string(),
   coverLetter: z.string(),
@@ -25,8 +25,8 @@ export const AnalysisSchema = z.object({
 const FreeAnalysisSchema = z.object({
   matchScore: z.number().min(0).max(100),
   summary: z.string(),
-  strengths: z.array(z.string()).min(1).max(10),
-  weaknesses: z.array(z.string()).min(1).max(10),
+  strengths: z.array(z.string()).max(10),
+  weaknesses: z.array(z.string()).max(10),
 });
 
 export type AnalysisResult = z.infer<typeof AnalysisSchema> & { plan?: "free" | "pro" };
@@ -141,7 +141,7 @@ export const analyzeResume = createServerFn({ method: "POST" })
     const plan: "free" | "pro" = admin ? "pro" : status.effectivePlan;
 
     const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-3-flash-preview");
+    const model = gateway("google/gemini-2.5-flash");
 
     const isFree = plan === "free";
 
