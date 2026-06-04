@@ -1,8 +1,8 @@
 export const WHATSAPP_NUMBER = "2348138908924";
-export const WHATSAPP_PREFILL = "Hello, I would like assistance with my CV and job application.";
+export const WHATSAPP_PREFILL = "Hello I am interested in your services";
 
-export function getWhatsAppUrl(prefill = WHATSAPP_PREFILL) {
-  const encoded = encodeURIComponent(prefill);
+export function getWhatsAppUrl() {
+  const encoded = encodeURIComponent(WHATSAPP_PREFILL);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
 }
 
@@ -21,3 +21,4 @@ export function trackWhatsAppClick(location: string) {
     // Silently fail if analytics is unavailable
   }
 }
+
