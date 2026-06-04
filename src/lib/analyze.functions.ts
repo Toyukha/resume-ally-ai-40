@@ -72,7 +72,8 @@ export const getUserPlan = createServerFn({ method: "GET" })
     const monthStart = new Date();
     monthStart.setUTCDate(1);
     monthStart.setUTCHours(0, 0, 0, 0);
-    const { count } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count } = await supabaseAdmin
       .from("analyses")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -110,6 +111,8 @@ export const analyzeResume = createServerFn({ method: "POST" })
       .maybeSingle();
     const status = resolvePlanStatus(profile as PlanRow | null);
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Admins bypass all subscription gating
     if (!admin) {
       // Block expired Pro users — they must renew before analyzing again
@@ -118,15 +121,17 @@ export const analyzeResume = createServerFn({ method: "POST" })
       }
 
       // Enforce free-tier monthly limit (resets at the start of each calendar month)
+      // Use admin client so the gate is not affected by RLS visibility quirks.
       if (status.effectivePlan === "free") {
         const monthStart = new Date();
         monthStart.setUTCDate(1);
         monthStart.setUTCHours(0, 0, 0, 0);
-        const { count } = await supabase
+        const { count, error: countError } = await supabaseAdmin
           .from("analyses")
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId)
           .gte("created_at", monthStart.toISOString());
+        if (countError) throw new Error(`Unable to verify plan usage: ${countError.message}`);
         if ((count ?? 0) >= 1) {
           throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
         }
@@ -188,8 +193,9 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       throw new Error(`Analysis failed: ${message}`);
     }
 
-    // Persist to database
-    const { data: saved, error } = await supabase
+    // Persist to database via admin client so the row is always recorded
+    // (otherwise a silent RLS failure would let free users bypass the monthly limit).
+    const { data: saved, error } = await supabaseAdmin
       .from("analyses")
       .insert({
         user_id: userId,
@@ -207,7 +213,10 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       .select("id")
       .single();
 
-    if (error) console.error("Failed to save analysis:", error);
+    if (error) {
+      console.error("Failed to save analysis:", error);
+      throw new Error(`Failed to save analysis: ${error.message}`);
+    }
     return { ...result, id: saved?.id ?? null, plan };
   });
 
