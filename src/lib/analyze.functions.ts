@@ -72,7 +72,8 @@ export const getUserPlan = createServerFn({ method: "GET" })
     const monthStart = new Date();
     monthStart.setUTCDate(1);
     monthStart.setUTCHours(0, 0, 0, 0);
-    const { count } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count } = await supabaseAdmin
       .from("analyses")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
