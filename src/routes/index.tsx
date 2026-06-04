@@ -6,6 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { Navbar } from "@/components/navbar";
 
 
@@ -198,7 +199,7 @@ function Landing() {
             Have a question, feedback, or need help with your account? Drop us a message on WhatsApp and we will get back to you quickly.
           </p>
           <Button size="lg" variant="hero" className="mt-8" asChild>
-            <a href="https://wa.me/2348138908924" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/2348138908924?text=Hello%2C%20I%20would%20like%20assistance%20with%20my%20CV%20and%20job%20application." target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-4 w-4" />
               Chat on WhatsApp
             </a>

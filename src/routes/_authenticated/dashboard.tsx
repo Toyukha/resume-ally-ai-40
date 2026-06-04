@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
   AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X,
+  MessageCircle, HeadphonesIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { analyzeResume, type AnalysisResult } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { toast } from "sonner";
@@ -136,6 +138,22 @@ function Dashboard() {
         </div>
 
         {mutation.data && <Results result={mutation.data} />}
+
+        {/* Support */}
+        <Card className="mt-16 border-[#25D366]/20 bg-[#25D366]/5 p-6">
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white">
+              <HeadphonesIcon className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-display text-lg font-semibold">Need help with your results?</h3>
+              <p className="text-sm text-muted-foreground">
+                Our team can walk you through your analysis and help you understand how to improve your resume.
+              </p>
+            </div>
+            <WhatsAppButton variant="inline" label="Contact via WhatsApp" location="dashboard_support" />
+          </div>
+        </Card>
       </main>
     </div>
   );
