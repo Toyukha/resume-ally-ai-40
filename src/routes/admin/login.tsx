@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapSuperAdmin, getAdminMe } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/login")({
   ssr: false,
@@ -19,19 +21,39 @@ function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const bootstrap = useServerFn(bootstrapSuperAdmin);
+  const fetchMe = useServerFn(getAdminMe);
 
   useEffect(() => {
+    // Ensure the super admin account exists with the enforced credentials.
+    bootstrap().catch(() => { /* non-fatal */ });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin", replace: true });
     });
-  }, [navigate]);
+  }, [navigate, bootstrap]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+    // Verify super_admin before entering the portal
+    try {
+      const me = await fetchMe();
+      if (!me.roles?.includes("super_admin")) {
+        await supabase.auth.signOut();
+        setLoading(false);
+        return toast.error("Access denied. Super admin credentials required.");
+      }
+    } catch {
+      await supabase.auth.signOut();
+      setLoading(false);
+      return toast.error("Could not verify admin access.");
+    }
     setLoading(false);
-    if (error) return toast.error(error.message);
     navigate({ to: "/admin", replace: true });
   };
 
