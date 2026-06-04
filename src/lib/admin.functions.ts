@@ -35,7 +35,7 @@ async function logActivity(
     action,
     target_type: target?.type ?? null,
     target_id: target?.id ?? null,
-    metadata: target?.metadata ?? {},
+    metadata: (target?.metadata ?? {}) as never,
   });
 }
 
