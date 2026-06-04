@@ -1,0 +1,23 @@
+export const WHATSAPP_NUMBER = "2348138908924";
+export const WHATSAPP_PREFILL = "Hello, I would like assistance with my CV and job application.";
+
+export function getWhatsAppUrl(prefill = WHATSAPP_PREFILL) {
+  const encoded = encodeURIComponent(prefill);
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+}
+
+export function trackWhatsAppClick(location: string) {
+  try {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "whatsapp_click", {
+        event_category: "engagement",
+        event_label: location,
+      });
+    }
+    // Also log to console for debugging / custom analytics pipelines
+    // eslint-disable-next-line no-console
+    console.log("[Analytics] WhatsApp click:", { location, timestamp: new Date().toISOString() });
+  } catch {
+    // Silently fail if analytics is unavailable
+  }
+}
