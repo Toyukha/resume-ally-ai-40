@@ -29,12 +29,19 @@ function Dashboard() {
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
 
+  const planFn = useServerFn(getUserPlan);
+  const planQuery = useQuery({
+    queryKey: ["user-plan"],
+    queryFn: () => planFn(),
+  });
+
   const analyzeFn = useServerFn(analyzeResume);
   const mutation = useMutation({
     mutationFn: async () => analyzeFn({ data: { resumeText, jobDescription, resumeFilename: resumeFile || undefined } }) as Promise<AnalysisResult>,
     onError: (e) => toast.error(e instanceof Error ? e.message : "Analysis failed"),
     onSuccess: () => {
       toast.success("Analysis complete!");
+      planQuery.refetch();
       setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
     },
   });
@@ -55,7 +62,11 @@ function Dashboard() {
     }
   };
 
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending;
+  const plan = planQuery.data?.plan ?? "free";
+  const isFree = plan === "free";
+  const analysesThisMonth = planQuery.data?.analysesThisMonth ?? 0;
+  const limitReached = isFree && analysesThisMonth >= 1;
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached;
 
   return (
     <div className="min-h-screen bg-background">
