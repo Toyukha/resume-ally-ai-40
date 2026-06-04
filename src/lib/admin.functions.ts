@@ -222,14 +222,15 @@ export const setUserPlan = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const now = new Date();
-    const update: Record<string, unknown> = { plan: data.plan };
+    const update: { plan: "free" | "pro"; pro_started_at: string | null; pro_expires_at: string | null } = {
+      plan: data.plan,
+      pro_started_at: null,
+      pro_expires_at: null,
+    };
     if (data.plan === "pro") {
       const months = data.months ?? 1;
       update.pro_started_at = now.toISOString();
       update.pro_expires_at = new Date(now.getTime() + months * 30 * 86400000).toISOString();
-    } else {
-      update.pro_started_at = null;
-      update.pro_expires_at = null;
     }
     const { error } = await supabaseAdmin.from("profiles").update(update).eq("id", data.userId);
     if (error) throw new Error(error.message);
