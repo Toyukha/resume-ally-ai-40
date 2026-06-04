@@ -44,10 +44,23 @@ function resolvePlanStatus(profile: PlanRow | null) {
   return { rawPlan, effectivePlan, proActive, proExpired, expiresAt, startedAt: profile?.pro_started_at ?? null };
 }
 
+
+async function isAdminUser(supabase: { from: (t: string) => { select: (c: string) => { eq: (col: string, v: string) => { eq: (col: string, v: boolean) => { limit: (n: number) => { maybeSingle: () => Promise<{ data: unknown }> } } } } } }, userId: string) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("suspended", false)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
 export const getUserPlan = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const admin = await isAdminUser(supabase as never, userId);
     const { data } = await supabase
       .from("profiles")
       .select("plan, pro_started_at, pro_expires_at")
@@ -65,15 +78,17 @@ export const getUserPlan = createServerFn({ method: "GET" })
       .gte("created_at", monthStart.toISOString());
 
     return {
-      plan: status.effectivePlan,
+      plan: admin ? ("pro" as const) : status.effectivePlan,
       rawPlan: status.rawPlan,
-      proExpired: status.proExpired,
+      isAdmin: admin,
+      proExpired: admin ? false : status.proExpired,
       proExpiresAt: status.expiresAt?.toISOString() ?? null,
       proStartedAt: status.startedAt,
       analysesThisMonth: count ?? 0,
-      monthlyLimit: status.effectivePlan === "free" ? 1 : null,
+      monthlyLimit: admin ? null : (status.effectivePlan === "free" ? 1 : null),
     };
   });
+
 
 export const analyzeResume = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -84,6 +99,8 @@ export const analyzeResume = createServerFn({ method: "POST" })
 
     const { supabase, userId } = context;
 
+    const admin = await isAdminUser(supabase as never, userId);
+
     // Determine plan & subscription status
     const { data: profile } = await supabase
       .from("profiles")
@@ -92,31 +109,35 @@ export const analyzeResume = createServerFn({ method: "POST" })
       .maybeSingle();
     const status = resolvePlanStatus(profile as PlanRow | null);
 
-    // Block expired Pro users — they must renew before analyzing again
-    if (status.proExpired) {
-      throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
-    }
+    // Admins bypass all subscription gating
+    if (!admin) {
+      // Block expired Pro users — they must renew before analyzing again
+      if (status.proExpired) {
+        throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
+      }
 
-    const plan = status.effectivePlan;
-
-    // Enforce free-tier monthly limit (resets at the start of each calendar month)
-    if (plan === "free") {
-      const monthStart = new Date();
-      monthStart.setUTCDate(1);
-      monthStart.setUTCHours(0, 0, 0, 0);
-      const { count } = await supabase
-        .from("analyses")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", monthStart.toISOString());
-      if ((count ?? 0) >= 1) {
-        throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
+      // Enforce free-tier monthly limit (resets at the start of each calendar month)
+      if (status.effectivePlan === "free") {
+        const monthStart = new Date();
+        monthStart.setUTCDate(1);
+        monthStart.setUTCHours(0, 0, 0, 0);
+        const { count } = await supabase
+          .from("analyses")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", monthStart.toISOString());
+        if ((count ?? 0) >= 1) {
+          throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
+        }
       }
     }
+
+    const plan: "free" | "pro" = admin ? "pro" : status.effectivePlan;
 
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
 
     const isFree = plan === "free";
+
 
     const system = isFree
       ? `You are a resume analysis assistant. Analyze the candidate's resume against the target job description and return:
