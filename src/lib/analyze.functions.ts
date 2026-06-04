@@ -25,7 +25,7 @@ export type AnalysisResult = z.infer<typeof AnalysisSchema>;
 export const analyzeResume = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("AI service is not configured.");
 
@@ -46,6 +46,7 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
 
     const prompt = `RESUME:\n"""\n${data.resumeText}\n"""\n\nJOB DESCRIPTION:\n"""\n${data.jobDescription}\n"""`;
 
+    let result: AnalysisResult;
     try {
       const { experimental_output } = await generateText({
         model,
@@ -53,11 +54,56 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
         prompt,
         experimental_output: Output.object({ schema: AnalysisSchema }),
       });
-      return experimental_output;
+      result = experimental_output;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("429")) throw new Error("Rate limit reached. Please wait a moment and try again.");
       if (message.includes("402")) throw new Error("AI credits exhausted. Please add credits in workspace billing.");
       throw new Error(`Analysis failed: ${message}`);
     }
+
+    // Persist to database
+    const { supabase, userId } = context;
+    const { data: saved, error } = await supabase
+      .from("analyses")
+      .insert({
+        user_id: userId,
+        resume_filename: data.resumeFilename ?? null,
+        resume_text: data.resumeText,
+        job_description: data.jobDescription,
+        match_score: result.matchScore,
+        summary: result.summary,
+        strengths: result.strengths,
+        weaknesses: result.weaknesses,
+        missing_keywords: result.missingKeywords,
+        optimized_resume: result.optimizedResume,
+        cover_letter: result.coverLetter,
+      })
+      .select("id")
+      .single();
+
+    if (error) console.error("Failed to save analysis:", error);
+    return { ...result, id: saved?.id ?? null };
+  });
+
+export const listAnalyses = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("analyses")
+      .select("id, resume_filename, match_score, summary, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const deleteAnalysis = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("analyses").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
