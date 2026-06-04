@@ -141,7 +141,8 @@ export const analyzeResume = createServerFn({ method: "POST" })
     const plan: "free" | "pro" = admin ? "pro" : status.effectivePlan;
 
     const gateway = createLovableAiGatewayProvider(apiKey);
-    const model = gateway("google/gemini-2.5-flash");
+    const PRIMARY_MODEL = "google/gemini-2.5-flash";
+    const FALLBACK_MODEL = "google/gemini-2.5-pro";
 
     const isFree = plan === "free";
 
@@ -167,30 +168,66 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
 
     const prompt = `RESUME:\n"""\n${data.resumeText}\n"""\n\nJOB DESCRIPTION:\n"""\n${data.jobDescription}\n"""`;
 
-    let result: z.infer<typeof AnalysisSchema>;
-    try {
-      const { experimental_output } = await generateText({
-        model,
+    let result!: z.infer<typeof AnalysisSchema>;
+    const schema = isFree ? FreeAnalysisSchema : AnalysisSchema;
+    const attempts: { model: string; ok: boolean; error?: string; rawPreview?: string }[] = [];
+
+    const runOnce = async (modelId: string) => {
+      const gen = await generateText({
+        model: gateway(modelId),
         system,
         prompt,
-        experimental_output: Output.object({ schema: isFree ? FreeAnalysisSchema : AnalysisSchema }),
+        experimental_output: Output.object({ schema }),
       });
-      if (isFree) {
-        const free = experimental_output as z.infer<typeof FreeAnalysisSchema>;
-        result = {
-          ...free,
-          missingKeywords: [],
-          optimizedResume: LOCKED_MESSAGE,
-          coverLetter: LOCKED_MESSAGE,
-        };
-      } else {
-        result = experimental_output as z.infer<typeof AnalysisSchema>;
+      return gen;
+    };
+
+    const isSchemaMismatch = (msg: string) =>
+      /did not match schema|No object generated|validation|invalid_type|Expected/i.test(msg);
+
+    let lastError: unknown = null;
+    for (const modelId of [PRIMARY_MODEL, FALLBACK_MODEL]) {
+      try {
+        const gen = await runOnce(modelId);
+        const raw = (() => {
+          try { return JSON.stringify(gen.experimental_output); } catch { return String(gen.text ?? ""); }
+        })();
+        console.log(`[analyze] model=${modelId} userId=${userId} plan=${plan} ok=true rawLen=${raw.length} preview=${raw.slice(0, 500)}`);
+        attempts.push({ model: modelId, ok: true, rawPreview: raw.slice(0, 200) });
+
+        if (isFree) {
+          const free = gen.experimental_output as z.infer<typeof FreeAnalysisSchema>;
+          result = {
+            ...free,
+            missingKeywords: [],
+            optimizedResume: LOCKED_MESSAGE,
+            coverLetter: LOCKED_MESSAGE,
+          };
+        } else {
+          result = gen.experimental_output as z.infer<typeof AnalysisSchema>;
+        }
+        lastError = null;
+        break;
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        const rawText = (err as { text?: string; response?: { text?: string } })?.text
+          ?? (err as { response?: { text?: string } })?.response?.text
+          ?? "";
+        console.error(`[analyze] model=${modelId} userId=${userId} plan=${plan} ok=false error=${message} rawPreview=${rawText.slice(0, 500)}`);
+        attempts.push({ model: modelId, ok: false, error: message, rawPreview: rawText.slice(0, 200) });
+        lastError = err;
+        if (message.includes("429")) throw new Error("Rate limit reached. Please wait a moment and try again.");
+        if (message.includes("402")) throw new Error("AI credits exhausted. Please add credits in workspace billing.");
+        // Only fall back on schema-mismatch style errors; rethrow other errors immediately.
+        if (!isSchemaMismatch(message)) throw new Error(`Analysis failed: ${message}`);
+        // else: loop and try fallback model
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (message.includes("429")) throw new Error("Rate limit reached. Please wait a moment and try again.");
-      if (message.includes("402")) throw new Error("AI credits exhausted. Please add credits in workspace billing.");
-      throw new Error(`Analysis failed: ${message}`);
+    }
+
+    if (lastError) {
+      const message = lastError instanceof Error ? lastError.message : String(lastError);
+      console.error(`[analyze] all models failed userId=${userId} attempts=${JSON.stringify(attempts)}`);
+      throw new Error(`Analysis failed after fallback: ${message}`);
     }
 
     // Persist to database via admin client so the row is always recorded
