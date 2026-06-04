@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
   CheckCircle2, ArrowRight, Star, HelpCircle, MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -233,8 +234,17 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Get That Job. Crafted for serious job seekers.
+        <div className="container mx-auto px-4 flex flex-col items-center gap-3 text-center">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Get That Job. Crafted for serious job seekers.
+          </p>
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            <ShieldCheck className="h-3 w-3" />
+            Admin Login
+          </Link>
         </div>
       </footer>
     </div>
