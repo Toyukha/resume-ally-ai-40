@@ -55,7 +55,7 @@ function Landing() {
               Land more interviews with a <span className="text-gradient">resume that actually fits</span>.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Now! sit back and let get you a resume and cover letter that'll land you that dream Job.
+              Now, sit back and relax while we prepare a professional resume and cover letter that will help you secure your dream job.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" variant="hero" asChild>
@@ -70,7 +70,7 @@ function Landing() {
             <div className="mt-10 flex items-center justify-center gap-6 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 fill-gold text-gold" />)}
-                <span className="ml-2">4.9 from 1,200+ candidates</span>
+                <span className="ml-2">Get more value for less</span>
               </div>
             </div>
           </div>
