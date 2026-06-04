@@ -37,29 +37,29 @@ function renderWithClient(ui: React.ReactNode) {
 
 describe("/admin route gate", () => {
   it("renders the admin outlet for super_admin", async () => {
-    renderWithClient(<Gate rolesFetcher={async () => ["super_admin"]} />);
+    renderWithClient(<Gate k="super" rolesFetcher={async () => ["super_admin"]} />);
     expect(await screen.findByTestId("admin-content")).toBeInTheDocument();
     expect(screen.queryByText(/Access Denied/i)).toBeNull();
   });
 
   it("blocks regular admin role with the denied screen", async () => {
-    renderWithClient(<Gate rolesFetcher={async () => ["admin"]} />);
+    renderWithClient(<Gate k="admin" rolesFetcher={async () => ["admin"]} />);
     expect(await screen.findByText(/Access Denied/i)).toBeInTheDocument();
     expect(screen.queryByTestId("admin-content")).toBeNull();
   });
 
   it("blocks support_admin and analytics_admin", async () => {
-    renderWithClient(<Gate rolesFetcher={async () => ["support_admin", "analytics_admin"]} />);
+    renderWithClient(<Gate k="support" rolesFetcher={async () => ["support_admin", "analytics_admin"]} />);
     expect(await screen.findByText(/Access Denied/i)).toBeInTheDocument();
   });
 
   it("blocks unauthenticated / role-less users", async () => {
-    renderWithClient(<Gate rolesFetcher={async () => []} />);
+    renderWithClient(<Gate k="empty" rolesFetcher={async () => []} />);
     expect(await screen.findByText(/Access Denied/i)).toBeInTheDocument();
   });
 
   it("denied screen offers a path back to /dashboard", async () => {
-    renderWithClient(<Gate rolesFetcher={async () => []} />);
+    renderWithClient(<Gate k="link" rolesFetcher={async () => []} />);
     const link = (await screen.findByRole("link", { name: /dashboard/i })) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/dashboard");
   });
