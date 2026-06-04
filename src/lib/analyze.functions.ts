@@ -75,6 +75,7 @@ export const getUserPlan = createServerFn({ method: "GET" })
     const { count } = await supabase
       .from("analyses")
       .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
       .gte("created_at", monthStart.toISOString());
 
     return {
@@ -124,6 +125,7 @@ export const analyzeResume = createServerFn({ method: "POST" })
         const { count } = await supabase
           .from("analyses")
           .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
           .gte("created_at", monthStart.toISOString());
         if ((count ?? 0) >= 1) {
           throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
