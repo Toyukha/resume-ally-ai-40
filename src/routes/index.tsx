@@ -49,14 +49,13 @@ function Landing() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
               <Sparkles className="h-3 w-3 text-gold" />
-              Powered by frontier AI models
+              Get a job in 1 month
             </div>
             <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
               Land more interviews with a <span className="text-gradient">resume that actually fits</span>.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Upload your resume, paste a job description, and watch AI rewrite it for ATS systems
-              and human recruiters — plus a tailored cover letter, in seconds.
+              Now! sit back and let get you a resume and cover letter that'll land you that dream Job.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" variant="hero" asChild>
