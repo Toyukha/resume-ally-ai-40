@@ -5,8 +5,9 @@ import { ADMIN_ROLES, assertSuperAdmin, type AppRole } from "@/lib/admin-access"
 
 const ROLES = ADMIN_ROLES;
 
-async function loadCurrentRoles(supabase: any, userId: string): Promise<AppRole[]> {
-  const { data } = await supabase
+async function loadCurrentRoles(_supabase: any, userId: string): Promise<AppRole[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
