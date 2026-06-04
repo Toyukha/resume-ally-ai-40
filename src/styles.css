@@ -90,50 +90,6 @@
   --shadow-glow: 0 0 80px -10px color-mix(in oklab, oklch(0.78 0.13 85) 40%, transparent);
 }
 
-.dark {
-  --background: oklch(0.16 0.02 160);
-  --foreground: oklch(0.97 0.015 90);
-
-  --card: oklch(0.21 0.03 160);
-  --card-foreground: oklch(0.97 0.015 90);
-
-  --popover: oklch(0.21 0.03 160);
-  --popover-foreground: oklch(0.97 0.015 90);
-
-  --primary: oklch(0.78 0.13 85);         /* gold becomes primary in dark for contrast */
-  --primary-foreground: oklch(0.16 0.04 160);
-  --primary-glow: oklch(0.85 0.13 90);
-
-  --secondary: oklch(0.27 0.04 160);
-  --secondary-foreground: oklch(0.97 0.015 90);
-
-  --muted: oklch(0.25 0.03 160);
-  --muted-foreground: oklch(0.7 0.02 90);
-
-  --accent: oklch(0.5 0.12 160);
-  --accent-foreground: oklch(0.98 0.02 90);
-
-  --gold: oklch(0.82 0.14 85);
-  --gold-foreground: oklch(0.16 0.04 160);
-
-  --destructive: oklch(0.65 0.2 27);
-  --destructive-foreground: oklch(0.98 0 0);
-
-  --success: oklch(0.7 0.15 160);
-  --success-foreground: oklch(0.16 0.04 160);
-
-  --warning: oklch(0.8 0.15 70);
-  --warning-foreground: oklch(0.2 0.05 70);
-
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.78 0.13 85);
-
-  --gradient-hero: linear-gradient(135deg, oklch(0.25 0.06 160) 0%, oklch(0.35 0.08 160) 50%, oklch(0.55 0.12 90) 100%);
-  --gradient-card: linear-gradient(180deg, oklch(0.22 0.03 160), oklch(0.19 0.025 160));
-  --shadow-elegant: 0 20px 60px -20px color-mix(in oklab, oklch(0 0 0) 50%, transparent);
-  --shadow-glow: 0 0 80px -10px color-mix(in oklab, oklch(0.78 0.13 85) 30%, transparent);
-}
 
 @layer base {
   * {

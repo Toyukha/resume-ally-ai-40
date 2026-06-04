@@ -18,7 +18,7 @@ import { extractTextFromFile } from "@/lib/extract-text";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — ResumeForge" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Get That Job" }] }),
   component: Dashboard,
 });
 

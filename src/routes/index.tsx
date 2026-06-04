@@ -10,7 +10,7 @@ import { Navbar } from "@/components/navbar";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ResumeForge — AI Resume Optimizer for Modern Job Seekers" },
+      { title: "Get That Job — AI Resume Optimizer for Modern Job Seekers" },
       { name: "description", content: "Tailor your resume to any job in seconds. ATS-friendly optimization, missing-keyword detection, and AI-generated cover letters." },
     ],
   }),
@@ -154,7 +154,7 @@ function Landing() {
 
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ResumeForge. Crafted for serious job seekers.
+          © {new Date().getFullYear()} Get That Job. Crafted for serious job seekers.
         </div>
       </footer>
     </div>

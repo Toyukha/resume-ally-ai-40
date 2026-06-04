@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "./theme-toggle";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -30,7 +30,7 @@ export function Navbar() {
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-hero shadow-glow">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span>ResumeForge</span>
+          <span>Get That Job</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -49,7 +49,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          
           {user ? (
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="mr-2 h-4 w-4" /> Sign out
