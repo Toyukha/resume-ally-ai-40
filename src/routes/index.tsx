@@ -30,9 +30,8 @@ const FEATURES = [
 ];
 
 const PRICING = [
-  { name: "Starter", price: "Free", period: "forever", desc: "Try the magic.", features: ["3 analyses / month", "ATS match score", "Basic optimization"], cta: "Get started", variant: "outline" as const },
-  { name: "Pro", price: "$19", period: "/ month", desc: "For active job seekers.", features: ["Unlimited analyses", "Full AI rewrite", "Cover letter generator", "Priority models", "Export to PDF"], cta: "Start Pro trial", variant: "hero" as const, featured: true },
-  { name: "Career", price: "$49", period: "/ month", desc: "For coaches & teams.", features: ["Everything in Pro", "5 team seats", "Bulk analysis", "Personal job coach prompts", "API access"], cta: "Contact sales", variant: "gold" as const },
+  { name: "Free", price: "₦0", period: "", desc: "Get started with basic insights.", features: ["1 CV analysis / month", "Basic ATS score", "No optimized resume generation", "No cover letter generation"], cta: "Get started", variant: "outline" as const },
+  { name: "Pro", price: "₦5,000", period: "/ month", desc: "For serious job seekers.", features: ["Unlimited CV analyses", "ATS optimization", "Unlimited cover letters", "Missing keyword recommendations", "CV rewrite suggestions", "Analysis history"], cta: "Start Pro trial", variant: "hero" as const, featured: true },
 ];
 
 function Landing() {
