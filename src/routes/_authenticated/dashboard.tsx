@@ -30,7 +30,7 @@ function Dashboard() {
 
   const analyzeFn = useServerFn(analyzeResume);
   const mutation = useMutation({
-    mutationFn: async () => analyzeFn({ data: { resumeText, jobDescription } }) as Promise<AnalysisResult>,
+    mutationFn: async () => analyzeFn({ data: { resumeText, jobDescription, resumeFilename: resumeFile || undefined } }) as Promise<AnalysisResult>,
     onError: (e) => toast.error(e instanceof Error ? e.message : "Analysis failed"),
     onSuccess: () => {
       toast.success("Analysis complete!");
