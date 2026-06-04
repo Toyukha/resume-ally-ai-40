@@ -168,7 +168,7 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
 
     const prompt = `RESUME:\n"""\n${data.resumeText}\n"""\n\nJOB DESCRIPTION:\n"""\n${data.jobDescription}\n"""`;
 
-    let result: z.infer<typeof AnalysisSchema>;
+    let result!: z.infer<typeof AnalysisSchema>;
     const schema = isFree ? FreeAnalysisSchema : AnalysisSchema;
     const attempts: { model: string; ok: boolean; error?: string; rawPreview?: string }[] = [];
 
