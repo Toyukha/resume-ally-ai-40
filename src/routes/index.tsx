@@ -104,7 +104,7 @@ function Landing() {
           <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Simple plans. Real results.</h2>
           <p className="mt-4 text-muted-foreground">Start free. Upgrade when you're ready to job-hunt seriously.</p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-5xl gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-2">
           {PRICING.map((p) => (
             <Card
               key={p.name}
