@@ -64,9 +64,11 @@ function Dashboard() {
 
   const plan = planQuery.data?.plan ?? "free";
   const isFree = plan === "free";
+  const proExpired = planQuery.data?.proExpired ?? false;
+  const proExpiresAt = planQuery.data?.proExpiresAt ?? null;
   const analysesThisMonth = planQuery.data?.analysesThisMonth ?? 0;
   const limitReached = isFree && analysesThisMonth >= 1;
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached;
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached && !proExpired;
 
   return (
     <div className="min-h-screen bg-background">
