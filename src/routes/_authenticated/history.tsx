@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Trash2, Loader2, Plus } from "lucide-react";
+import { FileText, Trash2, Loader2, Plus, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -62,8 +62,12 @@ function HistoryPage() {
             {data.map((a) => {
               const tone = a.match_score >= 80 ? "text-success" : a.match_score >= 60 ? "text-gold" : "text-destructive";
               return (
-                <Card key={a.id} className="flex items-center justify-between gap-4 p-5">
-                  <div className="min-w-0 flex-1">
+                <Card key={a.id} className="group relative flex items-center justify-between gap-4 p-5 transition-shadow hover:shadow-md">
+                  <Link
+                    to="/history/$id"
+                    params={{ id: a.id }}
+                    className="min-w-0 flex-1 cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <div className={`font-display text-2xl font-bold ${tone}`}>{a.match_score}</div>
                       <div className="min-w-0">
@@ -74,12 +78,16 @@ function HistoryPage() {
                       </div>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{a.summary}</p>
-                  </div>
+                    <div className="mt-2 flex items-center text-xs font-medium text-primary">
+                      View details <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </Link>
                   <Button
                     variant="ghost" size="icon"
-                    onClick={() => del.mutate(a.id)}
+                    onClick={(e) => { e.stopPropagation(); del.mutate(a.id); }}
                     disabled={del.isPending}
                     aria-label="Delete"
+                    className="shrink-0"
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
