@@ -1,19 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
-import { analyzeResume, type AnalysisResult } from "@/lib/analyze.functions";
+import { analyzeResume, getUserPlan, type AnalysisResult } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { toast } from "sonner";
 
@@ -22,11 +21,19 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
+
+
 function Dashboard() {
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
+
+  const planFn = useServerFn(getUserPlan);
+  const planQuery = useQuery({
+    queryKey: ["user-plan"],
+    queryFn: () => planFn(),
+  });
 
   const analyzeFn = useServerFn(analyzeResume);
   const mutation = useMutation({
@@ -34,6 +41,7 @@ function Dashboard() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Analysis failed"),
     onSuccess: () => {
       toast.success("Analysis complete!");
+      planQuery.refetch();
       setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
     },
   });
@@ -54,16 +62,55 @@ function Dashboard() {
     }
   };
 
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending;
+  const plan = planQuery.data?.plan ?? "free";
+  const isFree = plan === "free";
+  const analysesThisMonth = planQuery.data?.analysesThisMonth ?? 0;
+  const limitReached = isFree && analysesThisMonth >= 1;
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto max-w-6xl px-4 py-10">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold md:text-4xl">Optimize your resume</h1>
-          <p className="mt-1 text-muted-foreground">Upload your resume, paste the job description, and let AI do the heavy lifting.</p>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-bold md:text-4xl">Optimize your resume</h1>
+            <p className="mt-1 text-muted-foreground">Upload your resume, paste the job description, and let AI do the heavy lifting.</p>
+          </div>
+          {planQuery.data && (
+            <Card className={`flex items-center gap-3 px-4 py-2.5 ${isFree ? "border-gold/40 bg-gold/5" : "border-primary/40 bg-primary/5"}`}>
+              {isFree ? <Lock className="h-4 w-4 text-gold" /> : <Crown className="h-4 w-4 text-primary-glow" />}
+              <div className="text-sm">
+                <div className="font-semibold">{isFree ? "Free plan" : "Pro plan"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {isFree ? `${analysesThisMonth}/1 analysis used this month` : "Unlimited analyses"}
+                </div>
+              </div>
+              {isFree && (
+                <Button size="sm" variant="gold" asChild>
+                  <Link to="/" hash="pricing">Upgrade</Link>
+                </Button>
+              )}
+            </Card>
+          )}
         </div>
+
+        {limitReached && (
+          <Card className="mb-6 border-gold/40 bg-gold/5 p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 text-gold" />
+              <div className="flex-1">
+                <div className="font-semibold">You've used your free analysis for this month</div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Upgrade to Pro for unlimited CV analyses, ATS optimization, and tailored cover letters.
+                </p>
+              </div>
+              <Button variant="gold" asChild>
+                <Link to="/" hash="pricing">Upgrade to Pro</Link>
+              </Button>
+            </div>
+          </Card>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Resume Upload */}
@@ -166,40 +213,55 @@ function Results({ result }: { result: AnalysisResult }) {
         />
       </div>
 
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 text-gold">
-            <KeyRound className="h-4 w-4" />
+      {result.plan !== "free" && (
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 text-gold">
+              <KeyRound className="h-4 w-4" />
+            </div>
+            <h3 className="font-display text-lg font-semibold">Missing Keywords</h3>
           </div>
-          <h3 className="font-display text-lg font-semibold">Missing Keywords</h3>
-        </div>
-        {result.missingKeywords.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Excellent — no critical keywords missing.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {result.missingKeywords.map((kw) => (
-              <Badge key={kw} variant="outline" className="border-gold/40 bg-gold/10 text-foreground">
-                <X className="mr-1 h-3 w-3 text-gold" /> {kw}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </Card>
+          {result.missingKeywords.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Excellent — no critical keywords missing.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {result.missingKeywords.map((kw) => (
+                <Badge key={kw} variant="outline" className="border-gold/40 bg-gold/10 text-foreground">
+                  <X className="mr-1 h-3 w-3 text-gold" /> {kw}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
-      <Card className="overflow-hidden p-6">
-        <Tabs defaultValue="resume">
-          <TabsList>
-            <TabsTrigger value="resume"><FileCheck className="mr-2 h-4 w-4" /> Optimized Resume</TabsTrigger>
-            <TabsTrigger value="cover"><Mail className="mr-2 h-4 w-4" /> Cover Letter</TabsTrigger>
-          </TabsList>
-          <TabsContent value="resume" className="mt-4">
-            <CopyableText text={result.optimizedResume} />
-          </TabsContent>
-          <TabsContent value="cover" className="mt-4">
-            <CopyableText text={result.coverLetter} />
-          </TabsContent>
-        </Tabs>
-      </Card>
+      {result.plan === "free" ? (
+        <Card className="border-gold/40 bg-gold/5 p-8 text-center">
+          <Lock className="mx-auto h-8 w-8 text-gold" />
+          <h3 className="mt-3 font-display text-xl font-semibold">Unlock optimized resume & cover letter</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Pro members get a fully rewritten, ATS-tailored resume and a custom cover letter for every analysis — plus unlimited analyses and missing-keyword insights.
+          </p>
+          <Button variant="gold" className="mt-5" asChild>
+            <Link to="/" hash="pricing">Upgrade to Pro</Link>
+          </Button>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden p-6">
+          <Tabs defaultValue="resume">
+            <TabsList>
+              <TabsTrigger value="resume"><FileCheck className="mr-2 h-4 w-4" /> Optimized Resume</TabsTrigger>
+              <TabsTrigger value="cover"><Mail className="mr-2 h-4 w-4" /> Cover Letter</TabsTrigger>
+            </TabsList>
+            <TabsContent value="resume" className="mt-4">
+              <CopyableText text={result.optimizedResume} />
+            </TabsContent>
+            <TabsContent value="cover" className="mt-4">
+              <CopyableText text={result.coverLetter} />
+            </TabsContent>
+          </Tabs>
+        </Card>
+      )}
     </section>
   );
 }
