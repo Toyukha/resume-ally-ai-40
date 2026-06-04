@@ -23,8 +23,8 @@ import { AccessDenied } from "@/components/access-denied";
  *   - super_admin sees the protected outlet
  *   - everyone else lands on AccessDenied (which links to /dashboard)
  */
-function Gate({ rolesFetcher }: { rolesFetcher: () => Promise<string[]> }) {
-  const { data, isLoading } = useQuery({ queryKey: ["roles", Math.random()], queryFn: rolesFetcher });
+function Gate({ rolesFetcher, k }: { rolesFetcher: () => Promise<string[]>; k: string }) {
+  const { data, isLoading } = useQuery({ queryKey: ["roles", k], queryFn: rolesFetcher });
   if (isLoading) return <div>loading</div>;
   if (!isSuperAdmin(data)) return <AccessDenied />;
   return <div data-testid="admin-content">ADMIN OUTLET</div>;
