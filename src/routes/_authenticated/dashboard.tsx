@@ -5,7 +5,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
   AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X,
-  MessageCircle, HeadphonesIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +13,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
-import { WhatsAppButton } from "@/components/whatsapp-button";
 import { analyzeResume, type AnalysisResult } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { toast } from "sonner";
