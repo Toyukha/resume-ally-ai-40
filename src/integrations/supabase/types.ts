@@ -70,18 +70,24 @@ export type Database = {
           created_at: string
           id: string
           plan: string
+          pro_expires_at: string | null
+          pro_started_at: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           id: string
           plan?: string
+          pro_expires_at?: string | null
+          pro_started_at?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           plan?: string
+          pro_expires_at?: string | null
+          pro_started_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -91,7 +97,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_pro_active: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

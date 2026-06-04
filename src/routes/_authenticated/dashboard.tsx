@@ -64,9 +64,11 @@ function Dashboard() {
 
   const plan = planQuery.data?.plan ?? "free";
   const isFree = plan === "free";
+  const proExpired = planQuery.data?.proExpired ?? false;
+  const proExpiresAt = planQuery.data?.proExpiresAt ?? null;
   const analysesThisMonth = planQuery.data?.analysesThisMonth ?? 0;
   const limitReached = isFree && analysesThisMonth >= 1;
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached;
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached && !proExpired;
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +85,11 @@ function Dashboard() {
               <div className="text-sm">
                 <div className="font-semibold">{isFree ? "Free plan" : "Pro plan"}</div>
                 <div className="text-xs text-muted-foreground">
-                  {isFree ? `${analysesThisMonth}/1 analysis used this month` : "Unlimited analyses"}
+                  {isFree
+                    ? `${analysesThisMonth}/1 analysis used this month`
+                    : proExpiresAt
+                      ? `Renews ${new Date(proExpiresAt).toLocaleDateString()}`
+                      : "Unlimited analyses"}
                 </div>
               </div>
               {isFree && (
@@ -94,6 +100,26 @@ function Dashboard() {
             </Card>
           )}
         </div>
+
+        {proExpired && (
+          <Card className="mb-6 border-destructive/40 bg-destructive/5 p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 text-destructive" />
+              <div className="flex-1">
+                <div className="font-semibold">Your Pro subscription has expired</div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {proExpiresAt
+                    ? `Your 30-day Pro access ended on ${new Date(proExpiresAt).toLocaleDateString()}. `
+                    : "Your Pro access has ended. "}
+                  Renew to resume unlimited analyses, ATS optimization, and cover letters.
+                </p>
+              </div>
+              <Button variant="gold" asChild>
+                <Link to="/" hash="pricing">Renew Pro</Link>
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {limitReached && (
           <Card className="mb-6 border-gold/40 bg-gold/5 p-4">

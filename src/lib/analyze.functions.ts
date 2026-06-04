@@ -33,14 +33,29 @@ export type AnalysisResult = z.infer<typeof AnalysisSchema> & { plan?: "free" | 
 
 const LOCKED_MESSAGE = "🔒 Upgrade to Pro to unlock optimized resume generation and tailored cover letters.";
 
+type PlanRow = { plan: string | null; pro_started_at: string | null; pro_expires_at: string | null };
+
+function resolvePlanStatus(profile: PlanRow | null) {
+  const rawPlan = (profile?.plan ?? "free") as "free" | "pro";
+  const expiresAt = profile?.pro_expires_at ? new Date(profile.pro_expires_at) : null;
+  const proActive = rawPlan === "pro" && expiresAt !== null && expiresAt.getTime() > Date.now();
+  const proExpired = rawPlan === "pro" && !proActive;
+  const effectivePlan: "free" | "pro" = proActive ? "pro" : "free";
+  return { rawPlan, effectivePlan, proActive, proExpired, expiresAt, startedAt: profile?.pro_started_at ?? null };
+}
+
 export const getUserPlan = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
-    const plan = (data?.plan ?? "free") as "free" | "pro";
+    const { data } = await supabase
+      .from("profiles")
+      .select("plan, pro_started_at, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+    const status = resolvePlanStatus(data as PlanRow | null);
 
-    // Count this month's analyses
+    // Count this month's analyses (calendar-month reset for free users)
     const monthStart = new Date();
     monthStart.setUTCDate(1);
     monthStart.setUTCHours(0, 0, 0, 0);
@@ -49,7 +64,15 @@ export const getUserPlan = createServerFn({ method: "GET" })
       .select("id", { count: "exact", head: true })
       .gte("created_at", monthStart.toISOString());
 
-    return { plan, analysesThisMonth: count ?? 0, monthlyLimit: plan === "free" ? 1 : null };
+    return {
+      plan: status.effectivePlan,
+      rawPlan: status.rawPlan,
+      proExpired: status.proExpired,
+      proExpiresAt: status.expiresAt?.toISOString() ?? null,
+      proStartedAt: status.startedAt,
+      analysesThisMonth: count ?? 0,
+      monthlyLimit: status.effectivePlan === "free" ? 1 : null,
+    };
   });
 
 export const analyzeResume = createServerFn({ method: "POST" })
@@ -61,11 +84,22 @@ export const analyzeResume = createServerFn({ method: "POST" })
 
     const { supabase, userId } = context;
 
-    // Determine plan
-    const { data: profile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
-    const plan = (profile?.plan ?? "free") as "free" | "pro";
+    // Determine plan & subscription status
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan, pro_started_at, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+    const status = resolvePlanStatus(profile as PlanRow | null);
 
-    // Enforce free-tier monthly limit
+    // Block expired Pro users — they must renew before analyzing again
+    if (status.proExpired) {
+      throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
+    }
+
+    const plan = status.effectivePlan;
+
+    // Enforce free-tier monthly limit (resets at the start of each calendar month)
     if (plan === "free") {
       const monthStart = new Date();
       monthStart.setUTCDate(1);
