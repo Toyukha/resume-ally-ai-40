@@ -213,40 +213,55 @@ function Results({ result }: { result: AnalysisResult }) {
         />
       </div>
 
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 text-gold">
-            <KeyRound className="h-4 w-4" />
+      {result.plan !== "free" && (
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 text-gold">
+              <KeyRound className="h-4 w-4" />
+            </div>
+            <h3 className="font-display text-lg font-semibold">Missing Keywords</h3>
           </div>
-          <h3 className="font-display text-lg font-semibold">Missing Keywords</h3>
-        </div>
-        {result.missingKeywords.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Excellent — no critical keywords missing.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {result.missingKeywords.map((kw) => (
-              <Badge key={kw} variant="outline" className="border-gold/40 bg-gold/10 text-foreground">
-                <X className="mr-1 h-3 w-3 text-gold" /> {kw}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </Card>
+          {result.missingKeywords.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Excellent — no critical keywords missing.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {result.missingKeywords.map((kw) => (
+                <Badge key={kw} variant="outline" className="border-gold/40 bg-gold/10 text-foreground">
+                  <X className="mr-1 h-3 w-3 text-gold" /> {kw}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
-      <Card className="overflow-hidden p-6">
-        <Tabs defaultValue="resume">
-          <TabsList>
-            <TabsTrigger value="resume"><FileCheck className="mr-2 h-4 w-4" /> Optimized Resume</TabsTrigger>
-            <TabsTrigger value="cover"><Mail className="mr-2 h-4 w-4" /> Cover Letter</TabsTrigger>
-          </TabsList>
-          <TabsContent value="resume" className="mt-4">
-            <CopyableText text={result.optimizedResume} />
-          </TabsContent>
-          <TabsContent value="cover" className="mt-4">
-            <CopyableText text={result.coverLetter} />
-          </TabsContent>
-        </Tabs>
-      </Card>
+      {result.plan === "free" ? (
+        <Card className="border-gold/40 bg-gold/5 p-8 text-center">
+          <Lock className="mx-auto h-8 w-8 text-gold" />
+          <h3 className="mt-3 font-display text-xl font-semibold">Unlock optimized resume & cover letter</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Pro members get a fully rewritten, ATS-tailored resume and a custom cover letter for every analysis — plus unlimited analyses and missing-keyword insights.
+          </p>
+          <Button variant="gold" className="mt-5" asChild>
+            <Link to="/" hash="pricing">Upgrade to Pro</Link>
+          </Button>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden p-6">
+          <Tabs defaultValue="resume">
+            <TabsList>
+              <TabsTrigger value="resume"><FileCheck className="mr-2 h-4 w-4" /> Optimized Resume</TabsTrigger>
+              <TabsTrigger value="cover"><Mail className="mr-2 h-4 w-4" /> Cover Letter</TabsTrigger>
+            </TabsList>
+            <TabsContent value="resume" className="mt-4">
+              <CopyableText text={result.optimizedResume} />
+            </TabsContent>
+            <TabsContent value="cover" className="mt-4">
+              <CopyableText text={result.coverLetter} />
+            </TabsContent>
+          </Tabs>
+        </Card>
+      )}
     </section>
   );
 }
