@@ -22,7 +22,35 @@ export const AnalysisSchema = z.object({
   coverLetter: z.string(),
 });
 
-export type AnalysisResult = z.infer<typeof AnalysisSchema>;
+const FreeAnalysisSchema = z.object({
+  matchScore: z.number().min(0).max(100),
+  summary: z.string(),
+  strengths: z.array(z.string()).min(1).max(10),
+  weaknesses: z.array(z.string()).min(1).max(10),
+});
+
+export type AnalysisResult = z.infer<typeof AnalysisSchema> & { plan?: "free" | "pro" };
+
+const LOCKED_MESSAGE = "🔒 Upgrade to Pro to unlock optimized resume generation and tailored cover letters.";
+
+export const getUserPlan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
+    const plan = (data?.plan ?? "free") as "free" | "pro";
+
+    // Count this month's analyses
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    const { count } = await supabase
+      .from("analyses")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", monthStart.toISOString());
+
+    return { plan, analysesThisMonth: count ?? 0, monthlyLimit: plan === "free" ? 1 : null };
+  });
 
 export const analyzeResume = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -31,10 +59,39 @@ export const analyzeResume = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("AI service is not configured.");
 
+    const { supabase, userId } = context;
+
+    // Determine plan
+    const { data: profile } = await supabase.from("profiles").select("plan").eq("id", userId).maybeSingle();
+    const plan = (profile?.plan ?? "free") as "free" | "pro";
+
+    // Enforce free-tier monthly limit
+    if (plan === "free") {
+      const monthStart = new Date();
+      monthStart.setUTCDate(1);
+      monthStart.setUTCHours(0, 0, 0, 0);
+      const { count } = await supabase
+        .from("analyses")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", monthStart.toISOString());
+      if ((count ?? 0) >= 1) {
+        throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
+      }
+    }
+
     const gateway = createLovableAiGatewayProvider(apiKey);
     const model = gateway("google/gemini-3-flash-preview");
 
-    const system = `You are an elite resume optimization assistant. Analyze the candidate's resume against the target job description.
+    const isFree = plan === "free";
+
+    const system = isFree
+      ? `You are a resume analysis assistant. Analyze the candidate's resume against the target job description and return:
+- matchScore: 0-100 numeric fit score
+- summary: 2 short sentences explaining the score
+- strengths: 3-6 concrete bullet phrases
+- weaknesses: 3-6 concrete gaps the candidate should address
+Tone: confident, specific, ATS-friendly.`
+      : `You are an elite resume optimization assistant. Analyze the candidate's resume against the target job description.
 Return a JSON object with:
 - matchScore: 0-100 numeric fit score
 - summary: 2 short sentences explaining the score
@@ -48,15 +105,25 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
 
     const prompt = `RESUME:\n"""\n${data.resumeText}\n"""\n\nJOB DESCRIPTION:\n"""\n${data.jobDescription}\n"""`;
 
-    let result: AnalysisResult;
+    let result: z.infer<typeof AnalysisSchema>;
     try {
       const { experimental_output } = await generateText({
         model,
         system,
         prompt,
-        experimental_output: Output.object({ schema: AnalysisSchema }),
+        experimental_output: Output.object({ schema: isFree ? FreeAnalysisSchema : AnalysisSchema }),
       });
-      result = experimental_output;
+      if (isFree) {
+        const free = experimental_output as z.infer<typeof FreeAnalysisSchema>;
+        result = {
+          ...free,
+          missingKeywords: [],
+          optimizedResume: LOCKED_MESSAGE,
+          coverLetter: LOCKED_MESSAGE,
+        };
+      } else {
+        result = experimental_output as z.infer<typeof AnalysisSchema>;
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("429")) throw new Error("Rate limit reached. Please wait a moment and try again.");
@@ -65,7 +132,6 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
     }
 
     // Persist to database
-    const { supabase, userId } = context;
     const { data: saved, error } = await supabase
       .from("analyses")
       .insert({
@@ -85,7 +151,7 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       .single();
 
     if (error) console.error("Failed to save analysis:", error);
-    return { ...result, id: saved?.id ?? null };
+    return { ...result, id: saved?.id ?? null, plan };
   });
 
 export const listAnalyses = createServerFn({ method: "GET" })
@@ -125,4 +191,3 @@ export const getAnalysis = createServerFn({ method: "GET" })
     if (!row) throw new Error("Analysis not found.");
     return row as Tables<"analyses">;
   });
-
