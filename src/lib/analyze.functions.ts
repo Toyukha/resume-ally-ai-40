@@ -3,6 +3,8 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { Tables } from "@/integrations/supabase/types";
+
 
 const InputSchema = z.object({
   resumeText: z.string().min(50, "Resume text is too short").max(50000),
@@ -107,3 +109,20 @@ export const deleteAnalysis = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getAnalysis = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("analyses")
+      .select("*")
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .single();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Analysis not found.");
+    return row as Tables<"analyses">;
+  });
+
