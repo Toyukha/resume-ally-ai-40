@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ADMIN_ROLES, assertSuperAdmin, type AppRole } from "@/lib/admin-access";
 
-const ROLES = ["super_admin", "admin", "support_admin", "analytics_admin"] as const;
-type AppRole = (typeof ROLES)[number];
+const ROLES = ADMIN_ROLES;
 
 async function loadCurrentRoles(supabase: any, userId: string): Promise<AppRole[]> {
   const { data } = await supabase
@@ -15,11 +15,12 @@ async function loadCurrentRoles(supabase: any, userId: string): Promise<AppRole[
 }
 
 function requireAdmin(roles: AppRole[]) {
-  if (!roles.includes("super_admin")) throw new Error("Forbidden: super_admin required");
+  assertSuperAdmin(roles);
 }
 function requireSuper(roles: AppRole[]) {
-  if (!roles.includes("super_admin")) throw new Error("Forbidden: super_admin required");
+  assertSuperAdmin(roles);
 }
+
 
 // ---------- Bootstrap super admin (idempotent, public) ----------
 export const bootstrapSuperAdmin = createServerFn({ method: "POST" })
