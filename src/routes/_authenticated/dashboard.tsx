@@ -139,21 +139,6 @@ function Dashboard() {
 
         {mutation.data && <Results result={mutation.data} />}
 
-        {/* Support */}
-        <Card className="mt-16 border-[#25D366]/20 bg-[#25D366]/5 p-6">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white">
-              <HeadphonesIcon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-display text-lg font-semibold">Need help with your results?</h3>
-              <p className="text-sm text-muted-foreground">
-                Our team can walk you through your analysis and help you understand how to improve your resume.
-              </p>
-            </div>
-            <WhatsAppButton variant="inline" label="Contact via WhatsApp" location="dashboard_support" />
-          </div>
-        </Card>
       </main>
     </div>
   );
