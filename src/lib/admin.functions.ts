@@ -23,40 +23,12 @@ function requireSuper(roles: AppRole[]) {
 }
 
 
-// ---------- Bootstrap super admin (idempotent, public) ----------
-export const bootstrapSuperAdmin = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const EMAIL = "oyeyemiyunus24@gmail.com";
-    const PASSWORD = "Vanguards@180?";
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+// Generic server-side error helper: log details, surface safe message.
+function failSafely(scope: string, error: unknown): never {
+  console.error(`[admin:${scope}]`, error);
+  throw new Error("Operation failed. Please try again or contact support.");
+}
 
-    // Find user
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    let user = list.users.find((u) => (u.email ?? "").toLowerCase() === EMAIL);
-
-    if (!user) {
-      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email: EMAIL,
-        password: PASSWORD,
-        email_confirm: true,
-      });
-      if (error) throw new Error(error.message);
-      user = created.user!;
-    } else {
-      // Enforce the password every time
-      await supabaseAdmin.auth.admin.updateUserById(user.id, {
-        password: PASSWORD,
-        email_confirm: true,
-      });
-    }
-
-    // Ensure super_admin role
-    await supabaseAdmin
-      .from("user_roles")
-      .upsert({ user_id: user.id, role: "super_admin", suspended: false }, { onConflict: "user_id,role" });
-
-    return { ok: true };
-  });
 
 async function logActivity(
   supabase: any,
