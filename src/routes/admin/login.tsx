@@ -21,16 +21,14 @@ function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const bootstrap = useServerFn(bootstrapSuperAdmin);
   const fetchMe = useServerFn(getAdminMe);
 
   useEffect(() => {
-    // Ensure the super admin account exists with the enforced credentials.
-    bootstrap().catch(() => { /* non-fatal */ });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin", replace: true });
     });
-  }, [navigate, bootstrap]);
+  }, [navigate]);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
