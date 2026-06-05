@@ -81,8 +81,8 @@ function Landing() {
       <section id="features" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-medium text-primary-glow">FEATURES</p>
-          <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Everything you need to ship your application</h2>
-          <p className="mt-4 text-muted-foreground">Built for the way modern hiring actually works — bots first, humans second.</p>
+          <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Built for today’s local and international recruitment standards.</h2>
+          <p className="mt-4 text-muted-foreground">Ensure your application passes every screening stage with confidence.</p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
