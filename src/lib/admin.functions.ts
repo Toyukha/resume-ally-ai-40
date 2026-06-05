@@ -198,7 +198,7 @@ export const setUserSuspended = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ suspended: data.suspended }).eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       data.suspended ? "user.suspend" : "user.reactivate", { type: "user", id: data.userId });
     return { ok: true };
@@ -213,7 +213,7 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (data.userId === userId) throw new Error("Cannot delete your own account.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       "user.delete", { type: "user", id: data.userId });
     return { ok: true };
@@ -242,7 +242,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
       update.pro_expires_at = new Date(now.getTime() + months * 30 * 86400000).toISOString();
     }
     const { error } = await supabaseAdmin.from("profiles").update(update).eq("id", data.userId);
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       "user.set_plan", { type: "user", id: data.userId, metadata: { plan: data.plan, months: data.months } });
     return { ok: true };
@@ -256,7 +256,7 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.generateLink({ type: "recovery", email: data.email });
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       "user.password_reset", { type: "user", metadata: { email: data.email } });
     return { ok: true };
@@ -301,7 +301,7 @@ export const addAdmin = createServerFn({ method: "POST" })
       role: data.role,
       assigned_by: userId,
     });
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       "admin.add", { type: "user", id: target.id, metadata: { role: data.role, email: data.email } });
     return { ok: true };
@@ -315,7 +315,7 @@ export const removeAdmin = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       "admin.remove", { type: "user_role", id: data.id });
     return { ok: true };
@@ -329,7 +329,7 @@ export const setAdminSuspended = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("user_roles").update({ suspended: data.suspended }).eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
       data.suspended ? "admin.suspend" : "admin.reactivate", { type: "user_role", id: data.id });
     return { ok: true };
