@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { bootstrapSuperAdmin, getAdminMe } from "@/lib/admin.functions";
+import { getAdminMe } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/login")({
   ssr: false,
@@ -21,16 +21,14 @@ function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const bootstrap = useServerFn(bootstrapSuperAdmin);
   const fetchMe = useServerFn(getAdminMe);
 
   useEffect(() => {
-    // Ensure the super admin account exists with the enforced credentials.
-    bootstrap().catch(() => { /* non-fatal */ });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin", replace: true });
     });
-  }, [navigate, bootstrap]);
+  }, [navigate]);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
