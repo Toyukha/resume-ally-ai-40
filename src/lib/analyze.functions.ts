@@ -45,12 +45,14 @@ function resolvePlanStatus(profile: PlanRow | null) {
 }
 
 
-async function isAdminUser(supabase: { from: (t: string) => { select: (c: string) => { eq: (col: string, v: string) => { eq: (col: string, v: boolean) => { limit: (n: number) => { maybeSingle: () => Promise<{ data: unknown }> } } } } } }, userId: string) {
-  const { data } = await supabase
+async function isAdminUser(_supabase: unknown, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .eq("suspended", false)
+    .in("role", ["admin", "super_admin"])
     .limit(1)
     .maybeSingle();
   return !!data;
