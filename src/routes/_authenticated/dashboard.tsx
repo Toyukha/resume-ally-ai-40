@@ -82,7 +82,6 @@ function Dashboard() {
             missingKeywords: (row.missing_keywords as unknown as string[]) ?? [],
             optimizedResume: row.optimized_resume,
             coverLetter: row.cover_letter,
-            id: row.id,
             plan: planLabelForResult,
           });
           toast.success("Analysis complete!");
