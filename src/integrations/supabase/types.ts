@@ -104,11 +104,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          flw_response: Json | null
+          flw_transaction_id: string | null
+          id: string
+          plan_tier: string
+          status: string
+          tx_ref: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          flw_response?: Json | null
+          flw_transaction_id?: string | null
+          id?: string
+          plan_tier: string
+          status?: string
+          tx_ref: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          flw_response?: Json | null
+          flw_transaction_id?: string | null
+          id?: string
+          plan_tier?: string
+          status?: string
+          tx_ref?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           id: string
           plan: string
+          plan_tier: string
           pro_expires_at: string | null
           pro_started_at: string | null
           suspended: boolean
@@ -118,6 +161,7 @@ export type Database = {
           created_at?: string
           id: string
           plan?: string
+          plan_tier?: string
           pro_expires_at?: string | null
           pro_started_at?: string | null
           suspended?: boolean
@@ -127,6 +171,7 @@ export type Database = {
           created_at?: string
           id?: string
           plan?: string
+          plan_tier?: string
           pro_expires_at?: string | null
           pro_started_at?: string | null
           suspended?: boolean
