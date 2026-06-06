@@ -39,6 +39,7 @@ function Dashboard() {
   const [extracting, setExtracting] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [failedJob, setFailedJob] = useState<{ jobId: string; error: string | null } | null>(null);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
