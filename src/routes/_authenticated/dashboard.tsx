@@ -262,44 +262,13 @@ function Dashboard() {
             className="min-w-[260px]"
           >
             {isAnalyzing ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {jobId ? "Analyzing… (queued)" : "Starting…"}</>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing…</>
             ) : (
               <><Sparkles className="mr-2 h-4 w-4" /> Analyze & Optimize</>
             )}
           </Button>
         </div>
 
-        {failedJob && (
-          <Card className="mx-auto mt-6 max-w-2xl border-destructive/40 bg-destructive/5 p-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5 shrink-0">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-display font-semibold">Analysis failed</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {failedJob.error || "Something went wrong while analyzing your resume."}
-                </p>
-                <div className="mt-4 flex gap-3">
-                  <Button
-                    variant="hero"
-                    disabled={retryMutation.isPending || isAnalyzing}
-                    onClick={() => retryMutation.mutate()}
-                  >
-                    {retryMutation.isPending ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
-                    ) : (
-                      <><Sparkles className="mr-2 h-4 w-4" /> Retry analysis</>
-                    )}
-                  </Button>
-                  <Button variant="ghost" onClick={() => setFailedJob(null)}>
-                    Dismiss
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
 
         {result && <Results result={result} />}
 
