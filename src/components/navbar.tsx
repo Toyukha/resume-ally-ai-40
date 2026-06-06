@@ -35,7 +35,7 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-8 md:flex">
           <a href="/#features" className="text-sm text-muted-foreground hover:text-foreground">Features</a>
-          <a href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</a>
+          <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>Pricing</Link>
           <a href="/#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>Support</Link>
           <a href="/#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { Tables } from "@/integrations/supabase/types";
+import { getMonthlyLimit, type PlanTier } from "./plans";
 
 
 const InputSchema = z.object({
@@ -33,15 +34,32 @@ export type AnalysisResult = z.infer<typeof AnalysisSchema> & { plan?: "free" | 
 
 const LOCKED_MESSAGE = "🔒 Upgrade to Pro to unlock optimized resume generation and tailored cover letters.";
 
-type PlanRow = { plan: string | null; pro_started_at: string | null; pro_expires_at: string | null };
+type PlanRow = {
+  plan: string | null;
+  plan_tier: string | null;
+  pro_started_at: string | null;
+  pro_expires_at: string | null;
+};
 
 function resolvePlanStatus(profile: PlanRow | null) {
   const rawPlan = (profile?.plan ?? "free") as "free" | "pro";
+  const rawTier = (profile?.plan_tier ?? "free") as PlanTier;
   const expiresAt = profile?.pro_expires_at ? new Date(profile.pro_expires_at) : null;
   const proActive = rawPlan === "pro" && expiresAt !== null && expiresAt.getTime() > Date.now();
   const proExpired = rawPlan === "pro" && !proActive;
+  // When pro expires, effective tier falls back to free regardless of stored tier.
+  const effectiveTier: PlanTier = proActive ? rawTier : "free";
   const effectivePlan: "free" | "pro" = proActive ? "pro" : "free";
-  return { rawPlan, effectivePlan, proActive, proExpired, expiresAt, startedAt: profile?.pro_started_at ?? null };
+  return {
+    rawPlan,
+    rawTier,
+    effectiveTier,
+    effectivePlan,
+    proActive,
+    proExpired,
+    expiresAt,
+    startedAt: profile?.pro_started_at ?? null,
+  };
 }
 
 
@@ -65,12 +83,12 @@ export const getUserPlan = createServerFn({ method: "GET" })
     const admin = await isAdminUser(supabase as never, userId);
     const { data } = await supabase
       .from("profiles")
-      .select("plan, pro_started_at, pro_expires_at")
+      .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
       .maybeSingle();
     const status = resolvePlanStatus(data as PlanRow | null);
 
-    // Count this month's analyses (calendar-month reset for free users)
+    // Count this month's analyses (calendar-month reset)
     const monthStart = new Date();
     monthStart.setUTCDate(1);
     monthStart.setUTCHours(0, 0, 0, 0);
@@ -81,15 +99,22 @@ export const getUserPlan = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .gte("created_at", monthStart.toISOString());
 
+    const monthlyLimit = admin ? null : getMonthlyLimit(status.effectiveTier);
+    const used = count ?? 0;
+    const remaining = monthlyLimit === null ? null : Math.max(0, monthlyLimit - used);
+
     return {
       plan: admin ? ("pro" as const) : status.effectivePlan,
+      planTier: admin ? ("pro_legacy" as PlanTier) : status.effectiveTier,
       rawPlan: status.rawPlan,
+      rawTier: status.rawTier,
       isAdmin: admin,
       proExpired: admin ? false : status.proExpired,
       proExpiresAt: status.expiresAt?.toISOString() ?? null,
       proStartedAt: status.startedAt,
-      analysesThisMonth: count ?? 0,
-      monthlyLimit: admin ? null : (status.effectivePlan === "free" ? 1 : null),
+      analysesThisMonth: used,
+      monthlyLimit,
+      remaining,
     };
   });
 
@@ -108,7 +133,7 @@ export const analyzeResume = createServerFn({ method: "POST" })
     // Determine plan & subscription status
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan, pro_started_at, pro_expires_at")
+      .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
       .maybeSingle();
     const status = resolvePlanStatus(profile as PlanRow | null);
@@ -122,9 +147,9 @@ export const analyzeResume = createServerFn({ method: "POST" })
         throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
       }
 
-      // Enforce free-tier monthly limit (resets at the start of each calendar month)
-      // Use admin client so the gate is not affected by RLS visibility quirks.
-      if (status.effectivePlan === "free") {
+      // Enforce monthly tier limit (resets at the start of each calendar month)
+      const limit = getMonthlyLimit(status.effectiveTier);
+      if (limit !== null) {
         const monthStart = new Date();
         monthStart.setUTCDate(1);
         monthStart.setUTCHours(0, 0, 0, 0);
@@ -134,8 +159,11 @@ export const analyzeResume = createServerFn({ method: "POST" })
           .eq("user_id", userId)
           .gte("created_at", monthStart.toISOString());
         if (countError) throw new Error(`Unable to verify plan usage: ${countError.message}`);
-        if ((count ?? 0) >= 1) {
-          throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for unlimited analyses.");
+        if ((count ?? 0) >= limit) {
+          if (status.effectiveTier === "free") {
+            throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more analyses.");
+          }
+          throw new Error(`Monthly limit reached (${limit} analyses). Upgrade to a higher plan for more capacity.`);
         }
       }
     }
