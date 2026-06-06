@@ -63,6 +63,7 @@ export type Database = {
           missing_keywords: Json
           optimized_resume: string
           resume_filename: string | null
+          resume_storage_path: string | null
           resume_text: string
           strengths: Json
           summary: string
@@ -79,6 +80,7 @@ export type Database = {
           missing_keywords?: Json
           optimized_resume: string
           resume_filename?: string | null
+          resume_storage_path?: string | null
           resume_text: string
           strengths?: Json
           summary: string
@@ -95,6 +97,7 @@ export type Database = {
           missing_keywords?: Json
           optimized_resume?: string
           resume_filename?: string | null
+          resume_storage_path?: string | null
           resume_text?: string
           strengths?: Json
           summary?: string
@@ -103,6 +106,62 @@ export type Database = {
           weaknesses?: Json
         }
         Relationships: []
+      }
+      analysis_jobs: {
+        Row: {
+          analysis_id: string | null
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          job_description: string
+          resume_filename: string | null
+          resume_storage_path: string | null
+          resume_text: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_description: string
+          resume_filename?: string | null
+          resume_storage_path?: string | null
+          resume_text: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_description?: string
+          resume_filename?: string | null
+          resume_storage_path?: string | null
+          resume_text?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_jobs_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -247,6 +306,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_capacity_snapshot: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
