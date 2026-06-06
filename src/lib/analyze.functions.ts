@@ -11,6 +11,7 @@ const InputSchema = z.object({
   resumeText: z.string().min(50, "Resume text is too short").max(50000),
   jobDescription: z.string().min(30, "Job description is too short").max(20000),
   resumeFilename: z.string().max(255).optional(),
+  resumeStoragePath: z.string().max(500).optional(),
 });
 
 export const AnalysisSchema = z.object({
@@ -267,6 +268,7 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       .insert({
         user_id: userId,
         resume_filename: data.resumeFilename ?? null,
+        resume_storage_path: data.resumeStoragePath ?? null,
         resume_text: data.resumeText,
         job_description: data.jobDescription,
         match_score: result.matchScore,

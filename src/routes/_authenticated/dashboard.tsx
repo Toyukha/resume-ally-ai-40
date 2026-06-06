@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -13,11 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
 import {
-  enqueueAnalysis,
-  getAnalysisJob,
-  getAnalysis,
+  analyzeResume,
   getUserPlan,
-  retryAnalysisJob,
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
@@ -37,9 +34,7 @@ function Dashboard() {
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [failedJob, setFailedJob] = useState<{ jobId: string; error: string | null } | null>(null);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
@@ -47,54 +42,7 @@ function Dashboard() {
     queryFn: () => planFn(),
   });
 
-  const enqueueFn = useServerFn(enqueueAnalysis);
-  const getJobFn = useServerFn(getAnalysisJob);
-  const getAnalysisFn = useServerFn(getAnalysis);
-  const retryFn = useServerFn(retryAnalysisJob);
-
-  // Poll the job status while one is in flight.
-  const jobPoll = useQuery({
-    queryKey: ["analysis-job", jobId],
-    queryFn: () => getJobFn({ data: { jobId: jobId! } }),
-    enabled: !!jobId && !result,
-    refetchInterval: (q) => {
-      const s = q.state.data?.status;
-      return s === "completed" || s === "failed" ? false : 2000;
-    },
-  });
-
-  // When the job completes, fetch the analysis row and convert to AnalysisResult.
-  useEffect(() => {
-    const data = jobPoll.data;
-    if (!data) return;
-    if (data.status === "failed") {
-      toast.error(data.error || "Analysis failed");
-      setFailedJob({ jobId: data.id, error: data.error });
-      setJobId(null);
-      return;
-    }
-    if (data.status === "completed" && data.analysis_id && !result) {
-      getAnalysisFn({ data: { id: data.analysis_id } })
-        .then((row) => {
-          const planLabelForResult: "free" | "pro" =
-            (row.optimized_resume?.startsWith("🔒") ? "free" : "pro");
-          setResult({
-            matchScore: row.match_score,
-            summary: row.summary,
-            strengths: (row.strengths as unknown as string[]) ?? [],
-            weaknesses: (row.weaknesses as unknown as string[]) ?? [],
-            missingKeywords: (row.missing_keywords as unknown as string[]) ?? [],
-            optimizedResume: row.optimized_resume,
-            coverLetter: row.cover_letter,
-            plan: planLabelForResult,
-          });
-          toast.success("Analysis complete!");
-          planQuery.refetch();
-          setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
-        })
-        .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load result"));
-    }
-  }, [jobPoll.data, result, getAnalysisFn, planQuery]);
+  const analyzeFn = useServerFn(analyzeResume);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -114,8 +62,7 @@ function Dashboard() {
         }
       }
       setResult(null);
-      setFailedJob(null);
-      const res = await enqueueFn({
+      const res = await analyzeFn({
         data: {
           resumeText,
           jobDescription,
@@ -123,23 +70,15 @@ function Dashboard() {
           resumeStoragePath: storagePath,
         },
       });
-      setJobId(res.jobId);
       return res;
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not start analysis"),
-  });
-
-  const retryMutation = useMutation({
-    mutationFn: async () => {
-      if (!failedJob) throw new Error("No failed job to retry");
-      setFailedJob(null);
-      setResult(null);
-      const res = await retryFn({ data: { jobId: failedJob.jobId } });
-      setJobId(res.jobId);
-      return res;
+    onSuccess: (res) => {
+      setResult(res);
+      toast.success("Analysis complete!");
+      planQuery.refetch();
+      setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
     },
-    onSuccess: () => toast.success("Retrying analysis…"),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Retry failed"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Analysis failed"),
   });
 
   const onFile = async (file: File | null) => {
@@ -169,8 +108,9 @@ function Dashboard() {
   const monthlyLimit = planQuery.data?.monthlyLimit ?? null;
   const remaining = planQuery.data?.remaining ?? null;
   const limitReached = monthlyLimit !== null && analysesThisMonth >= monthlyLimit;
-  const isAnalyzing = mutation.isPending || retryMutation.isPending || (!!jobId && !result);
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !isAnalyzing && !limitReached && !proExpired && !failedJob;
+  const isAnalyzing = mutation.isPending;
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !isAnalyzing && !limitReached && !proExpired;
+
 
   const planLabel = isAdmin
     ? "Admin · Unlimited"
@@ -322,44 +262,13 @@ function Dashboard() {
             className="min-w-[260px]"
           >
             {isAnalyzing ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {jobId ? "Analyzing… (queued)" : "Starting…"}</>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing…</>
             ) : (
               <><Sparkles className="mr-2 h-4 w-4" /> Analyze & Optimize</>
             )}
           </Button>
         </div>
 
-        {failedJob && (
-          <Card className="mx-auto mt-6 max-w-2xl border-destructive/40 bg-destructive/5 p-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5 shrink-0">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-display font-semibold">Analysis failed</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {failedJob.error || "Something went wrong while analyzing your resume."}
-                </p>
-                <div className="mt-4 flex gap-3">
-                  <Button
-                    variant="hero"
-                    disabled={retryMutation.isPending || isAnalyzing}
-                    onClick={() => retryMutation.mutate()}
-                  >
-                    {retryMutation.isPending ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
-                    ) : (
-                      <><Sparkles className="mr-2 h-4 w-4" /> Retry analysis</>
-                    )}
-                  </Button>
-                  <Button variant="ghost" onClick={() => setFailedJob(null)}>
-                    Dismiss
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
 
         {result && <Results result={result} />}
 
