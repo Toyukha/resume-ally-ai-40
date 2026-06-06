@@ -48,6 +48,9 @@ function HistoryPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Retry failed"),
   });
 
+  const failedJobs = jobs?.filter((j) => j.status === "failed") ?? [];
+  const hasContent = (analyses && analyses.length > 0) || failedJobs.length > 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -64,7 +67,7 @@ function HistoryPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-        ) : !data || data.length === 0 ? (
+        ) : !hasContent ? (
           <Card className="p-12 text-center">
             <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-4 font-display text-lg font-semibold">No analyses yet</h3>
@@ -74,42 +77,93 @@ function HistoryPage() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {data.map((a) => {
-              const tone = a.match_score >= 80 ? "text-success" : a.match_score >= 60 ? "text-gold" : "text-destructive";
-              return (
-                <Card key={a.id} className="group relative flex items-center justify-between gap-4 p-5 transition-shadow hover:shadow-md">
-                  <Link
-                    to="/history/$id"
-                    params={{ id: a.id }}
-                    className="min-w-0 flex-1 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`font-display text-2xl font-bold ${tone}`}>{a.match_score}</div>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">{a.resume_filename || "Untitled resume"}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(a.created_at).toLocaleString()}
+          <div className="space-y-8">
+            {/* Failed jobs */}
+            {failedJobs.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-destructive">
+                  Failed — needs retry
+                </h2>
+                {failedJobs.map((job) => (
+                  <Card key={job.id} className="flex items-center justify-between gap-4 border-destructive/30 bg-destructive/5 p-5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+                        <div className="min-w-0">
+                          <div className="truncate font-medium">
+                            {job.resume_filename || "Untitled resume"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(job.created_at).toLocaleString()}
+                          </div>
                         </div>
                       </div>
+                      {job.error && (
+                        <p className="mt-2 text-sm text-destructive">{job.error}</p>
+                      )}
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{a.summary}</p>
-                    <div className="mt-2 flex items-center text-xs font-medium text-primary">
-                      View details <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </Link>
-                  <Button
-                    variant="ghost" size="icon"
-                    onClick={(e) => { e.stopPropagation(); del.mutate(a.id); }}
-                    disabled={del.isPending}
-                    aria-label="Delete"
-                    className="shrink-0"
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </Card>
-              );
-            })}
+                    <Button
+                      variant="hero"
+                      size="sm"
+                      disabled={retry.isPending}
+                      onClick={() => retry.mutate(job.id)}
+                    >
+                      {retry.isPending ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
+                      ) : (
+                        <><RefreshCw className="mr-2 h-4 w-4" /> Retry</>
+                      )}
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Completed analyses */}
+            {analyses && analyses.length > 0 && (
+              <div className="space-y-3">
+                {failedJobs.length > 0 && (
+                  <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    Completed
+                  </h2>
+                )}
+                {analyses.map((a) => {
+                  const tone = a.match_score >= 80 ? "text-success" : a.match_score >= 60 ? "text-gold" : "text-destructive";
+                  return (
+                    <Card key={a.id} className="group relative flex items-center justify-between gap-4 p-5 transition-shadow hover:shadow-md">
+                      <Link
+                        to="/history/$id"
+                        params={{ id: a.id }}
+                        className="min-w-0 flex-1 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`font-display text-2xl font-bold ${tone}`}>{a.match_score}</div>
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{a.resume_filename || "Untitled resume"}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(a.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{a.summary}</p>
+                        <div className="mt-2 flex items-center text-xs font-medium text-primary">
+                          View details <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                        </div>
+                      </Link>
+                      <Button
+                        variant="ghost" size="icon"
+                        onClick={(e) => { e.stopPropagation(); del.mutate(a.id); }}
+                        disabled={del.isPending}
+                        aria-label="Delete"
+                        className="shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </main>
