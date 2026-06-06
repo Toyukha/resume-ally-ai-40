@@ -11,7 +11,7 @@ import { z } from "zod";
 const SearchSchema = z.object({
   status: z.string().optional(),
   tx_ref: z.string().optional(),
-  transaction_id: z.string().optional(),
+  transaction_id: z.union([z.string(), z.number()]).optional().transform((v) => (v === undefined ? undefined : String(v))),
 });
 
 export const Route = createFileRoute("/_authenticated/payment-callback")({
