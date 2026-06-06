@@ -391,3 +391,24 @@ function CopyableText({ text }: { text: string }) {
     </div>
   );
 }
+
+function UsageMeter({ label, remaining, total, freeLocked = false }: { label: string; remaining: number; total: number; freeLocked?: boolean }) {
+  const pct = total > 0 ? Math.min(100, Math.round((remaining / total) * 100)) : 0;
+  const tone = freeLocked
+    ? "bg-muted-foreground/30"
+    : pct > 50 ? "bg-success" : pct > 20 ? "bg-gold" : "bg-destructive";
+  return (
+    <Card className="p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        <div className="font-display text-sm font-semibold">
+          {freeLocked ? <span className="text-muted-foreground">Pro only</span> : <>{remaining} <span className="text-muted-foreground">/ {total}</span></>}
+        </div>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full transition-all ${tone}`} style={{ width: `${freeLocked ? 0 : pct}%` }} />
+      </div>
+    </Card>
+  );
+}
+
