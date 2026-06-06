@@ -27,6 +27,8 @@ import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_auth
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryIndexRouteImport } from './routes/_authenticated/history.index'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated.history.$id'
+import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/public/hooks/usage-alerts'
+import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
@@ -119,6 +121,18 @@ const AuthenticatedHistoryIdRoute = AuthenticatedHistoryIdRouteImport.update({
   path: '/history/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksUsageAlertsRoute =
+  ApiPublicHooksUsageAlertsRouteImport.update({
+    id: '/api/public/hooks/usage-alerts',
+    path: '/api/public/hooks/usage-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksProcessAnalysisJobsRoute =
+  ApiPublicHooksProcessAnalysisJobsRouteImport.update({
+    id: '/api/public/hooks/process-analysis-jobs',
+    path: '/api/public/hooks/process-analysis-jobs',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +152,8 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/history/': typeof AuthenticatedHistoryIndexRoute
+  '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
+  '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -156,6 +172,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/history/$id': typeof AuthenticatedHistoryIdRoute
   '/history': typeof AuthenticatedHistoryIndexRoute
+  '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
+  '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -177,6 +195,8 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
   '/_authenticated/history/': typeof AuthenticatedHistoryIndexRoute
+  '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
+  '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,6 +218,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/history/$id'
     | '/history/'
+    | '/api/public/hooks/process-analysis-jobs'
+    | '/api/public/hooks/usage-alerts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -216,6 +238,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/history/$id'
     | '/history'
+    | '/api/public/hooks/process-analysis-jobs'
+    | '/api/public/hooks/usage-alerts'
   id:
     | '__root__'
     | '/'
@@ -236,6 +260,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_authenticated/history/$id'
     | '/_authenticated/history/'
+    | '/api/public/hooks/process-analysis-jobs'
+    | '/api/public/hooks/usage-alerts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -245,6 +271,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PricingRoute: typeof PricingRoute
   SupportRoute: typeof SupportRoute
+  ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
+  ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -375,6 +403,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/usage-alerts': {
+      id: '/api/public/hooks/usage-alerts'
+      path: '/api/public/hooks/usage-alerts'
+      fullPath: '/api/public/hooks/usage-alerts'
+      preLoaderRoute: typeof ApiPublicHooksUsageAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/process-analysis-jobs': {
+      id: '/api/public/hooks/process-analysis-jobs'
+      path: '/api/public/hooks/process-analysis-jobs'
+      fullPath: '/api/public/hooks/process-analysis-jobs'
+      preLoaderRoute: typeof ApiPublicHooksProcessAnalysisJobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -428,7 +470,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PricingRoute: PricingRoute,
   SupportRoute: SupportRoute,
+  ApiPublicHooksProcessAnalysisJobsRoute:
+    ApiPublicHooksProcessAnalysisJobsRoute,
+  ApiPublicHooksUsageAlertsRoute: ApiPublicHooksUsageAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
