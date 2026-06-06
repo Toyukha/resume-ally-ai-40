@@ -406,6 +406,90 @@ export const getAnalysisJob = createServerFn({ method: "GET" })
     return row;
   });
 
+export const retryAnalysisJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Verify ownership and that the job is actually failed
+    const { data: job, error: fetchErr } = await supabase
+      .from("analysis_jobs")
+      .select("id, status, resume_text, job_description, resume_filename, resume_storage_path")
+      .eq("id", data.jobId)
+      .eq("user_id", userId)
+      .single();
+    if (fetchErr || !job) throw new Error("Job not found.");
+    if (job.status !== "failed") throw new Error("Only failed jobs can be retried.");
+
+    // Re-check plan/quota since time may have passed
+    const admin = await isAdminUser(supabase as never, userId);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan, plan_tier, pro_started_at, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+    const status = resolvePlanStatus(profile as PlanRow | null);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (!admin) {
+      if (status.proExpired) {
+        throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
+      }
+      const limit = getMonthlyLimit(status.effectiveTier);
+      if (limit !== null) {
+        const monthStart = new Date();
+        monthStart.setUTCDate(1);
+        monthStart.setUTCHours(0, 0, 0, 0);
+        const { count } = await supabaseAdmin
+          .from("analyses")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", monthStart.toISOString());
+        if ((count ?? 0) >= limit) {
+          if (status.effectiveTier === "free") {
+            throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more analyses.");
+          }
+          throw new Error(`Monthly limit reached (${limit} analyses). Upgrade to a higher plan for more capacity.`);
+        }
+      }
+    }
+
+    // Reset job to pending (clear error, reset attempts)
+    const { error: updateErr } = await supabaseAdmin
+      .from("analysis_jobs")
+      .update({
+        status: "pending",
+        error: null,
+        attempts: 0,
+        started_at: null,
+        completed_at: null,
+        analysis_id: null,
+      })
+      .eq("id", data.jobId);
+    if (updateErr) throw new Error(updateErr.message);
+
+    // Kick off runner immediately
+    const { runAnalysisJob } = await import("./analyze-runner.server");
+    runAnalysisJob(data.jobId).catch((e) => console.error("[retryAnalysisJob] runner error", e));
+
+    return { jobId: data.jobId };
+  });
+
+export const listAnalysisJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("analysis_jobs")
+      .select("id, status, error, resume_filename, created_at, analysis_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const getResumeDownloadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ analysisId: z.string().uuid() }).parse(input))
