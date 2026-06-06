@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Trash2, Loader2, Plus, ChevronRight, RefreshCw, AlertTriangle } from "lucide-react";
+import { FileText, Trash2, Loader2, Plus, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { listAnalyses, deleteAnalysis, listAnalysisJobs, retryAnalysisJob } from "@/lib/analyze.functions";
+import { listAnalyses, deleteAnalysis } from "@/lib/analyze.functions";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/history/")({
   head: () => ({ meta: [{ title: "History — Get That Job" }] }),
