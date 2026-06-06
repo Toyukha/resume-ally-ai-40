@@ -50,6 +50,7 @@ function Dashboard() {
   const enqueueFn = useServerFn(enqueueAnalysis);
   const getJobFn = useServerFn(getAnalysisJob);
   const getAnalysisFn = useServerFn(getAnalysis);
+  const retryFn = useServerFn(retryAnalysisJob);
 
   // Poll the job status while one is in flight.
   const jobPoll = useQuery({
