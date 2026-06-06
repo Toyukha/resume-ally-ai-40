@@ -49,17 +49,14 @@ export const Route = createFileRoute("/api/public/hooks/usage-alerts")({
         }
 
         if (warnings.length > 0) {
-          await supabaseAdmin.from("system_notifications").insert(
-            warnings.map((w) => ({
-              type: "capacity_warning",
-              severity: w.severity,
-              title: w.title,
-              message: w.message,
-              metadata: s as unknown as Parameters<typeof supabaseAdmin.from>[0] extends never ? never : never,
-              // metadata is jsonb; cast through unknown to satisfy generated Json type
-              ...(undefined as unknown as object),
-            }))
-          );
+          const rows = warnings.map((w) => ({
+            type: "capacity_warning",
+            severity: w.severity,
+            title: w.title,
+            message: w.message,
+            metadata: s as unknown as never,
+          }));
+          await supabaseAdmin.from("system_notifications").insert(rows);
         }
 
         return Response.json({ ok: true, snapshot: s, alerts: warnings.length });
