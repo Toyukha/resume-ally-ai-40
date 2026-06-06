@@ -69,6 +69,7 @@ function Dashboard() {
     if (!data) return;
     if (data.status === "failed") {
       toast.error(data.error || "Analysis failed");
+      setFailedJob({ jobId: data.id, error: data.error });
       setJobId(null);
       return;
     }
