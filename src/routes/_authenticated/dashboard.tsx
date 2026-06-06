@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -12,8 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
-import { analyzeResume, getUserPlan, type AnalysisResult } from "@/lib/analyze.functions";
+import {
+  enqueueAnalysis,
+  getAnalysisJob,
+  getAnalysis,
+  getUserPlan,
+  type AnalysisResult,
+} from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
