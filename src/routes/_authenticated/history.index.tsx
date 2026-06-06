@@ -17,18 +17,11 @@ export const Route = createFileRoute("/_authenticated/history/")({
 function HistoryPage() {
   const listFn = useServerFn(listAnalyses);
   const deleteFn = useServerFn(deleteAnalysis);
-  const jobsFn = useServerFn(listAnalysisJobs);
-  const retryFn = useServerFn(retryAnalysisJob);
   const qc = useQueryClient();
 
   const { data: analyses, isLoading } = useQuery({
     queryKey: ["analyses"],
     queryFn: () => listFn(),
-  });
-
-  const { data: jobs } = useQuery({
-    queryKey: ["analysis-jobs"],
-    queryFn: () => jobsFn(),
   });
 
   const del = useMutation({
@@ -40,17 +33,7 @@ function HistoryPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Delete failed"),
   });
 
-  const retry = useMutation({
-    mutationFn: (jobId: string) => retryFn({ data: { jobId } }),
-    onSuccess: () => {
-      toast.success("Retrying analysis…");
-      qc.invalidateQueries({ queryKey: ["analysis-jobs"] });
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Retry failed"),
-  });
-
-  const failedJobs = jobs?.filter((j) => j.status === "failed") ?? [];
-  const hasContent = (analyses && analyses.length > 0) || failedJobs.length > 0;
+  const hasContent = analyses && analyses.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,57 +61,9 @@ function HistoryPage() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-8">
-            {/* Failed jobs */}
-            {failedJobs.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-destructive">
-                  Failed — needs retry
-                </h2>
-                {failedJobs.map((job) => (
-                  <Card key={job.id} className="flex items-center justify-between gap-4 border-destructive/30 bg-destructive/5 p-5">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">
-                            {job.resume_filename || "Untitled resume"}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(job.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                      {job.error && (
-                        <p className="mt-2 text-sm text-destructive">{job.error}</p>
-                      )}
-                    </div>
-                    <Button
-                      variant="hero"
-                      size="sm"
-                      disabled={retry.isPending}
-                      onClick={() => retry.mutate(job.id)}
-                    >
-                      {retry.isPending ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Retrying…</>
-                      ) : (
-                        <><RefreshCw className="mr-2 h-4 w-4" /> Retry</>
-                      )}
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-            )}
+          <div className="space-y-3">
+            {analyses!.map((a) => {
 
-            {/* Completed analyses */}
-            {analyses && analyses.length > 0 && (
-              <div className="space-y-3">
-                {failedJobs.length > 0 && (
-                  <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Completed
-                  </h2>
-                )}
-                {analyses.map((a) => {
                   const tone = a.match_score >= 80 ? "text-success" : a.match_score >= 60 ? "text-gold" : "text-destructive";
                   return (
                     <Card key={a.id} className="group relative flex items-center justify-between gap-4 p-5 transition-shadow hover:shadow-md">
