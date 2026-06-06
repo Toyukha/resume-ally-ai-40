@@ -17,6 +17,7 @@ import {
   getAnalysisJob,
   getAnalysis,
   getUserPlan,
+  retryAnalysisJob,
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
