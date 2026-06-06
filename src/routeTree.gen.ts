@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -22,6 +23,7 @@ import { Route as AdminLogsRouteImport } from './routes/admin/logs'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminAnalysesRouteImport } from './routes/admin/analyses'
 import { Route as AdminAdminsRouteImport } from './routes/admin/admins'
+import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryIndexRouteImport } from './routes/_authenticated/history.index'
 import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated.history.$id'
@@ -29,6 +31,11 @@ import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authentica
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -90,6 +97,12 @@ const AdminAdminsRoute = AdminAdminsRouteImport.update({
   path: '/admins',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AuthenticatedPaymentCallbackRoute =
+  AuthenticatedPaymentCallbackRouteImport.update({
+    id: '/payment-callback',
+    path: '/payment-callback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -111,8 +124,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/pricing': typeof PricingRoute
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -127,8 +142,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pricing': typeof PricingRoute
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -146,8 +163,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/pricing': typeof PricingRoute
   '/support': typeof SupportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -165,8 +184,10 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/pricing'
     | '/support'
     | '/dashboard'
+    | '/payment-callback'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -181,8 +202,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/pricing'
     | '/support'
     | '/dashboard'
+    | '/payment-callback'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -199,8 +222,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/auth'
+    | '/pricing'
     | '/support'
     | '/_authenticated/dashboard'
+    | '/_authenticated/payment-callback'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -218,6 +243,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PricingRoute: typeof PricingRoute
   SupportRoute: typeof SupportRoute
 }
 
@@ -228,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -314,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_authenticated/payment-callback': {
+      id: '/_authenticated/payment-callback'
+      path: '/payment-callback'
+      fullPath: '/payment-callback'
+      preLoaderRoute: typeof AuthenticatedPaymentCallbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -340,12 +380,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
   AuthenticatedHistoryIdRoute: typeof AuthenticatedHistoryIdRoute
   AuthenticatedHistoryIndexRoute: typeof AuthenticatedHistoryIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
   AuthenticatedHistoryIdRoute: AuthenticatedHistoryIdRoute,
   AuthenticatedHistoryIndexRoute: AuthenticatedHistoryIndexRoute,
 }
@@ -384,6 +426,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PricingRoute: PricingRoute,
   SupportRoute: SupportRoute,
 }
 export const routeTree = rootRouteImport

@@ -126,7 +126,7 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
         .update({
           status: "failed",
           flw_transaction_id: data.transaction_id,
-          flw_response: body as unknown as object,
+          flw_response: body as unknown as Record<string, unknown>,
           verified_at: new Date().toISOString(),
         })
         .eq("id", payment.id);
@@ -143,7 +143,7 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
         .update({
           status: "successful",
           flw_transaction_id: data.transaction_id,
-          flw_response: body as unknown as object,
+          flw_response: body as unknown as Record<string, unknown>,
           verified_at: now.toISOString(),
         })
         .eq("id", payment.id),
