@@ -268,6 +268,7 @@ Never invent employers, degrees, or dates. Tone: confident, specific, ATS-friend
       .insert({
         user_id: userId,
         resume_filename: data.resumeFilename ?? null,
+        resume_storage_path: data.resumeStoragePath ?? null,
         resume_text: data.resumeText,
         job_description: data.jobDescription,
         match_score: result.matchScore,
