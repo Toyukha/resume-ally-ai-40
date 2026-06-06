@@ -63,12 +63,23 @@ function Dashboard() {
   };
 
   const plan = planQuery.data?.plan ?? "free";
+  const planTier = planQuery.data?.planTier ?? "free";
+  const isAdmin = planQuery.data?.isAdmin ?? false;
   const isFree = plan === "free";
   const proExpired = planQuery.data?.proExpired ?? false;
   const proExpiresAt = planQuery.data?.proExpiresAt ?? null;
   const analysesThisMonth = planQuery.data?.analysesThisMonth ?? 0;
-  const limitReached = isFree && analysesThisMonth >= 1;
+  const monthlyLimit = planQuery.data?.monthlyLimit ?? null;
+  const remaining = planQuery.data?.remaining ?? null;
+  const limitReached = monthlyLimit !== null && analysesThisMonth >= monthlyLimit;
   const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached && !proExpired;
+
+  const planLabel = isAdmin
+    ? "Admin · Unlimited"
+    : planTier === "pro_2" ? "Pro Plan 2"
+    : planTier === "pro_1" ? "Pro Plan 1"
+    : planTier === "pro_legacy" ? "Pro (Legacy)"
+    : "Free plan";
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,23 +94,33 @@ function Dashboard() {
             <Card className={`flex items-center gap-3 px-4 py-2.5 ${isFree ? "border-gold/40 bg-gold/5" : "border-primary/40 bg-primary/5"}`}>
               {isFree ? <Lock className="h-4 w-4 text-gold" /> : <Crown className="h-4 w-4 text-primary-glow" />}
               <div className="text-sm">
-                <div className="font-semibold">{isFree ? "Free plan" : "Pro plan"}</div>
+                <div className="font-semibold">{planLabel}</div>
                 <div className="text-xs text-muted-foreground">
-                  {isFree
-                    ? `${analysesThisMonth}/1 analysis used this month`
-                    : proExpiresAt
-                      ? `Renews ${new Date(proExpiresAt).toLocaleDateString()}`
-                      : "Unlimited analyses"}
+                  {monthlyLimit === null
+                    ? "Unlimited analyses"
+                    : `${analysesThisMonth}/${monthlyLimit} analyses used this month`}
+                  {proExpiresAt && plan === "pro" && (
+                    <> · Renews {new Date(proExpiresAt).toLocaleDateString()}</>
+                  )}
                 </div>
               </div>
-              {isFree && (
+              {(isFree || planTier === "pro_1") && (
                 <Button size="sm" variant="gold" asChild>
-                  <Link to="/" hash="pricing">Upgrade</Link>
+                  <Link to="/pricing">{isFree ? "Upgrade" : "Upgrade"}</Link>
                 </Button>
               )}
             </Card>
           )}
         </div>
+
+        {/* Usage widget — three counters tick down together (bundled per analysis) */}
+        {planQuery.data && !isAdmin && monthlyLimit !== null && (
+          <div className="mb-6 grid gap-3 md:grid-cols-3">
+            <UsageMeter label="CV Analyses Remaining" remaining={remaining ?? 0} total={monthlyLimit} />
+            <UsageMeter label="Cover Letters Remaining" remaining={planTier === "free" ? 0 : (remaining ?? 0)} total={planTier === "free" ? 0 : monthlyLimit} freeLocked={planTier === "free"} />
+            <UsageMeter label="Optimized CVs Remaining" remaining={planTier === "free" ? 0 : (remaining ?? 0)} total={planTier === "free" ? 0 : monthlyLimit} freeLocked={planTier === "free"} />
+          </div>
+        )}
 
         {proExpired && (
           <Card className="mb-6 border-destructive/40 bg-destructive/5 p-4">
@@ -111,28 +132,30 @@ function Dashboard() {
                   {proExpiresAt
                     ? `Your 30-day Pro access ended on ${new Date(proExpiresAt).toLocaleDateString()}. `
                     : "Your Pro access has ended. "}
-                  Renew to resume unlimited analyses, ATS optimization, and cover letters.
+                  Renew to resume your analyses, ATS optimization, and cover letters.
                 </p>
               </div>
               <Button variant="gold" asChild>
-                <Link to="/" hash="pricing">Renew Pro</Link>
+                <Link to="/pricing">Renew Pro</Link>
               </Button>
             </div>
           </Card>
         )}
 
-        {limitReached && (
+        {limitReached && !proExpired && (
           <Card className="mb-6 border-gold/40 bg-gold/5 p-4">
             <div className="flex items-start gap-3">
               <Lock className="mt-0.5 h-5 w-5 text-gold" />
               <div className="flex-1">
-                <div className="font-semibold">You've used your free analysis for this month</div>
+                <div className="font-semibold">You've used all your analyses for this month</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Upgrade to Pro for unlimited CV analyses, ATS optimization, and tailored cover letters.
+                  {isFree
+                    ? "Upgrade to Pro Plan 1 or Pro Plan 2 for more CV analyses, ATS optimization, and tailored cover letters."
+                    : "Upgrade to Pro Plan 2 for double the monthly capacity and priority processing."}
                 </p>
               </div>
               <Button variant="gold" asChild>
-                <Link to="/" hash="pricing">Upgrade to Pro</Link>
+                <Link to="/pricing">{isFree ? "Upgrade to Pro" : "Upgrade plan"}</Link>
               </Button>
             </div>
           </Card>
@@ -368,3 +391,24 @@ function CopyableText({ text }: { text: string }) {
     </div>
   );
 }
+
+function UsageMeter({ label, remaining, total, freeLocked = false }: { label: string; remaining: number; total: number; freeLocked?: boolean }) {
+  const pct = total > 0 ? Math.min(100, Math.round((remaining / total) * 100)) : 0;
+  const tone = freeLocked
+    ? "bg-muted-foreground/30"
+    : pct > 50 ? "bg-success" : pct > 20 ? "bg-gold" : "bg-destructive";
+  return (
+    <Card className="p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        <div className="font-display text-sm font-semibold">
+          {freeLocked ? <span className="text-muted-foreground">Pro only</span> : <>{remaining} <span className="text-muted-foreground">/ {total}</span></>}
+        </div>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full transition-all ${tone}`} style={{ width: `${freeLocked ? 0 : pct}%` }} />
+      </div>
+    </Card>
+  );
+}
+

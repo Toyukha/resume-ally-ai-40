@@ -30,10 +30,7 @@ const FEATURES = [
   { icon: Sparkles, title: "Modern AI Models", desc: "Powered by the latest frontier models for nuanced, recruiter-quality output." },
 ];
 
-const PRICING = [
-  { name: "Free", price: "₦0", period: "", desc: "Get started with basic insights.", features: ["1 CV analysis / month", "Basic ATS score", "No optimized resume generation", "No cover letter generation"], cta: "Get started", variant: "outline" as const },
-  { name: "Pro", price: "₦5,000", period: "/ month", desc: "For serious job seekers.", features: ["Unlimited CV analyses", "ATS optimization", "Unlimited cover letters", "Missing keyword recommendations", "CV rewrite suggestions", "Analysis history"], cta: "Start Pro trial", variant: "hero" as const, featured: true },
-];
+import { PLANS, PLAN_ORDER } from "@/lib/plans";
 
 function Landing() {
   return (
@@ -100,40 +97,65 @@ function Landing() {
       {/* Pricing */}
       <section id="pricing" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-medium text-gold-foreground backdrop-blur">
+            <Sparkles className="h-3 w-3 text-gold" />
+            Increase Your Chances of Landing Interviews with our Resume Optimization
+          </div>
           <p className="text-sm font-medium text-primary-glow">PRICING</p>
-          <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Simple plans. Real results.</h2>
-          <p className="mt-4 text-muted-foreground">Start free. Upgrade when you're ready to job-hunt seriously.</p>
+          <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Simple, Transparent Pricing</h2>
+          <p className="mt-4 text-muted-foreground">Choose the plan that best fits your job search journey.</p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-4xl gap-6 md:grid-cols-2">
-          {PRICING.map((p) => (
-            <Card
-              key={p.name}
-              className={`relative p-8 ${p.featured ? "border-primary-glow shadow-elegant scale-[1.02]" : ""}`}
-            >
-              {p.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
-                  Most popular
+        <div className="mx-auto mt-16 grid max-w-6xl items-stretch gap-6 md:grid-cols-3">
+          {PLAN_ORDER.map((tier) => {
+            const p = PLANS[tier];
+            const isFeatured = !!p.featured;
+            return (
+              <Card
+                key={tier}
+                className={`relative flex flex-col p-8 transition-all hover:-translate-y-1 hover:shadow-elegant ${
+                  isFeatured ? "border-primary-glow shadow-elegant md:scale-[1.04]" : ""
+                }`}
+              >
+                {p.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground shadow-sm">
+                    {p.badge}
+                  </div>
+                )}
+                <h3 className="font-display text-lg font-semibold">{p.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{p.subtitle}</p>
+                <div className="mt-6 flex items-baseline gap-1">
+                  <span className="font-display text-5xl font-bold">{p.priceLabel}</span>
+                  <span className="text-sm text-muted-foreground">{p.period}</span>
                 </div>
-              )}
-              <h3 className="font-display text-lg font-semibold">{p.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{p.desc}</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-display text-5xl font-bold">{p.price}</span>
-                <span className="text-sm text-muted-foreground">{p.period}</span>
-              </div>
-              <ul className="mt-6 space-y-3">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button className="mt-8 w-full" variant={p.variant} asChild>
-                <Link to="/auth">{p.cta}</Link>
-              </Button>
-            </Card>
-          ))}
+                <ul className="mt-6 space-y-3">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                  {p.notIncluded?.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60">✗</span>
+                      <span className="line-through decoration-muted-foreground/40">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-auto w-full"
+                  variant={isFeatured ? "hero" : tier === "pro_2" ? "gold" : "outline"}
+                  asChild
+                >
+                  <Link to="/pricing">{p.cta}</Link>
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
+        <div className="mt-10 text-center">
+          <Link to="/pricing" className="text-sm font-medium text-primary-glow hover:underline">
+            See full comparison & FAQ →
+          </Link>
         </div>
       </section>
 
@@ -179,7 +201,13 @@ function Landing() {
             <AccordionItem value="q6">
               <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
               <AccordionContent>
-                Free gives you 1 CV analysis per month with a basic ATS score. Pro unlocks unlimited CV analyses, ATS optimization, unlimited cover letters, missing keyword recommendations, CV rewrite suggestions, and full analysis history.
+                Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦4,900/month) gives you 10 full analyses including optimized resume, cover letter, missing-keyword report, and history. Pro Plan 2 (₦9,900/month) doubles that to 20 analyses per month and adds priority processing.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q7">
+              <AccordionTrigger>How do payments work?</AccordionTrigger>
+              <AccordionContent>
+                Pro plans are billed as a one-time monthly payment via Flutterwave (₦4,900 or ₦9,900). Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in control of your budget.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
