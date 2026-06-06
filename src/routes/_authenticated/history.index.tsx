@@ -98,10 +98,9 @@ function HistoryPage() {
                     </Card>
                   );
                 })}
-              </div>
-            )}
           </div>
         )}
+
       </main>
     </div>
   );
