@@ -16,11 +16,18 @@ export const Route = createFileRoute("/_authenticated/history/")({
 function HistoryPage() {
   const listFn = useServerFn(listAnalyses);
   const deleteFn = useServerFn(deleteAnalysis);
+  const jobsFn = useServerFn(listAnalysisJobs);
+  const retryFn = useServerFn(retryAnalysisJob);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data: analyses, isLoading } = useQuery({
     queryKey: ["analyses"],
     queryFn: () => listFn(),
+  });
+
+  const { data: jobs } = useQuery({
+    queryKey: ["analysis-jobs"],
+    queryFn: () => jobsFn(),
   });
 
   const del = useMutation({
@@ -30,6 +37,15 @@ function HistoryPage() {
       qc.invalidateQueries({ queryKey: ["analyses"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Delete failed"),
+  });
+
+  const retry = useMutation({
+    mutationFn: (jobId: string) => retryFn({ data: { jobId } }),
+    onSuccess: () => {
+      toast.success("Retrying analysis…");
+      qc.invalidateQueries({ queryKey: ["analysis-jobs"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Retry failed"),
   });
 
   return (
