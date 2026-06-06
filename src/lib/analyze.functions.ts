@@ -324,3 +324,105 @@ export const getAnalysis = createServerFn({ method: "GET" })
     if (!row) throw new Error("Analysis not found.");
     return row as Tables<"analyses">;
   });
+
+// ─── Queued analysis ────────────────────────────────────────────────────────
+
+const EnqueueSchema = InputSchema.extend({
+  resumeStoragePath: z.string().max(500).optional(),
+});
+
+export const enqueueAnalysis = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => EnqueueSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const admin = await isAdminUser(supabase as never, userId);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan, plan_tier, pro_started_at, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+    const status = resolvePlanStatus(profile as PlanRow | null);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (!admin) {
+      if (status.proExpired) {
+        throw new Error("Your Pro subscription has expired. Please renew to continue running analyses.");
+      }
+      const limit = getMonthlyLimit(status.effectiveTier);
+      if (limit !== null) {
+        const monthStart = new Date();
+        monthStart.setUTCDate(1);
+        monthStart.setUTCHours(0, 0, 0, 0);
+        const { count } = await supabaseAdmin
+          .from("analyses")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", monthStart.toISOString());
+        if ((count ?? 0) >= limit) {
+          if (status.effectiveTier === "free") {
+            throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more analyses.");
+          }
+          throw new Error(`Monthly limit reached (${limit} analyses). Upgrade to a higher plan for more capacity.`);
+        }
+      }
+    }
+
+    const { data: job, error } = await supabaseAdmin
+      .from("analysis_jobs")
+      .insert({
+        user_id: userId,
+        status: "pending",
+        resume_text: data.resumeText,
+        job_description: data.jobDescription,
+        resume_filename: data.resumeFilename ?? null,
+        resume_storage_path: data.resumeStoragePath ?? null,
+      })
+      .select("id")
+      .single();
+    if (error || !job) throw new Error(error?.message ?? "Failed to enqueue analysis");
+
+    // Kick off processing in the same request. The job row is the source of
+    // truth — if the worker dies mid-run, the cron safety-net retries.
+    const { runAnalysisJob } = await import("./analyze-runner.server");
+    runAnalysisJob(job.id).catch((e) => console.error("[enqueueAnalysis] runner error", e));
+
+    return { jobId: job.id as string };
+  });
+
+export const getAnalysisJob = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("analysis_jobs")
+      .select("id, status, analysis_id, error, created_at")
+      .eq("id", data.jobId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Job not found.");
+    return row;
+  });
+
+export const getResumeDownloadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ analysisId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("analyses")
+      .select("resume_storage_path, user_id")
+      .eq("id", data.analysisId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!row?.resume_storage_path) throw new Error("Original file not available for this analysis.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("resumes")
+      .createSignedUrl(row.resume_storage_path, 60);
+    if (error || !signed) throw new Error(error?.message ?? "Could not sign URL");
+    return { url: signed.signedUrl };
+  });
+
