@@ -114,6 +114,7 @@ function Dashboard() {
         }
       }
       setResult(null);
+      setFailedJob(null);
       const res = await enqueueFn({
         data: {
           resumeText,
@@ -126,6 +127,19 @@ function Dashboard() {
       return res;
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Could not start analysis"),
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async () => {
+      if (!failedJob) throw new Error("No failed job to retry");
+      setFailedJob(null);
+      setResult(null);
+      const res = await retryFn({ data: { jobId: failedJob.jobId } });
+      setJobId(res.jobId);
+      return res;
+    },
+    onSuccess: () => toast.success("Retrying analysis…"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Retry failed"),
   });
 
   const onFile = async (file: File | null) => {
