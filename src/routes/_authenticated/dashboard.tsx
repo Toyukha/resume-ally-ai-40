@@ -33,8 +33,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
+  const [resumeBlob, setResumeBlob] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
@@ -42,15 +45,84 @@ function Dashboard() {
     queryFn: () => planFn(),
   });
 
-  const analyzeFn = useServerFn(analyzeResume);
-  const mutation = useMutation({
-    mutationFn: async () => analyzeFn({ data: { resumeText, jobDescription, resumeFilename: resumeFile || undefined } }) as Promise<AnalysisResult>,
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Analysis failed"),
-    onSuccess: () => {
-      toast.success("Analysis complete!");
-      planQuery.refetch();
-      setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
+  const enqueueFn = useServerFn(enqueueAnalysis);
+  const getJobFn = useServerFn(getAnalysisJob);
+  const getAnalysisFn = useServerFn(getAnalysis);
+
+  // Poll the job status while one is in flight.
+  const jobPoll = useQuery({
+    queryKey: ["analysis-job", jobId],
+    queryFn: () => getJobFn({ data: { jobId: jobId! } }),
+    enabled: !!jobId && !result,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      return s === "completed" || s === "failed" ? false : 2000;
     },
+  });
+
+  // When the job completes, fetch the analysis row and convert to AnalysisResult.
+  useEffect(() => {
+    const data = jobPoll.data;
+    if (!data) return;
+    if (data.status === "failed") {
+      toast.error(data.error || "Analysis failed");
+      setJobId(null);
+      return;
+    }
+    if (data.status === "completed" && data.analysis_id && !result) {
+      getAnalysisFn({ data: { id: data.analysis_id } })
+        .then((row) => {
+          const planLabelForResult: "free" | "pro" =
+            (row.optimized_resume?.startsWith("🔒") ? "free" : "pro");
+          setResult({
+            matchScore: row.match_score,
+            summary: row.summary,
+            strengths: (row.strengths as unknown as string[]) ?? [],
+            weaknesses: (row.weaknesses as unknown as string[]) ?? [],
+            missingKeywords: (row.missing_keywords as unknown as string[]) ?? [],
+            optimizedResume: row.optimized_resume,
+            coverLetter: row.cover_letter,
+            id: row.id,
+            plan: planLabelForResult,
+          });
+          toast.success("Analysis complete!");
+          planQuery.refetch();
+          setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
+        })
+        .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load result"));
+    }
+  }, [jobPoll.data, result, getAnalysisFn, planQuery]);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      // Best-effort: upload the original file to the private `resumes` bucket.
+      let storagePath: string | undefined;
+      if (resumeBlob) {
+        const { data: u } = await supabase.auth.getUser();
+        const uid = u.user?.id;
+        if (uid) {
+          const safe = resumeBlob.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `${uid}/${crypto.randomUUID()}-${safe}`;
+          const { error } = await supabase.storage
+            .from("resumes")
+            .upload(path, resumeBlob, { contentType: resumeBlob.type || undefined, upsert: false });
+          if (!error) storagePath = path;
+          else console.warn("[dashboard] resume upload failed:", error.message);
+        }
+      }
+      setResult(null);
+      const res = await enqueueFn({
+        data: {
+          resumeText,
+          jobDescription,
+          resumeFilename: resumeFile || undefined,
+          resumeStoragePath: storagePath,
+        },
+      });
+      setJobId(res.jobId);
+      return res;
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not start analysis"),
   });
 
   const onFile = async (file: File | null) => {
@@ -61,6 +133,7 @@ function Dashboard() {
       const text = await extractTextFromFile(file);
       setResumeText(text.trim());
       setResumeFile(file.name);
+      setResumeBlob(file);
       toast.success(`Loaded ${file.name}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read file");
@@ -79,7 +152,8 @@ function Dashboard() {
   const monthlyLimit = planQuery.data?.monthlyLimit ?? null;
   const remaining = planQuery.data?.remaining ?? null;
   const limitReached = monthlyLimit !== null && analysesThisMonth >= monthlyLimit;
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !mutation.isPending && !limitReached && !proExpired;
+  const isAnalyzing = mutation.isPending || (!!jobId && !result);
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !isAnalyzing && !limitReached && !proExpired;
 
   const planLabel = isAdmin
     ? "Admin · Unlimited"
