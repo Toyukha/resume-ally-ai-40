@@ -55,7 +55,9 @@ export const Route = createFileRoute("/api/public/hooks/usage-alerts")({
               severity: w.severity,
               title: w.title,
               message: w.message,
-              metadata: s as unknown as Record<string, unknown>,
+              metadata: s as unknown as Parameters<typeof supabaseAdmin.from>[0] extends never ? never : never,
+              // metadata is jsonb; cast through unknown to satisfy generated Json type
+              ...(undefined as unknown as object),
             }))
           );
         }
