@@ -304,15 +304,15 @@ function Dashboard() {
             onClick={() => mutation.mutate()}
             className="min-w-[260px]"
           >
-            {mutation.isPending ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing with AI...</>
+            {isAnalyzing ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {jobId ? "Analyzing… (queued)" : "Starting…"}</>
             ) : (
               <><Sparkles className="mr-2 h-4 w-4" /> Analyze & Optimize</>
             )}
           </Button>
         </div>
 
-        {mutation.data && <Results result={mutation.data} />}
+        {result && <Results result={result} />}
 
       </main>
     </div>
