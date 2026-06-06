@@ -169,8 +169,8 @@ function Dashboard() {
   const monthlyLimit = planQuery.data?.monthlyLimit ?? null;
   const remaining = planQuery.data?.remaining ?? null;
   const limitReached = monthlyLimit !== null && analysesThisMonth >= monthlyLimit;
-  const isAnalyzing = mutation.isPending || (!!jobId && !result);
-  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !isAnalyzing && !limitReached && !proExpired;
+  const isAnalyzing = mutation.isPending || retryMutation.isPending || (!!jobId && !result);
+  const canAnalyze = resumeText.length >= 50 && jobDescription.length >= 30 && !isAnalyzing && !limitReached && !proExpired && !failedJob;
 
   const planLabel = isAdmin
     ? "Admin · Unlimited"
