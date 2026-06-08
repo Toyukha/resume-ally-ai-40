@@ -40,6 +40,9 @@ function Dashboard() {
   const planQuery = useQuery({
     queryKey: ["user-plan"],
     queryFn: () => planFn(),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const analyzeFn = useServerFn(analyzeResume);
@@ -138,7 +141,7 @@ function Dashboard() {
                     ? "Unlimited analyses"
                     : `${analysesThisMonth}/${monthlyLimit} analyses used this month`}
                   {proExpiresAt && plan === "pro" && (
-                    <> · Renews {new Date(proExpiresAt).toLocaleDateString()}</>
+                    <> · Expires {new Date(proExpiresAt).toLocaleDateString()}</>
                   )}
                 </div>
               </div>

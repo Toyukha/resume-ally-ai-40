@@ -82,6 +82,8 @@ export const getPlatformStats = createServerFn({ method: "GET" })
       { count: analysesThisMonth },
       { count: proUsers },
       { data: revenueRows },
+      { data: monthlyPayments },
+      { data: totalPayments },
       { data: dailyAnalyses },
       { data: dailyUsers },
     ] = await Promise.all([
@@ -93,14 +95,15 @@ export const getPlatformStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("analyses").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("plan", "pro").gt("pro_expires_at", now.toISOString()),
       supabaseAdmin.from("profiles").select("pro_started_at").eq("plan", "pro").gt("pro_expires_at", now.toISOString()),
+      supabaseAdmin.from("payments").select("amount").eq("status", "successful").gte("verified_at", startOfMonth.toISOString()),
+      supabaseAdmin.from("payments").select("amount").eq("status", "successful"),
       supabaseAdmin.from("analyses").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
       supabaseAdmin.from("profiles").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
     ]);
 
-    const PRO_PRICE = 5000;
     const activeSubs = revenueRows?.length ?? 0;
-    const monthlyRevenue = activeSubs * PRO_PRICE;
-    const totalRevenue = monthlyRevenue; // single recurring product; extend if multi-tier
+    const monthlyRevenue = (monthlyPayments ?? []).reduce((s: number, r: { amount: number | string }) => s + Number(r.amount || 0), 0);
+    const totalRevenue = (totalPayments ?? []).reduce((s: number, r: { amount: number | string }) => s + Number(r.amount || 0), 0);
     const conversionRate = totalUsers ? Math.round((activeSubs / totalUsers) * 1000) / 10 : 0;
 
     // Build last-30-day buckets
@@ -147,7 +150,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
-      .select("id, plan, suspended, pro_started_at, pro_expires_at, created_at")
+      .select("id, plan, plan_tier, suspended, pro_started_at, pro_expires_at, created_at")
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -175,10 +178,11 @@ export const listAllUsers = createServerFn({ method: "GET" })
       rolesMap.set(r.user_id, arr);
     });
 
-    const rows = (profiles ?? []).map((p: { id: string; plan: string; suspended: boolean; pro_expires_at: string | null; created_at: string }) => ({
+    const rows = (profiles ?? []).map((p: { id: string; plan: string; plan_tier: string | null; suspended: boolean; pro_expires_at: string | null; created_at: string }) => ({
       id: p.id,
       email: emailMap.get(p.id) ?? "",
       plan: p.plan,
+      plan_tier: p.plan_tier ?? "free",
       suspended: p.suspended,
       pro_expires_at: p.pro_expires_at,
       created_at: p.created_at,
@@ -223,7 +227,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({
     userId: z.string().uuid(),
-    plan: z.enum(["free", "pro"]),
+    planTier: z.enum(["free", "pro_1", "pro_2"]),
     months: z.number().int().min(1).max(36).optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
@@ -231,12 +235,19 @@ export const setUserPlan = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const now = new Date();
-    const update: { plan: "free" | "pro"; pro_started_at: string | null; pro_expires_at: string | null } = {
-      plan: data.plan,
+    const isPro = data.planTier !== "free";
+    const update: {
+      plan: "free" | "pro";
+      plan_tier: "free" | "pro_1" | "pro_2";
+      pro_started_at: string | null;
+      pro_expires_at: string | null;
+    } = {
+      plan: isPro ? "pro" : "free",
+      plan_tier: data.planTier,
       pro_started_at: null,
       pro_expires_at: null,
     };
-    if (data.plan === "pro") {
+    if (isPro) {
       const months = data.months ?? 1;
       update.pro_started_at = now.toISOString();
       update.pro_expires_at = new Date(now.getTime() + months * 30 * 86400000).toISOString();
@@ -244,7 +255,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("profiles").update(update).eq("id", data.userId);
     if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
-      "user.set_plan", { type: "user", id: data.userId, metadata: { plan: data.plan, months: data.months } });
+      "user.set_plan", { type: "user", id: data.userId, metadata: { plan_tier: data.planTier, months: data.months } });
     return { ok: true };
   });
 
