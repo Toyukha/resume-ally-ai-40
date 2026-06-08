@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /history
+Disallow: /payment-callback
+Disallow: /api/
+
+Sitemap: https://thecareerboost.com/sitemap.xml

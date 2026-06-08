@@ -16,7 +16,11 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Get That Job — AI Resume Optimizer for Modern Job Seekers" },
       { name: "description", content: "Tailor your resume to any job in seconds. ATS-friendly optimization, missing-keyword detection, and AI-generated cover letters." },
+      { property: "og:title", content: "Get That Job — AI Resume Optimizer for Modern Job Seekers" },
+      { property: "og:description", content: "Tailor your resume to any job in seconds. ATS-friendly optimization, missing-keyword detection, and AI-generated cover letters." },
+      { property: "og:url", content: "https://thecareerboost.com/" },
     ],
+    links: [{ rel: "canonical", href: "https://thecareerboost.com/" }],
   }),
   component: Landing,
 });

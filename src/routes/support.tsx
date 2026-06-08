@@ -9,7 +9,11 @@ export const Route = createFileRoute("/support")({
     meta: [
       { title: "Support — Get That Job" },
       { name: "description", content: "Get help with your resume, job applications, and account. Contact us via WhatsApp for quick assistance." },
+      { property: "og:title", content: "Support — Get That Job" },
+      { property: "og:description", content: "Get help with your resume, job applications, and account. Contact us via WhatsApp for quick assistance." },
+      { property: "og:url", content: "https://thecareerboost.com/support" },
     ],
+    links: [{ rel: "canonical", href: "https://thecareerboost.com/support" }],
   }),
   component: SupportPage,
 });

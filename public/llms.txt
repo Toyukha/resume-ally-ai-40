@@ -1,0 +1,12 @@
+# Get That Job
+
+> AI career coach that optimizes resumes for ATS systems, generates tailored cover letters, and helps job seekers land more interviews.
+
+Get That Job analyzes your resume against any job description, scoring ATS compatibility, surfacing missing keywords, and generating an optimized resume and cover letter in under a minute.
+
+## Pages
+
+- [Home](/): Overview of Get That Job and how AI resume optimization works.
+- [Pricing](/pricing): Free, Pro Plan 1 (₦5,000/mo), and Pro Plan 2 (₦10,000/mo) — features and limits.
+- [Support](/support): Get help via WhatsApp with resumes, billing, and account questions.
+- [Sign in](/auth): Sign in or create an account to start optimizing your resume.

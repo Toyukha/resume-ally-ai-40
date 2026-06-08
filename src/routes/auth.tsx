@@ -11,7 +11,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Get That Job" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in — Get That Job" },
+      { name: "description", content: "Sign in or create your Get That Job account to optimize your resume, generate cover letters, and track your applications." },
+      { property: "og:title", content: "Sign in — Get That Job" },
+      { property: "og:description", content: "Sign in or create your Get That Job account to optimize your resume, generate cover letters, and track your applications." },
+      { property: "og:url", content: "https://thecareerboost.com/auth" },
+    ],
+    links: [{ rel: "canonical", href: "https://thecareerboost.com/auth" }],
+  }),
   component: AuthPage,
 });
 
