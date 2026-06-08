@@ -141,7 +141,7 @@ function Dashboard() {
                     ? "Unlimited analyses"
                     : `${analysesThisMonth}/${monthlyLimit} analyses used this month`}
                   {proExpiresAt && plan === "pro" && (
-                    <> · Renews {new Date(proExpiresAt).toLocaleDateString()}</>
+                    <> · Expires {new Date(proExpiresAt).toLocaleDateString()}</>
                   )}
                 </div>
               </div>
