@@ -28,6 +28,8 @@ type State =
 function CallbackPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const verify = useServerFn(verifyFlutterwavePayment);
   const [state, setState] = useState<State>({ kind: "verifying" });
   const ran = useRef(false);
@@ -46,9 +48,13 @@ function CallbackPage() {
     }
 
     verify({ data: { tx_ref: search.tx_ref, transaction_id: search.transaction_id } })
-      .then((r) => setState({ kind: "success", planTier: r.planTier }))
+      .then(async (r) => {
+        await queryClient.invalidateQueries();
+        await router.invalidate();
+        setState({ kind: "success", planTier: r.planTier });
+      })
       .catch((e) => setState({ kind: "error", message: e instanceof Error ? e.message : "Verification failed" }));
-  }, [search, verify]);
+  }, [search, verify, queryClient, router]);
 
   return (
     <div className="min-h-screen bg-background">
