@@ -223,7 +223,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({
     userId: z.string().uuid(),
-    plan: z.enum(["free", "pro"]),
+    planTier: z.enum(["free", "pro_1", "pro_2"]),
     months: z.number().int().min(1).max(36).optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
@@ -231,12 +231,19 @@ export const setUserPlan = createServerFn({ method: "POST" })
     requireSuper(await loadCurrentRoles(supabase, userId));
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const now = new Date();
-    const update: { plan: "free" | "pro"; pro_started_at: string | null; pro_expires_at: string | null } = {
-      plan: data.plan,
+    const isPro = data.planTier !== "free";
+    const update: {
+      plan: "free" | "pro";
+      plan_tier: "free" | "pro_1" | "pro_2";
+      pro_started_at: string | null;
+      pro_expires_at: string | null;
+    } = {
+      plan: isPro ? "pro" : "free",
+      plan_tier: data.planTier,
       pro_started_at: null,
       pro_expires_at: null,
     };
-    if (data.plan === "pro") {
+    if (isPro) {
       const months = data.months ?? 1;
       update.pro_started_at = now.toISOString();
       update.pro_expires_at = new Date(now.getTime() + months * 30 * 86400000).toISOString();
@@ -244,7 +251,7 @@ export const setUserPlan = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("profiles").update(update).eq("id", data.userId);
     if (error) failSafely("db", error);
     await logActivity(supabase, userId, (claims as { email?: string }).email ?? null,
-      "user.set_plan", { type: "user", id: data.userId, metadata: { plan: data.plan, months: data.months } });
+      "user.set_plan", { type: "user", id: data.userId, metadata: { plan_tier: data.planTier, months: data.months } });
     return { ok: true };
   });
 
