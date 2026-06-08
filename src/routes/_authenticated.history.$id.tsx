@@ -15,7 +15,13 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/history/$id")({
-  head: () => ({ meta: [{ title: "Analysis Details — Get That Job" }] }),
+  head: () => ({
+    meta: [
+      { title: "Analysis Details — Get That Job" },
+      { name: "description", content: "Review your resume analysis: ATS score, strengths, weaknesses, missing keywords, optimized resume, and cover letter." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: AnalysisDetailPage,
 });
 

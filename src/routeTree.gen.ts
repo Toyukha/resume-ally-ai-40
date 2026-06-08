@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -33,6 +34,11 @@ import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/pricing'
+    | '/sitemap.xml'
     | '/support'
     | '/dashboard'
     | '/payment-callback'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/pricing'
+    | '/sitemap.xml'
     | '/support'
     | '/dashboard'
     | '/payment-callback'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/pricing'
+    | '/sitemap.xml'
     | '/support'
     | '/_authenticated/dashboard'
     | '/_authenticated/payment-callback'
@@ -270,6 +282,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PricingRoute: typeof PricingRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PricingRoute: PricingRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
