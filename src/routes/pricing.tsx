@@ -21,7 +21,9 @@ export const Route = createFileRoute("/pricing")({
       { name: "description", content: "Simple, transparent pricing for AI-powered CV optimization. Free plan, Pro Plan 1 (₦5,000), and Pro Plan 2 (₦10,000) — choose what fits your job search." },
       { property: "og:title", content: "Pricing — Get That Job" },
       { property: "og:description", content: "Choose the plan that best fits your job search journey. Free, Pro 1, and Pro 2." },
+      { property: "og:url", content: "https://thecareerboost.com/pricing" },
     ],
+    links: [{ rel: "canonical", href: "https://thecareerboost.com/pricing" }],
   }),
   component: PricingPage,
 });
