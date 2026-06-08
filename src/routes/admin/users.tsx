@@ -83,7 +83,20 @@ function UsersPage() {
                   <tr key={u.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="p-3 font-medium">{u.email || u.id.slice(0, 8)}</td>
                     <td className="p-3">
-                      <Badge variant={u.plan === "pro" ? "default" : "secondary"}>{u.plan}</Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant={u.plan === "pro" ? "default" : "secondary"}>
+                          {u.plan_tier === "pro_1" ? "Pro 1"
+                            : u.plan_tier === "pro_2" ? "Pro 2"
+                            : u.plan_tier === "pro_legacy" ? "Pro (legacy)"
+                            : u.plan === "pro" ? "Pro"
+                            : "Free"}
+                        </Badge>
+                        {u.pro_expires_at && u.plan === "pro" && (
+                          <span className="text-[10px] text-muted-foreground">
+                            exp {new Date(u.pro_expires_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
@@ -103,8 +116,8 @@ function UsersPage() {
                           onSuspend={() => suspendFn({ data: { userId: u.id, suspended: !u.suspended } })
                             .then(() => { toast.success(u.suspended ? "User reactivated" : "User suspended"); refetch(); })
                             .catch((e) => toast.error(e.message))}
-                          onPlan={(plan) => planFn({ data: { userId: u.id, plan, months: plan === "pro" ? 1 : undefined } })
-                            .then(() => { toast.success(`Plan set to ${plan}`); refetch(); })
+                          onPlan={(planTier) => planFn({ data: { userId: u.id, planTier, months: planTier === "free" ? undefined : 1 } })
+                            .then(() => { toast.success(`Plan set to ${planTier}`); qc.invalidateQueries({ queryKey: ["user-plan"] }); refetch(); })
                             .catch((e) => toast.error(e.message))}
                           onReset={() => u.email && resetFn({ data: { email: u.email } })
                             .then(() => toast.success("Password reset email sent"))
@@ -132,18 +145,35 @@ function UsersPage() {
 }
 
 function UserActions({ user, onSuspend, onPlan, onReset, onDelete }: {
-  user: { suspended: boolean; plan: string };
-  onSuspend: () => void; onPlan: (plan: "free" | "pro") => void; onReset: () => void; onDelete: () => void;
+  user: { suspended: boolean; plan: string; plan_tier: string };
+  onSuspend: () => void;
+  onPlan: (planTier: "free" | "pro_1" | "pro_2") => void;
+  onReset: () => void;
+  onDelete: () => void;
 }) {
+  const isPro = user.plan === "pro";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onPlan(user.plan === "pro" ? "free" : "pro")}>
-          {user.plan === "pro" ? "Downgrade to Free" : "Grant Pro (30 days)"}
-        </DropdownMenuItem>
+        {user.plan_tier !== "pro_1" && (
+          <DropdownMenuItem onClick={() => onPlan("pro_1")}>
+            Upgrade to Pro Plan 1 (30 days)
+          </DropdownMenuItem>
+        )}
+        {user.plan_tier !== "pro_2" && (
+          <DropdownMenuItem onClick={() => onPlan("pro_2")}>
+            Upgrade to Pro Plan 2 (30 days)
+          </DropdownMenuItem>
+        )}
+        {isPro && (
+          <DropdownMenuItem onClick={() => onPlan("free")} className="text-destructive">
+            Downgrade to Free
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onReset}>Send password reset</DropdownMenuItem>
         <DropdownMenuItem onClick={onSuspend}>{user.suspended ? "Reactivate" : "Suspend"}</DropdownMenuItem>
         <DropdownMenuSeparator />
