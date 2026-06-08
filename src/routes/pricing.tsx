@@ -18,7 +18,7 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Get That Job" },
-      { name: "description", content: "Simple, transparent pricing for AI-powered CV optimization. Free plan, Pro Plan 1 (₦4,900), and Pro Plan 2 (₦9,900) — choose what fits your job search." },
+      { name: "description", content: "Simple, transparent pricing for AI-powered CV optimization. Free plan, Pro Plan 1 (₦5,000), and Pro Plan 2 (₦10,000) — choose what fits your job search." },
       { property: "og:title", content: "Pricing — Get That Job" },
       { property: "og:description", content: "Choose the plan that best fits your job search journey. Free, Pro 1, and Pro 2." },
     ],
@@ -213,7 +213,7 @@ function PricingPage() {
             <AccordionItem value="q1">
               <AccordionTrigger>How does billing work?</AccordionTrigger>
               <AccordionContent>
-                Pro Plan 1 and Pro Plan 2 are one-time monthly payments of ₦4,900 and ₦9,900 respectively, processed securely through Flutterwave. Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in full control.
+                Pro Plan 1 and Pro Plan 2 are one-time monthly payments of ₦5,000 and ₦10,000 respectively, processed securely through Flutterwave. Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in full control.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q2">
