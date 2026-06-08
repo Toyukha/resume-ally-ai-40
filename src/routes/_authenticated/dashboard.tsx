@@ -40,6 +40,9 @@ function Dashboard() {
   const planQuery = useQuery({
     queryKey: ["user-plan"],
     queryFn: () => planFn(),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const analyzeFn = useServerFn(analyzeResume);
