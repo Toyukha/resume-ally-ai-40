@@ -52,7 +52,7 @@ function AdminOverview() {
         <Stat icon={FileBarChart2} label="Analyses This Month" value={fmt(data.analysesThisMonth)} />
         <Stat icon={TrendingUp} label="Conversion" value={`${data.conversionRate}%`} hint="Pro / Total users" />
         <Stat icon={DollarSign} label="Monthly Revenue" value={naira(data.monthlyRevenue)} />
-        <Stat icon={DollarSign} label="Total Revenue" value={naira(data.totalRevenue)} hint="Active subs × ₦5,000" />
+        <Stat icon={DollarSign} label="Total Revenue" value={naira(data.totalRevenue)} hint="All successful payments" />
         <Stat icon={CreditCard} label="Active Subscribers" value={fmt(data.activeSubscribers)} />
         <Stat icon={BarChart3} label="Avg/Day (30d)" value={fmt(Math.round(data.trend.reduce((s, d) => s + d.analyses, 0) / 30))} />
       </div>
