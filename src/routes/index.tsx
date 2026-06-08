@@ -201,13 +201,13 @@ function Landing() {
             <AccordionItem value="q6">
               <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
               <AccordionContent>
-                Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦4,900/month) gives you 10 full analyses including optimized resume, cover letter, missing-keyword report, and history. Pro Plan 2 (₦9,900/month) doubles that to 20 analyses per month and adds priority processing.
+                Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦5,000/month) gives you 10 full analyses including optimized resume, cover letter, missing-keyword report, and history. Pro Plan 2 (₦10,000/month) doubles that to 20 analyses per month and adds priority processing.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q7">
               <AccordionTrigger>How do payments work?</AccordionTrigger>
               <AccordionContent>
-                Pro plans are billed as a one-time monthly payment via Flutterwave (₦4,900 or ₦9,900). Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in control of your budget.
+                Pro plans are billed as a one-time monthly payment via Flutterwave (₦5,000 or ₦10,000). Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in control of your budget.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
