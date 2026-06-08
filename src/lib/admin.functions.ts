@@ -147,7 +147,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
-      .select("id, plan, suspended, pro_started_at, pro_expires_at, created_at")
+      .select("id, plan, plan_tier, suspended, pro_started_at, pro_expires_at, created_at")
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -175,10 +175,11 @@ export const listAllUsers = createServerFn({ method: "GET" })
       rolesMap.set(r.user_id, arr);
     });
 
-    const rows = (profiles ?? []).map((p: { id: string; plan: string; suspended: boolean; pro_expires_at: string | null; created_at: string }) => ({
+    const rows = (profiles ?? []).map((p: { id: string; plan: string; plan_tier: string | null; suspended: boolean; pro_expires_at: string | null; created_at: string }) => ({
       id: p.id,
       email: emailMap.get(p.id) ?? "",
       plan: p.plan,
+      plan_tier: p.plan_tier ?? "free",
       suspended: p.suspended,
       pro_expires_at: p.pro_expires_at,
       created_at: p.created_at,
