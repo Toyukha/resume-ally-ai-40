@@ -82,6 +82,8 @@ export const getPlatformStats = createServerFn({ method: "GET" })
       { count: analysesThisMonth },
       { count: proUsers },
       { data: revenueRows },
+      { data: monthlyPayments },
+      { data: totalPayments },
       { data: dailyAnalyses },
       { data: dailyUsers },
     ] = await Promise.all([
@@ -93,14 +95,15 @@ export const getPlatformStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("analyses").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("plan", "pro").gt("pro_expires_at", now.toISOString()),
       supabaseAdmin.from("profiles").select("pro_started_at").eq("plan", "pro").gt("pro_expires_at", now.toISOString()),
+      supabaseAdmin.from("payments").select("amount").eq("status", "successful").gte("verified_at", startOfMonth.toISOString()),
+      supabaseAdmin.from("payments").select("amount").eq("status", "successful"),
       supabaseAdmin.from("analyses").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
       supabaseAdmin.from("profiles").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
     ]);
 
-    const PRO_PRICE = 5000;
     const activeSubs = revenueRows?.length ?? 0;
-    const monthlyRevenue = activeSubs * PRO_PRICE;
-    const totalRevenue = monthlyRevenue; // single recurring product; extend if multi-tier
+    const monthlyRevenue = (monthlyPayments ?? []).reduce((s: number, r: { amount: number | string }) => s + Number(r.amount || 0), 0);
+    const totalRevenue = (totalPayments ?? []).reduce((s: number, r: { amount: number | string }) => s + Number(r.amount || 0), 0);
     const conversionRate = totalUsers ? Math.round((activeSubs / totalUsers) * 1000) / 10 : 0;
 
     // Build last-30-day buckets
