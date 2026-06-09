@@ -103,7 +103,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur md:px-6">
           <button className="md:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
-          <div className="text-sm font-medium text-muted-foreground">Get That Job — Admin Portal</div>
+          <div className="text-sm font-medium text-muted-foreground">Career Boost — Admin Portal</div>
           <Link to="/dashboard" className="text-xs text-muted-foreground hover:text-foreground">User app →</Link>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>

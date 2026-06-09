@@ -9,7 +9,7 @@ interface ReauthenticationEmailProps {
 
 export const ReauthenticationEmail = ({
   token,
-  siteName = 'Get That Job',
+  siteName = 'Career Boost',
 }: ReauthenticationEmailProps) => (
   <BrandLayout preview="Your verification code" siteName={siteName}>
     <Heading style={styles.h1}>Confirm reauthentication</Heading>

@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Get That Job" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
   component: Dashboard,
 });
 

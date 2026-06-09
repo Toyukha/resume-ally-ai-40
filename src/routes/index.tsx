@@ -24,9 +24,9 @@ const HOME_FAQ: Array<[string, string]> = [
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Get That Job — AI Resume Optimizer for Modern Job Seekers" },
+      { title: "Career Boost — AI Resume Optimizer for Modern Job Seekers" },
       { name: "description", content: "Tailor your resume to any job in seconds. ATS-friendly optimization, missing-keyword detection, and AI-generated cover letters." },
-      { property: "og:title", content: "Get That Job — AI Resume Optimizer for Modern Job Seekers" },
+      { property: "og:title", content: "Career Boost — AI Resume Optimizer for Modern Job Seekers" },
       { property: "og:description", content: "Tailor your resume to any job in seconds. ATS-friendly optimization, missing-keyword detection, and AI-generated cover letters." },
       { property: "og:url", content: "https://thecareerboost.com/" },
     ],
@@ -192,7 +192,7 @@ function Landing() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-medium text-primary-glow">FAQ</p>
           <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Questions? Answered.</h2>
-          <p className="mt-4 text-muted-foreground">Everything you need to know about Get That Job.</p>
+          <p className="mt-4 text-muted-foreground">Everything you need to know about Career Boost.</p>
         </div>
         <div className="mx-auto mt-12 max-w-3xl">
           <Accordion type="single" collapsible className="w-full">
@@ -291,7 +291,7 @@ function Landing() {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 flex flex-col items-center gap-3 text-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Get That Job. Crafted for serious job seekers.
+            © {new Date().getFullYear()} Career Boost. Crafted for serious job seekers.
           </p>
           <Link
             to="/admin/login"
