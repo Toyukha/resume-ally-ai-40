@@ -11,10 +11,10 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — Get That Job" },
-      { name: "description", content: "Set a new password for your Get That Job account." },
-      { property: "og:title", content: "Reset password — Get That Job" },
-      { property: "og:description", content: "Set a new password for your Get That Job account." },
+      { title: "Reset password — Career Boost" },
+      { name: "description", content: "Set a new password for your Career Boost account." },
+      { property: "og:title", content: "Reset password — Career Boost" },
+      { property: "og:description", content: "Set a new password for your Career Boost account." },
     ],
     links: [{ rel: "canonical", href: "https://thecareerboost.com/reset-password" }],
   }),

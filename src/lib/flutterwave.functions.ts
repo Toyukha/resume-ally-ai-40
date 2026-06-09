@@ -59,7 +59,7 @@ export const initFlutterwavePayment = createServerFn({ method: "POST" })
         redirect_url: redirectUrl,
         customer: { email, name },
         customizations: {
-          title: "Get That Job — " + plan.name,
+          title: "Career Boost — " + plan.name,
           description: `${plan.name} subscription (30 days)`,
         },
         meta: { user_id: userId, plan_tier: data.planTier },

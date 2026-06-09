@@ -12,7 +12,7 @@ import { getAdminMe } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/login")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Admin Login — Get That Job" }] }),
+  head: () => ({ meta: [{ title: "Admin Login — Career Boost" }] }),
   component: AdminLogin,
 });
 

@@ -13,10 +13,10 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Get That Job" },
-      { name: "description", content: "Sign in or create your Get That Job account to optimize your resume, generate cover letters, and track your applications." },
-      { property: "og:title", content: "Sign in — Get That Job" },
-      { property: "og:description", content: "Sign in or create your Get That Job account to optimize your resume, generate cover letters, and track your applications." },
+      { title: "Sign in — Career Boost" },
+      { name: "description", content: "Sign in or create your Career Boost account to optimize your resume, generate cover letters, and track your applications." },
+      { property: "og:title", content: "Sign in — Career Boost" },
+      { property: "og:description", content: "Sign in or create your Career Boost account to optimize your resume, generate cover letters, and track your applications." },
       { property: "og:url", content: "https://thecareerboost.com/auth" },
     ],
     links: [{ rel: "canonical", href: "https://thecareerboost.com/auth" }],
@@ -80,7 +80,7 @@ function AuthPage() {
               <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-hero shadow-glow">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="font-display text-2xl font-bold">Welcome to Get That Job</h1>
+              <h1 className="font-display text-2xl font-bold">Welcome to Career Boost</h1>
               <p className="mt-1 text-sm text-muted-foreground">Sign in to start optimizing</p>
             </div>
 

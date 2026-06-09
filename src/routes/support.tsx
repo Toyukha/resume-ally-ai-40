@@ -7,9 +7,9 @@ import { WhatsAppButton } from "@/components/whatsapp-button";
 export const Route = createFileRoute("/support")({
   head: () => ({
     meta: [
-      { title: "Support — Get That Job" },
+      { title: "Support — Career Boost" },
       { name: "description", content: "Get help with your resume, job applications, and account. Contact us via WhatsApp for quick assistance." },
-      { property: "og:title", content: "Support — Get That Job" },
+      { property: "og:title", content: "Support — Career Boost" },
       { property: "og:description", content: "Get help with your resume, job applications, and account. Contact us via WhatsApp for quick assistance." },
       { property: "og:url", content: "https://thecareerboost.com/support" },
     ],
@@ -32,7 +32,7 @@ const SUPPORT_CARDS = [
   {
     icon: Mail,
     title: "Feature Requests",
-    desc: "Have an idea to make Get That Job better? We would love to hear it.",
+    desc: "Have an idea to make Career Boost better? We would love to hear it.",
   },
   {
     icon: Shield,
@@ -54,7 +54,7 @@ function SupportPage() {
           </div>
           <h1 className="font-display text-4xl font-bold md:text-5xl">How can we help you?</h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Our team is ready to assist you with your CV, job applications, and any questions about Get That Job.
+            Our team is ready to assist you with your CV, job applications, and any questions about Career Boost.
           </p>
         </div>
 
