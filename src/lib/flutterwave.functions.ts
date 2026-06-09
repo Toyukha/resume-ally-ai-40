@@ -49,7 +49,7 @@ export const initFlutterwavePayment = createServerFn({ method: "POST" })
     });
     if (insertErr) throw new Error(`Could not start payment: ${insertErr.message}`);
 
-    const redirectUrl = `${data.origin}/payment-callback`;
+    const redirectUrl = "https://thecareerboost.com/payment-callback";
 
     const resp = await fetch(`${FLW_API}/payments`, {
       method: "POST",
