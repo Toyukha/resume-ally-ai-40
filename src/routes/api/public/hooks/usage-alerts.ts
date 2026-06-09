@@ -3,19 +3,27 @@
 // thresholds. Super-admins already see those notifications in-app.
 
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "crypto";
 
 const DB_SIZE_WARN_BYTES = 400 * 1024 * 1024; // 400 MB ~ 80% of 500 MB free tier
 const FAILED_JOBS_WARN = 10;
+
+function authorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET ?? "";
+  const provided = request.headers.get("x-cron-secret") ?? "";
+  if (!expected || !provided) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 export const Route = createFileRoute("/api/public/hooks/usage-alerts")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const provided = request.headers.get("apikey") ?? "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
-        if (!expected || provided !== expected) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        if (!authorized(request)) return new Response("Unauthorized", { status: 401 });
+
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

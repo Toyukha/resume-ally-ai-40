@@ -1,26 +1,31 @@
 // Cron-driven worker that processes pending analysis jobs.
-// Auth: requires the project anon/publishable key in the `apikey` header
-// (matches the pg_cron convention). Per-request safety: only processes one
-// job per call to stay well under worker time limits.
+// Auth: requires CRON_SECRET in the `x-cron-secret` header (timing-safe compare).
+// Per-request safety: only processes one job per call.
 
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "crypto";
 import { runAnalysisJob } from "@/lib/analyze-runner.server";
 
 const MAX_RETRIES = 3;
+
+function authorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET ?? "";
+  const provided = request.headers.get("x-cron-secret") ?? "";
+  if (!expected || !provided) return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 export const Route = createFileRoute("/api/public/hooks/process-analysis-jobs")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const provided = request.headers.get("apikey") ?? "";
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
-        if (!expected || provided !== expected) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        if (!authorized(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Pick oldest pending job; also reclaim long-running 'processing' jobs (>5min).
         const stuckCutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         const { data: jobs } = await supabaseAdmin
           .from("analysis_jobs")
@@ -33,8 +38,6 @@ export const Route = createFileRoute("/api/public/hooks/process-analysis-jobs")(
         const job = jobs?.[0];
         if (!job) return Response.json({ ok: true, processed: 0 });
 
-        // Reset stuck processing jobs to pending so runAnalysisJob's atomic
-        // claim works.
         if (job.status === "processing") {
           await supabaseAdmin
             .from("analysis_jobs")
