@@ -42,6 +42,13 @@ function Dashboard() {
   const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [pollWindowOpen, setPollWindowOpen] = useState(justUpgraded);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugData, setDebugData] = useState<{
+    plan: Awaited<ReturnType<typeof getUserPlan>> | null;
+    refresh: Awaited<ReturnType<typeof refreshSubscriptionStatus>> | null;
+    at: string;
+  } | null>(null);
+  const [debugLoading, setDebugLoading] = useState(false);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
