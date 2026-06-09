@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/payment-callback")({
 type State =
   | { kind: "verifying" }
   | { kind: "success"; planTier: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  | { kind: "timeout"; planTier: string };
 
 function CallbackPage() {
   const search = Route.useSearch();
