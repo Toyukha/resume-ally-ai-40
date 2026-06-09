@@ -44,6 +44,13 @@ function ActivationsPage() {
   const [status, setStatus] = useState<"all" | "failure" | "success">("failure");
   const [event, setEvent] = useState<string>("all");
   const [hours, setHours] = useState<number>(168);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState<
+    | { scanned: number; repaired: Array<{ tx_ref: string }>; failed: Array<{ tx_ref: string; reason: string }> }
+    | { error: string }
+    | null
+  >(null);
+  const reconcileFn = useServerFn(reconcileStuckActivations);
 
   const fn = useServerFn(listActivationEvents);
   const { data, isFetching, refetch } = useQuery({
