@@ -104,9 +104,17 @@ function CallbackPage() {
         const r = await verify({ data: { tx_ref: txRef, transaction_id: txId } });
         log("verify_response", { plan_tier: r.planTier, already_verified: r.alreadyVerified });
 
-        // Poll the user-plan until it reflects Pro (up to ~30 s).
-        let confirmed = false;
-        for (let i = 0; i < 20; i++) {
+        // The server has verified the payment AND activated the plan (or
+        // confirmed it's already active). Treat this as authoritative success
+        // and surface it to the user immediately. The background poll only
+        // exists to refresh the client cache before redirecting to the dashboard.
+        setState({ kind: "success", planTier: r.planTier });
+        log("activation_success", { plan_tier: r.planTier });
+
+        // Best-effort: poll a few times so the dashboard's plan query is warm
+        // before we navigate. Even if this doesn't observe Pro, getUserPlan
+        // self-heals on the dashboard, so we still proceed to success.
+        for (let i = 0; i < 8; i++) {
           const plan = await fetchPlan().catch((err) => {
             log("fetch_plan_error", { attempt: i + 1, error: err instanceof Error ? err.message : String(err) });
             return null;
@@ -116,36 +124,16 @@ function CallbackPage() {
             lastKnownPlanTier = plan.planTier ?? null;
           }
           if (plan?.plan === "pro") {
-            confirmed = true;
             log("plan_confirmed", { attempt: i + 1 });
             break;
           }
-          await new Promise((res) => setTimeout(res, 1500));
+          await new Promise((res) => setTimeout(res, 1000));
         }
 
         await queryClient.invalidateQueries();
         await router.invalidate();
 
-        if (!confirmed) {
-          log("activation_timeout", { plan_tier: r.planTier });
-          await reportTimeout({
-            data: {
-              tx_ref: txRef,
-              transaction_id: txId,
-              plan_tier: r.planTier as "pro_1" | "pro_2",
-              elapsed_ms: elapsed(),
-              last_known_plan: lastKnownPlan ?? undefined,
-              last_known_plan_tier: lastKnownPlanTier ?? undefined,
-            },
-          }).catch((err) => log("report_timeout_failed", { error: err instanceof Error ? err.message : String(err) }));
-          setState({ kind: "timeout", planTier: r.planTier });
-          return;
-        }
-
-        log("activation_success", { plan_tier: r.planTier });
-        setState({ kind: "success", planTier: r.planTier });
-
-        // Auto-redirect to dashboard after a brief moment so the user sees the success state.
+        // Auto-redirect to dashboard so the user lands on their active plan.
         setTimeout(() => {
           navigate({ to: "/dashboard", search: { upgraded: 1 } as never });
         }, 1500);
