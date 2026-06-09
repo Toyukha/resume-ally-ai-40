@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
   getUserPlan,
   type AnalysisResult,
 } from "@/lib/analyze.functions";
+import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -64,6 +65,21 @@ function Dashboard() {
   }, [pollWindowOpen, planQuery.data?.plan]);
 
   const analyzeFn = useServerFn(analyzeResume);
+  const refreshFn = useServerFn(refreshSubscriptionStatus);
+  const refreshMutation = useMutation({
+    mutationFn: () => refreshFn(),
+    onSuccess: (res) => {
+      planQuery.refetch();
+      if (res.changed) {
+        toast.success(`Subscription updated to ${res.planTier === "pro_2" ? "Pro Plan 2" : res.planTier === "pro_1" ? "Pro Plan 1" : res.planTier}.`);
+      } else if (res.reason === "no_successful_payment") {
+        toast.info("No verified payment found on your account.");
+      } else {
+        toast.success("Your subscription is already up to date.");
+      }
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Refresh failed"),
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -163,9 +179,23 @@ function Dashboard() {
                   )}
                 </div>
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => refreshMutation.mutate()}
+                disabled={refreshMutation.isPending}
+                title="Re-check your latest verified payment and update your plan"
+              >
+                {refreshMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="ml-1.5 hidden sm:inline">Refresh status</span>
+              </Button>
               {(isFree || planTier === "pro_1") && (
                 <Button size="sm" variant="gold" asChild>
-                  <Link to="/pricing">{isFree ? "Upgrade" : "Upgrade"}</Link>
+                  <Link to="/pricing">Upgrade</Link>
                 </Button>
               )}
             </Card>
