@@ -458,7 +458,16 @@ export const reconcileStuckActivations = createServerFn({ method: "POST" })
     const failed: Array<{ tx_ref: string; user_id: string; reason: string }> = [];
     let scanned = 0;
 
+    // Only the LATEST successful payment per user determines the active tier.
+    // Older payments must not overwrite a correctly-set profile (e.g. user paid
+    // pro_1 then upgraded to pro_2 — the pro_1 row must not reset them to pro_1).
+    type PaymentRow = NonNullable<typeof payments>[number];
+    const latestByUser = new Map<string, PaymentRow>();
     for (const p of payments ?? []) {
+      if (!latestByUser.has(p.user_id)) latestByUser.set(p.user_id, p);
+    }
+
+    for (const p of latestByUser.values()) {
       scanned++;
       const { data: prof } = await supabaseAdmin
         .from("profiles")
