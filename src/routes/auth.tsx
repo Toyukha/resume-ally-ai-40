@@ -94,6 +94,27 @@ function AuthPage() {
                 <form onSubmit={signIn} className="space-y-4 pt-4">
                   <Field id="email" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
                   <Field id="password" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!email) {
+                          toast.error("Please enter your email first.");
+                          return;
+                        }
+                        setLoading(true);
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/reset-password`,
+                        });
+                        setLoading(false);
+                        if (error) toast.error(error.message);
+                        else toast.success("Check your email for a reset link.");
+                      }}
+                      className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign in"}
                   </Button>
