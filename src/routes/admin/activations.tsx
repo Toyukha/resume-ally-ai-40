@@ -21,8 +21,13 @@ export const Route = createFileRoute("/admin/activations")({
 const EVENT_OPTIONS = [
   { value: "all", label: "All events" },
   { value: "activation_complete", label: "activation_complete" },
+  { value: "activation_self_healed", label: "activation_self_healed" },
+  { value: "activation_recovered", label: "activation_recovered" },
+  { value: "activation_recovered_via_webhook", label: "activation_recovered_via_webhook" },
+  { value: "activation_recovered_by_admin", label: "activation_recovered_by_admin" },
   { value: "already_verified", label: "already_verified" },
   { value: "activation_timeout", label: "activation_timeout" },
+  { value: "activation_no_effect", label: "activation_no_effect" },
   { value: "activate_pro_plan_failed", label: "activate_pro_plan_failed" },
   { value: "flw_verify_failed", label: "flw_verify_failed" },
   { value: "payment_not_found", label: "payment_not_found" },
