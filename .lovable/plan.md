@@ -1,75 +1,37 @@
-## What I found
+## What I’ll fix
 
-- **Opeyemi is already Pro Plan 1 in live production now.**
-  - Profile: `plan=pro`, `plan_tier=pro_1`
-  - Expiry: **2026-07-09 09:49:31 UTC**
-- The original payment for `GTJ-pro_1-a199fd89-1780996317211` was marked successful at **09:13 UTC**, but the profile did not reflect the upgrade during the callback window.
-- A later admin reconciliation repaired that account at **09:49 UTC**.
-- Production logs show the activation path succeeded server-side for that transaction, but the user-facing callback flow still timed out earlier.
+I verified the live record for `opeyemioyeyemi00@gmail.com`: the latest payment is `₦5,000`, marked successful, and the profile is already `pro / pro_1` with a valid expiry. I also found a live activation log showing the plan update completed successfully. That means the main problem is the app’s confirmation/sync flow, not the payment itself.
 
-## Why the dashboard showed Free
+## Plan
 
-Most likely one of these live-production conditions caused it:
+1. **Make dashboard plan reads authoritative**
+   - Update the server-side plan read used by the dashboard so it can reconcile from the user’s **latest successful payment** before returning plan data.
+   - Ensure the returned dashboard tier reflects the user’s **current plan**, not an older or stale state.
+   - Preserve the intended mapping:
+     - `₦5,000` → **Pro Plan 1**
+     - `₦10,000` → **Pro Plan 2**
 
-1. **The profile was still actually free during the first callback window** even though the payment row was already marked successful.
-2. **The dashboard was reading before the repair landed** and therefore correctly showed Free at that moment.
-3. **There is still activation drift in live production** for at least one successful Pro 1 payment, meaning the activation system is not yet fully reliable.
+2. **Fix the payment callback confirmation flow**
+   - Adjust the callback page so it does not show the “We couldn’t confirm your upgrade” timeout when the backend has already verified and activated the plan.
+   - Use the successful verification/recovery result as the primary signal, then revalidate the dashboard state in the background.
+   - Keep the retry path only for true unresolved cases.
 
-## Live production verification result
+3. **Fix “Fix my plan” and dashboard refresh behavior**
+   - Strengthen the recovery/refresh server functions so they return the fully reconciled plan state after activation.
+   - Update the dashboard query handling so the UI refreshes immediately after recovery and does not continue displaying Free when the reconciled state is Pro.
+   - Add proper loading/error handling instead of silently defaulting to Free during sync gaps.
 
-### Pro Plan 1
-- Successful payments checked in the last 14 days: **3**
-- Successful payments whose profile does **not** match the paid tier: **1**
-
-### Pro Plan 2
-- Successful payments checked in the last 14 days: **2**
-- Successful payments whose profile does **not** match the paid tier: **0**
-
-## Remaining live issue
-
-There is still **one live Pro Plan 1 mismatch** in production:
-- User: `98da6986-f4e9-43bc-8f83-445b705f05ea`
-- Payment: `GTJ-pro_1-98da6986-1780828735255`
-- Paid tier: `pro_1`
-- Current profile tier: `pro_2`
-
-This means **Pro Plan 2 activation looks healthy**, while **Pro Plan 1 still has at least one live inconsistency** that should be reconciled and then prevented going forward.
-
-## Implementation plan
-
-1. **Reconcile the remaining live mismatch**
-   - Repair the mismatched successful Pro 1 payment so the profile matches the paid tier.
-   - Write an activation event entry for auditability.
-
-2. **Harden live production activation verification**
-   - Re-check the callback verification path so a successful payment cannot remain marked successful while the profile stays on the wrong plan.
-   - Treat mismatched plan tier as a recoverable activation failure and re-run activation automatically.
-
-3. **Make dashboard plan refresh more deterministic after checkout**
-   - Ensure the dashboard re-fetches the latest plan state immediately after return from payment callback and after any activation recovery.
-   - Confirm there is no stale cached plan surviving the redirect.
-
-4. **Add a production-safe validation pass for both plans**
-   - Validate Pro 1 and Pro 2 upgrade flows against live records by checking:
-     - payment marked successful
-     - profile plan matches paid tier
-     - expiry is present and in the future
-     - activation event trail exists
-
-5. **Report exact root cause once code and data are aligned**
-   - After the repair, re-check recent live payments and confirm whether the issue was:
-     - callback-only timing,
-     - activation drift,
-     - or stale dashboard state.
+4. **Validate both paid tiers end-to-end**
+   - Verify the final behavior for:
+     - **Pro Plan 1** (`₦5,000`)
+     - **Pro Plan 2** (`₦10,000`)
+   - Confirm the dashboard always shows the user’s **current active plan** after successful payment, retry, or manual refresh.
 
 ## Technical details
 
-- The dashboard reads plan state from `getUserPlan`, which pulls directly from `profiles` and computes effective plan from `pro_expires_at`.
-- Since Opeyemi’s live `profiles` row is now correct, any continued Free display would point to **stale client state or pre-repair timing**, not the current stored plan.
-- The production dataset still shows a **Pro 1-only mismatch pattern**, so that tier needs one more pass in live reconciliation and validation.
-
-## Expected outcome
-
-- Opeyemi’s dashboard consistently shows **Pro Plan 1**.
-- All recent successful Pro 1 and Pro 2 payments in live production match the profile tier.
-- Future successful Flutterwave payments activate independently of browser timing and are visible on the dashboard immediately after return.
+- Likely code paths involved:
+  - `src/lib/analyze.functions.ts` (`getUserPlan`)
+  - `src/lib/flutterwave.functions.ts` (verify, recover, refresh)
+  - `src/routes/_authenticated/payment-callback.tsx`
+  - `src/routes/_authenticated/dashboard.tsx`
+- I’ll keep the existing payment model and tighten the sync/reconciliation logic only where the incorrect UI state is being produced.
