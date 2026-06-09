@@ -1,36 +1,85 @@
-## Problem
+# Fix: paid Pro users not being upgraded
 
-User `opeyemioyeyemi00@gmail.com` paid ₦5,000 for Pro Plan 1 — the payment row was marked `successful` in the database, but the `profiles.plan` / `plan_tier` / `pro_expires_at` columns never updated, and the dashboard never reflected the upgrade.
+## What's happening today
 
-Root cause: the `prevent_billing_field_self_update` trigger on `public.profiles` only bypasses billing-field changes when (a) the current role is `service_role`, or (b) `is_admin(auth.uid())` is true. The verify server function uses the service-role admin client, but in our current Supabase setup neither bypass reliably evaluates true for that connection path, so the `UPDATE profiles SET plan='pro', plan_tier=…` inside `verifyFlutterwavePayment` is rejected with "Not allowed to modify billing fields". The payment row update (different table, no trigger) succeeds in parallel, leaving the user in a "paid but still free" state.
+- The only path that activates Pro is the browser callback at `/payment-callback`, which calls `verifyFlutterwavePayment` and then polls `getUserPlan` for up to 30s.
+- For user `opeyemioyeyemi00@gmail.com` (tx_ref `GTJ-pro_1-a199fd89-1780996317211`):
+  - Flutterwave returned `status=successful`.
+  - The `payments` row was updated to `status=successful, verified_at=09:13:10` — meaning the server reached the line *after* the `activate_pro_plan` RPC call.
+  - But no `activation_complete` event was persisted, and the profile stayed on `free` through both 30s polls.
+  - Net effect: charge captured, plan not upgraded.
+- There is **no Flutterwave webhook** wired up, so if the browser callback fails for any reason (network blip, user closes tab, RPC effect not visible to the user's session, etc.) the upgrade silently never happens.
 
-Secondary issue: even after a successful verification, the dashboard does not always show the new plan until a hard reload, because the `user-plan` query is only invalidated on the callback page.
+## Goal
 
-## Fix
+Make plan activation reliable and independent of the user's browser, and self-heal cases where the payment is `successful` but the profile is still `free`.
 
-### 1. Activate plans through a SECURITY DEFINER RPC (migration)
-Create `public.activate_pro_plan(_user_id uuid, _plan_tier text, _days int)` as `SECURITY DEFINER` owned by `postgres`. It performs the `profiles` update atomically and is immune to the trigger because the trigger already has an explicit `service_role` / admin bypass and SECURITY DEFINER runs as the function owner. Grant `EXECUTE` to `service_role` only (not `authenticated` or `anon`).
+## Changes
 
-Also harden the trigger so future server-side writes don't hit the same wall: add a bypass when `auth.uid()` IS NULL (i.e. no authenticated user — only reachable from service-role / DB-internal callers).
+### 1. Add a Flutterwave webhook (server-to-server activation)
 
-### 2. Use the RPC from `verifyFlutterwavePayment`
-In `src/lib/flutterwave.functions.ts`, replace the direct `supabaseAdmin.from("profiles").update(...)` with `supabaseAdmin.rpc("activate_pro_plan", { _user_id: userId, _plan_tier: payment.plan_tier, _days: 30 })`. Keep the payment-row update as is. Keep both writes, but run the profile RPC FIRST and only mark the payment `successful` if the plan activation succeeded — so we never again end up with a paid-but-not-upgraded user.
+New server route: `src/routes/api/public/hooks/flutterwave.ts`.
 
-### 3. Backfill the affected user
-Run a one-off data update setting `opeyemioyeyemi00@gmail.com`'s profile to `plan='pro'`, `plan_tier='pro_1'`, `pro_started_at=2026-06-09 07:39:03Z`, `pro_expires_at = pro_started_at + 30 days`.
+- Verifies the `verif-hash` header against a new `FLUTTERWAVE_WEBHOOK_HASH` secret (timing-safe compare).
+- Re-fetches the transaction from Flutterwave's `/transactions/:id/verify` endpoint (don't trust the webhook payload alone).
+- Locates the matching `payments` row by `tx_ref` + amount + currency.
+- If valid and not already activated:
+  - Calls `activate_pro_plan(user_id, plan_tier, 30)`.
+  - Marks `payments.status='successful'` (idempotent — skip if already successful and profile already pro).
+  - Persists an `activation_complete` (or `activation_recovered_via_webhook`) event into `payment_activation_events` with `source='webhook'`.
+- Always returns 200 after persisting, so Flutterwave doesn't retry storm.
 
-### 4. Auto-refresh the dashboard after a successful payment
-- In `src/routes/_authenticated/payment-callback.tsx`, after `verify(...)` resolves successfully, poll `getUserPlan` (or re-invalidate + refetch the `user-plan` query) up to ~10× at 1.5s intervals until `plan === 'pro'`, then redirect to `/dashboard`. This handles any residual replication lag.
-- In `src/routes/_authenticated/dashboard.tsx`, broaden the existing `user-plan` query to also `refetchInterval` while the tab is focused for the first 30 seconds after mount when `?upgraded=1` is present in the URL (the callback page will append this on redirect). This guarantees the badge/limits flip without a manual reload.
+### 2. Make activation idempotent and self-healing on the callback
 
-### 5. Verify
-- Re-run `verifyFlutterwavePayment` flow in preview (existing successful payment short-circuits via `alreadyVerified`, so testing requires a fresh transaction — not in scope, but logs from the next real payment will confirm).
-- Confirm the affected user's profile now shows `plan='pro'`, `plan_tier='pro_1'`, valid `pro_expires_at`.
-- Confirm dashboard reflects Pro plan immediately after redirect.
+Update `verifyFlutterwavePayment` in `src/lib/flutterwave.functions.ts`:
 
-## Files touched
-- new migration: `activate_pro_plan` function + trigger hardening + grants
-- `src/lib/flutterwave.functions.ts` — call RPC, reorder writes
-- `src/routes/_authenticated/payment-callback.tsx` — poll + redirect with `?upgraded=1`
-- `src/routes/_authenticated/dashboard.tsx` — short refetch window when `?upgraded=1`
-- data fix for `opeyemioyeyemi00@gmail.com`
+- When `payment.status === 'successful'` (the `already_verified` branch today), also re-check the user's profile. If `plan !== 'pro'` or `plan_tier !== payment.plan_tier`, re-run `activate_pro_plan` before returning. This fixes users whose payment row says "successful" but whose profile somehow didn't get the upgrade (exactly the case we just saw).
+- After `activate_pro_plan`, do a `SELECT plan, plan_tier, pro_expires_at FROM profiles WHERE id = userId` and include it in the log payload + the returned response. If the read-back still shows `free`, persist a new terminal event `activation_no_effect` with the before/after snapshot so we never again have a silent "RPC returned OK but profile didn't change".
+
+### 3. Recovery action from the timeout screen
+
+`src/routes/_authenticated/payment-callback.tsx`:
+
+- On timeout, instead of asking the user to reload, call a new `recoverActivation` server fn that:
+  - Looks up the payment by `tx_ref + user_id`.
+  - If `status='successful'`, re-runs `activate_pro_plan` and returns the fresh profile.
+  - If still pending, re-calls verify with the transaction id.
+- Show a "Fix my plan" button that calls it and transitions to success on resolution.
+
+### 4. Admin reconciliation tool
+
+New server fn `reconcileStuckActivations` (admin-only) + a button on `src/routes/admin/activations.tsx`:
+
+- Finds `payments` rows with `status='successful'` in the last 7 days whose owning profile is not `pro` or has the wrong `plan_tier`.
+- Runs `activate_pro_plan` for each and logs an `activation_recovered_by_admin` event.
+- Lets you one-click fix this specific user right now (and any future stragglers) without manual SQL.
+
+### 5. Fix this user immediately
+
+Migration step (one-shot, in the same migration that adds the event-type label) — re-run the RPC for the affected payment so his plan reflects what he actually paid for:
+
+```sql
+SELECT public.activate_pro_plan('a199fd89-ac87-42c4-9f89-8ff66b634545', 'pro_1', 30);
+INSERT INTO public.payment_activation_events (event, success, user_id, tx_ref, plan_tier, metadata)
+VALUES ('activation_recovered_by_admin', true, 'a199fd89-ac87-42c4-9f89-8ff66b634545',
+        'GTJ-pro_1-a199fd89-1780996317211', 'pro_1',
+        jsonb_build_object('source','manual_repair','reason','callback_timeout_without_profile_update'));
+```
+
+(He was manually bumped to `pro_2` at 09:21 — confirm with you whether to set him back to the `pro_1` he actually paid for, or leave the goodwill upgrade in place. See question below.)
+
+## Secrets / config required
+
+- `FLUTTERWAVE_WEBHOOK_HASH` — the "Secret hash" you set in the Flutterwave dashboard's webhook section. We'll prompt you to add this once the webhook route is in place.
+- Webhook URL to configure in Flutterwave dashboard: `https://www.thecareerboost.com/api/public/hooks/flutterwave`.
+
+## Why this fixes the root cause
+
+Even if we never figure out exactly why the browser-side poll didn't see the `pro` row in this one case, the webhook path runs entirely on Flutterwave's schedule (with retries) and the `already_verified` branch now actively repairs profile drift. So a paid user gets upgraded whether or not their browser ever returns to `/payment-callback`.
+
+## Open question
+
+For the affected user `opeyemioyeyemi00@gmail.com`: he paid for **Pro Plan 1** but was manually bumped to **Pro Plan 2** at 09:21. Do you want me to:
+
+- (a) leave him on Pro Plan 2 as goodwill, or
+- (b) correct him to Pro Plan 1 (what he actually paid for)?
