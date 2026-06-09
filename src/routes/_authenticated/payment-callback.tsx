@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/payment-callback")({
 type State =
   | { kind: "verifying" }
   | { kind: "success"; planTier: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  | { kind: "timeout"; planTier: string };
 
 function CallbackPage() {
   const search = Route.useSearch();
@@ -53,15 +54,25 @@ function CallbackPage() {
       try {
         const r = await verify({ data: { tx_ref: search.tx_ref!, transaction_id: search.transaction_id! } });
 
-        // Poll the user-plan until it reflects Pro (handles any replication lag).
-        for (let i = 0; i < 8; i++) {
+        // Poll the user-plan until it reflects Pro (up to ~30 s).
+        let confirmed = false;
+        for (let i = 0; i < 20; i++) {
           const plan = await fetchPlan().catch(() => null);
-          if (plan?.plan === "pro") break;
-          await new Promise((res) => setTimeout(res, 1200));
+          if (plan?.plan === "pro") {
+            confirmed = true;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 1500));
         }
 
         await queryClient.invalidateQueries();
         await router.invalidate();
+
+        if (!confirmed) {
+          setState({ kind: "timeout", planTier: r.planTier });
+          return;
+        }
+
         setState({ kind: "success", planTier: r.planTier });
 
         // Auto-redirect to dashboard after a brief moment so the user sees the success state.
@@ -109,6 +120,35 @@ function CallbackPage() {
                 </Button>
                 <Button variant="hero" asChild>
                   <Link to="/pricing">Try again</Link>
+                </Button>
+              </div>
+            </>
+          )}
+          {state.kind === "timeout" && (
+            <>
+              <XCircle className="mx-auto h-12 w-12 text-amber-500" />
+              <h1 className="mt-6 font-display text-2xl font-semibold">We couldn&apos;t confirm your upgrade</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Your payment was received, but we couldn&apos;t activate your {state.planTier === "pro_2" ? "Pro Plan 2" : "Pro Plan 1"} within 30 seconds.
+                Don&apos;t worry — your transaction is safe.
+              </p>
+              <div className="mt-6 rounded-lg bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
+                <p className="font-medium">What to do next:</p>
+                <ul className="mt-1 list-inside list-disc space-y-1 text-left">
+                  <li>Check your dashboard — the plan may already be active.</li>
+                  <li>If not, tap <strong>Retry activation</strong> to try again.</li>
+                  <li>Still stuck? Reach out via <strong>Support</strong> and we&apos;ll fix it immediately.</li>
+                </ul>
+              </div>
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Button variant="outline" asChild>
+                  <Link to="/dashboard">Go to Dashboard</Link>
+                </Button>
+                <Button variant="hero" onClick={() => window.location.reload()}>
+                  Retry Activation
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link to="/support">Contact Support</Link>
                 </Button>
               </div>
             </>
