@@ -212,17 +212,25 @@ function CallbackPage() {
                   <li>Still stuck? Reach out via <strong>Support</strong> and we&apos;ll fix it immediately.</li>
                 </ul>
               </div>
+              {recoveryError && (
+                <p className="mt-4 text-sm text-destructive">{recoveryError}</p>
+              )}
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <Button variant="outline" asChild>
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
-                <Button variant="hero" onClick={() => window.location.reload()}>
-                  Retry Activation
+                <Button variant="hero" onClick={handleRecover} disabled={recovering}>
+                  {recovering ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Fixing…</>
+                  ) : (
+                    "Fix my plan"
+                  )}
                 </Button>
                 <Button variant="outline" asChild>
                   <Link to="/support">Contact Support</Link>
                 </Button>
               </div>
+
             </>
           )}
         </Card>
