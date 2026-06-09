@@ -82,12 +82,54 @@ export const getUserPlan = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const admin = await isAdminUser(supabase as never, userId);
-    const { data } = await supabase
+    let { data } = await supabase
       .from("profiles")
       .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
       .maybeSingle();
-    const status = resolvePlanStatus(data as PlanRow | null);
+    let status = resolvePlanStatus(data as PlanRow | null);
+
+    // Self-heal: if the profile doesn't reflect an active Pro plan but the
+    // user has a recent successful payment (within 30 days), reconcile the
+    // profile from the latest verified payment. Keeps the dashboard truthful
+    // even if the callback poll or webhook missed updating the profile.
+    if (!admin && status.effectivePlan !== "pro") {
+      const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
+      const { data: latestPayment } = await adminClient
+        .from("payments")
+        .select("plan_tier, verified_at, created_at")
+        .eq("user_id", userId)
+        .eq("status", "successful")
+        .in("plan_tier", ["pro_1", "pro_2"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestPayment) {
+        const paidAt = new Date(
+          (latestPayment.verified_at as string | null) ?? (latestPayment.created_at as string),
+        );
+        const ageMs = Date.now() - paidAt.getTime();
+        const windowMs = 30 * 24 * 60 * 60 * 1000;
+        if (ageMs < windowMs) {
+          const remainingDays = Math.max(1, Math.ceil((windowMs - ageMs) / (24 * 60 * 60 * 1000)));
+          const { error: healErr } = await adminClient.rpc("activate_pro_plan", {
+            _user_id: userId,
+            _plan_tier: latestPayment.plan_tier as "pro_1" | "pro_2",
+            _days: remainingDays,
+          });
+          if (!healErr) {
+            const { data: healed } = await supabase
+              .from("profiles")
+              .select("plan, plan_tier, pro_started_at, pro_expires_at")
+              .eq("id", userId)
+              .maybeSingle();
+            data = healed;
+            status = resolvePlanStatus(data as PlanRow | null);
+          }
+        }
+      }
+    }
 
     // Count this month's analyses (calendar-month reset)
     const monthStart = new Date();
