@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { listActivationEvents } from "@/lib/admin.functions";
+import { listActivationEvents, reconcileStuckActivations } from "@/lib/admin.functions";
+import { Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/admin/activations")({
   head: () => ({ meta: [{ title: "Activation Diagnostics — Admin" }] }),
