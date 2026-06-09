@@ -406,10 +406,17 @@ export const listActivationEvents = createServerFn({ method: "POST" })
 
     const search = data.search?.trim();
     if (search) {
-      // tx_ref / user_id / error_message / plan_tier substring match
       const escaped = search.replace(/[%,]/g, "");
+      const isUuid = /^[0-9a-f-]{36}$/i.test(search);
+      let userIdFromEmail: string | null = null;
+      if (search.includes("@")) {
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const u = users.users.find((x) => (x.email ?? "").toLowerCase().includes(search.toLowerCase()));
+        userIdFromEmail = u?.id ?? null;
+      }
+      const noMatch = "00000000-0000-0000-0000-000000000000";
       query = query.or(
-        `tx_ref.ilike.%${escaped}%,user_id.eq.${/^[0-9a-f-]{36}$/i.test(search) ? search : "00000000-0000-0000-0000-000000000000"},error_message.ilike.%${escaped}%,plan_tier.ilike.%${escaped}%`,
+        `tx_ref.ilike.%${escaped}%,user_id.eq.${isUuid ? search : userIdFromEmail ?? noMatch},error_message.ilike.%${escaped}%,plan_tier.ilike.%${escaped}%`,
       );
     }
 
