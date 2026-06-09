@@ -73,6 +73,46 @@ export const initFlutterwavePayment = createServerFn({ method: "POST" })
     return { checkoutUrl: body.data.link, txRef };
   });
 
+const TERMINAL_FAILURE_EVENTS = new Set([
+  "config_missing",
+  "payment_lookup_error",
+  "payment_not_found",
+  "flw_verify_failed",
+  "activate_pro_plan_failed",
+  "payment_mark_successful_failed",
+]);
+
+const SUCCESS_EVENTS = new Set(["activation_complete", "already_verified"]);
+
+async function persistActivationEvent(
+  event: string,
+  fields: Record<string, unknown>,
+) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("payment_activation_events").insert({
+      event,
+      success: SUCCESS_EVENTS.has(event),
+      user_id: (fields.user_id as string) ?? null,
+      tx_ref: (fields.tx_ref as string) ?? null,
+      payment_id: (fields.payment_id as string) ?? null,
+      plan_tier: (fields.plan_tier as string) ?? null,
+      last_known_plan: (fields.last_known_plan as string) ?? null,
+      last_known_plan_tier: (fields.last_known_plan_tier as string) ?? null,
+      elapsed_ms:
+        typeof fields.elapsed_ms === "number" ? (fields.elapsed_ms as number) : null,
+      error_message:
+        (fields.error as string) ??
+        (fields.rpc_error as string) ??
+        (fields.flw_message as string) ??
+        null,
+      metadata: fields as never,
+    });
+  } catch (err) {
+    console.error("persist_activation_event_failed", err);
+  }
+}
+
 function logActivation(
   event: string,
   fields: Record<string, unknown>,
@@ -83,6 +123,10 @@ function logActivation(
     "flw_activation " +
       JSON.stringify({ event, ts: new Date().toISOString(), ...fields }),
   );
+  if (TERMINAL_FAILURE_EVENTS.has(event) || SUCCESS_EVENTS.has(event)) {
+    // Fire-and-forget: never let logging failures break the activation flow.
+    void persistActivationEvent(event, fields);
+  }
 }
 
 export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
