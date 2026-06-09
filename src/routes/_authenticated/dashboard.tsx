@@ -175,6 +175,25 @@ function Dashboard() {
     : planTier === "pro_legacy" ? "Pro (Legacy)"
     : "Free plan";
 
+  const runDebugCheck = async () => {
+    setDebugLoading(true);
+    try {
+      const [planRes, refreshRes] = await Promise.all([planFn(), refreshFn()]);
+      setDebugData({ plan: planRes, refresh: refreshRes, at: new Date().toISOString() });
+      setDebugOpen(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Debug check failed");
+    } finally {
+      setDebugLoading(false);
+    }
+  };
+
+  // The UI badge is rendered from planQuery.data (getUserPlan).
+  const uiSource = "getUserPlan (planQuery cache)";
+  const planTierFromPlan = debugData?.plan?.planTier ?? null;
+  const planTierFromRefresh = debugData?.refresh?.planTier ?? null;
+  const tiersAgree = planTierFromPlan === planTierFromRefresh;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
