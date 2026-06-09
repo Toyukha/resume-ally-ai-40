@@ -195,17 +195,67 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
     }
 
     if (payment.status === "successful") {
-      logActivation("already_verified", {
-        user_id: userId,
-        tx_ref: data.tx_ref,
-        payment_id: payment.id,
-        plan_tier: payment.plan_tier,
-        last_known_plan: profileBefore?.plan,
-        last_known_plan_tier: profileBefore?.plan_tier,
-        elapsed_ms: elapsed(),
-      });
+      // Self-heal: payment row says successful, but the profile may not actually
+      // reflect the upgrade (we've seen this happen when the callback poll never
+      // observed the new plan). Re-run the RPC if the profile drifted.
+      const needsHeal =
+        profileBefore?.plan !== "pro" ||
+        profileBefore?.plan_tier !== payment.plan_tier ||
+        !profileBefore?.pro_expires_at ||
+        new Date(profileBefore.pro_expires_at as string) <= new Date();
+
+      if (needsHeal) {
+        const { error: healErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+          _user_id: userId,
+          _plan_tier: payment.plan_tier,
+          _days: 30,
+        });
+        const { data: profileAfter } = await supabaseAdmin
+          .from("profiles")
+          .select("plan, plan_tier, pro_expires_at")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (healErr || profileAfter?.plan !== "pro" || profileAfter?.plan_tier !== payment.plan_tier) {
+          logActivation("activation_no_effect", {
+            user_id: userId,
+            tx_ref: data.tx_ref,
+            payment_id: payment.id,
+            plan_tier: payment.plan_tier,
+            last_known_plan: profileBefore?.plan,
+            last_known_plan_tier: profileBefore?.plan_tier,
+            profile_after_plan: profileAfter?.plan,
+            profile_after_plan_tier: profileAfter?.plan_tier,
+            rpc_error: healErr?.message,
+            elapsed_ms: elapsed(),
+          });
+        } else {
+          logActivation("activation_self_healed", {
+            user_id: userId,
+            tx_ref: data.tx_ref,
+            payment_id: payment.id,
+            plan_tier: payment.plan_tier,
+            last_known_plan: profileBefore?.plan,
+            last_known_plan_tier: profileBefore?.plan_tier,
+            profile_after_plan: profileAfter?.plan,
+            profile_after_plan_tier: profileAfter?.plan_tier,
+            elapsed_ms: elapsed(),
+          });
+        }
+      } else {
+        logActivation("already_verified", {
+          user_id: userId,
+          tx_ref: data.tx_ref,
+          payment_id: payment.id,
+          plan_tier: payment.plan_tier,
+          last_known_plan: profileBefore?.plan,
+          last_known_plan_tier: profileBefore?.plan_tier,
+          elapsed_ms: elapsed(),
+        });
+      }
       return { ok: true, alreadyVerified: true, planTier: payment.plan_tier };
     }
+
 
     // Verify with Flutterwave
     const resp = await fetch(`${FLW_API}/transactions/${encodeURIComponent(data.transaction_id)}/verify`, {
