@@ -318,3 +318,31 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
 
     return { ok: true, alreadyVerified: false, planTier: payment.plan_tier };
   });
+
+// Records a callback-side activation timeout so it surfaces in admin diagnostics.
+const ReportTimeoutSchema = z.object({
+  tx_ref: z.string().min(4).max(120),
+  transaction_id: z.string().min(1).max(60).optional(),
+  plan_tier: z.enum(["pro_1", "pro_2"]).optional(),
+  elapsed_ms: z.number().int().min(0).max(600000).optional(),
+  last_known_plan: z.string().max(20).optional(),
+  last_known_plan_tier: z.string().max(20).optional(),
+});
+
+export const reportActivationTimeout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ReportTimeoutSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await persistActivationEvent("activation_timeout", {
+      user_id: userId,
+      tx_ref: data.tx_ref,
+      transaction_id: data.transaction_id,
+      plan_tier: data.plan_tier,
+      elapsed_ms: data.elapsed_ms,
+      last_known_plan: data.last_known_plan,
+      last_known_plan_tier: data.last_known_plan_tier,
+      source: "callback",
+    });
+    return { ok: true };
+  });
