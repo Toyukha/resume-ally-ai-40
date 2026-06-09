@@ -240,6 +240,58 @@ function Dashboard() {
           )}
         </div>
 
+        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus */}
+        <div className="mb-6">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={runDebugCheck}
+            disabled={debugLoading}
+            className="text-xs text-muted-foreground"
+          >
+            {debugLoading ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
+            Debug: compare plan sources
+          </Button>
+          {debugOpen && debugData && (
+            <Card className={`mt-2 p-4 text-xs ${tiersAgree ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="font-semibold">
+                  Plan source comparison · {tiersAgree ? "✅ in sync" : "⚠️ mismatch"}
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => setDebugOpen(false)} className="h-6 px-2">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="mb-2 text-muted-foreground">
+                UI is rendering from: <span className="font-mono text-foreground">{uiSource}</span> ·
+                {" "}badge tier: <span className="font-mono text-foreground">{planTier}</span> ·
+                {" "}checked at {new Date(debugData.at).toLocaleTimeString()}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <div className="mb-1 font-semibold">getUserPlan</div>
+                  <pre className="overflow-auto rounded bg-background/60 p-2 font-mono text-[10px]">
+{JSON.stringify(debugData.plan, null, 2)}
+                  </pre>
+                </div>
+                <div>
+                  <div className="mb-1 font-semibold">refreshSubscriptionStatus</div>
+                  <pre className="overflow-auto rounded bg-background/60 p-2 font-mono text-[10px]">
+{JSON.stringify(debugData.refresh, null, 2)}
+                  </pre>
+                </div>
+              </div>
+              {!tiersAgree && (
+                <div className="mt-2 text-destructive">
+                  planTier differs: getUserPlan={String(planTierFromPlan)} · refresh={String(planTierFromRefresh)}.
+                  Click "Refresh status" above to reconcile.
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
+
+
         {/* Usage widget — three counters tick down together (bundled per analysis) */}
         {planQuery.data && !isAdmin && monthlyLimit !== null && (
           <div className="mb-6 grid gap-3 md:grid-cols-3">
