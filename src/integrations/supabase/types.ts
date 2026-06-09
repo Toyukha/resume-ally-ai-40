@@ -417,6 +417,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_pro_plan: {
+        Args: { _days: number; _plan_tier: string; _user_id: string }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

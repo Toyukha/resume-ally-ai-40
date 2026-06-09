@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import { verifyFlutterwavePayment } from "@/lib/flutterwave.functions";
+import { getUserPlan } from "@/lib/analyze.functions";
 import { z } from "zod";
 
 const SearchSchema = z.object({
@@ -31,6 +32,7 @@ function CallbackPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const verify = useServerFn(verifyFlutterwavePayment);
+  const fetchPlan = useServerFn(getUserPlan);
   const [state, setState] = useState<State>({ kind: "verifying" });
   const ran = useRef(false);
 
@@ -47,14 +49,30 @@ function CallbackPage() {
       return;
     }
 
-    verify({ data: { tx_ref: search.tx_ref, transaction_id: search.transaction_id } })
-      .then(async (r) => {
+    (async () => {
+      try {
+        const r = await verify({ data: { tx_ref: search.tx_ref!, transaction_id: search.transaction_id! } });
+
+        // Poll the user-plan until it reflects Pro (handles any replication lag).
+        for (let i = 0; i < 8; i++) {
+          const plan = await fetchPlan().catch(() => null);
+          if (plan?.plan === "pro") break;
+          await new Promise((res) => setTimeout(res, 1200));
+        }
+
         await queryClient.invalidateQueries();
         await router.invalidate();
         setState({ kind: "success", planTier: r.planTier });
-      })
-      .catch((e) => setState({ kind: "error", message: e instanceof Error ? e.message : "Verification failed" }));
-  }, [search, verify, queryClient, router]);
+
+        // Auto-redirect to dashboard after a brief moment so the user sees the success state.
+        setTimeout(() => {
+          navigate({ to: "/dashboard", search: { upgraded: 1 } as never });
+        }, 1500);
+      } catch (e) {
+        setState({ kind: "error", message: e instanceof Error ? e.message : "Verification failed" });
+      }
+    })();
+  }, [search, verify, fetchPlan, queryClient, router, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -23,18 +23,24 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    upgraded: s.upgraded === 1 || s.upgraded === "1" ? 1 : undefined,
+  }),
   component: Dashboard,
 });
 
 
 
 function Dashboard() {
+  const search = Route.useSearch();
+  const justUpgraded = search.upgraded === 1;
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [pollWindowOpen, setPollWindowOpen] = useState(justUpgraded);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
@@ -43,7 +49,19 @@ function Dashboard() {
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
+    refetchInterval: pollWindowOpen ? 2000 : false,
   });
+
+  // Stop polling once Pro is detected, and cap the polling window to 30s.
+  useEffect(() => {
+    if (!pollWindowOpen) return;
+    if (planQuery.data?.plan === "pro") {
+      setPollWindowOpen(false);
+      return;
+    }
+    const t = setTimeout(() => setPollWindowOpen(false), 30_000);
+    return () => clearTimeout(t);
+  }, [pollWindowOpen, planQuery.data?.plan]);
 
   const analyzeFn = useServerFn(analyzeResume);
 

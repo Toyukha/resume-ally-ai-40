@@ -1,40 +1,36 @@
-Three deliverables on top of the current build. Scoped to keep changes additive and behind small, reversible steps.
+## Problem
 
-## 1. PDF / source-file storage bucket
+User `opeyemioyeyemi00@gmail.com` paid ₦5,000 for Pro Plan 1 — the payment row was marked `successful` in the database, but the `profiles.plan` / `plan_tier` / `pro_expires_at` columns never updated, and the dashboard never reflected the upgrade.
 
-Currently the dashboard extracts text in the browser and only stores `resume_text` in the `analyses` table — the original file is never persisted. This adds optional original-file storage so users can re-download their CV and (later) so we can drop oversized `resume_text` rows.
+Root cause: the `prevent_billing_field_self_update` trigger on `public.profiles` only bypasses billing-field changes when (a) the current role is `service_role`, or (b) `is_admin(auth.uid())` is true. The verify server function uses the service-role admin client, but in our current Supabase setup neither bypass reliably evaluates true for that connection path, so the `UPDATE profiles SET plan='pro', plan_tier=…` inside `verifyFlutterwavePayment` is rejected with "Not allowed to modify billing fields". The payment row update (different table, no trigger) succeeds in parallel, leaving the user in a "paid but still free" state.
 
-- New private bucket `resumes` (RLS: users can only read/write under `{userId}/...`; service_role full access).
-- Add `resume_storage_path TEXT` column to `analyses`.
-- On dashboard submit, after a successful extract, upload the original file to `resumes/{userId}/{uuid}.{ext}` (best-effort — failure does not block analysis).
-- New server fn `getResumeDownloadUrl(analysisId)` returns a 60s signed URL; surface a "Download original" link on the analysis detail.
+Secondary issue: even after a successful verification, the dashboard does not always show the new plan until a hard reload, because the `user-plan` query is only invalidated on the callback page.
 
-## 2. Queued AI analysis jobs
+## Fix
 
-Replace the synchronous `analyzeResume` round trip with a job queue so big analyses don't block the request and don't time out on the worker.
+### 1. Activate plans through a SECURITY DEFINER RPC (migration)
+Create `public.activate_pro_plan(_user_id uuid, _plan_tier text, _days int)` as `SECURITY DEFINER` owned by `postgres`. It performs the `profiles` update atomically and is immune to the trigger because the trigger already has an explicit `service_role` / admin bypass and SECURITY DEFINER runs as the function owner. Grant `EXECUTE` to `service_role` only (not `authenticated` or `anon`).
 
-- New table `analysis_jobs(id, user_id, status [pending|processing|completed|failed], resume_text, job_description, resume_filename, resume_storage_path, analysis_id, error, attempts, created_at, started_at, completed_at)`.
-- `enqueueAnalysis` server fn: validates input, checks plan/quota (same logic as today), inserts a `pending` row, returns `jobId`. Replaces the dashboard's direct `analyzeResume` call.
-- `getJob(jobId)` server fn: polled by the dashboard every 2s; returns status and final `analysisId` when done.
-- `/api/public/hooks/process-analysis-jobs` server route: picks the oldest `pending` row, marks it `processing`, runs the existing AI pipeline, writes the `analyses` row, marks the job `completed`. Auth = anon apikey header.
-- `pg_cron` every minute to invoke the route (also invokable directly from `enqueueAnalysis` via `pg_net` for instant start; cron is the safety net for retries).
-- Dashboard UI: after submit show "Analyzing… (queued)" with a progress indicator; on `completed` load the result via existing `getAnalysis`.
-- Keep the legacy `analyzeResume` export as a thin wrapper that enqueues + polls so any external callers still work.
+Also harden the trigger so future server-side writes don't hit the same wall: add a bypass when `auth.uid()` IS NULL (i.e. no authenticated user — only reachable from service-role / DB-internal callers).
 
-## 3. Usage alerts
+### 2. Use the RPC from `verifyFlutterwavePayment`
+In `src/lib/flutterwave.functions.ts`, replace the direct `supabaseAdmin.from("profiles").update(...)` with `supabaseAdmin.rpc("activate_pro_plan", { _user_id: userId, _plan_tier: payment.plan_tier, _days: 30 })`. Keep the payment-row update as is. Keep both writes, but run the profile RPC FIRST and only mark the payment `successful` if the plan activation succeeded — so we never again end up with a paid-but-not-upgraded user.
 
-Daily check that writes to existing `system_notifications` table when thresholds are crossed; super-admins already see those.
+### 3. Backfill the affected user
+Run a one-off data update setting `opeyemioyeyemi00@gmail.com`'s profile to `plan='pro'`, `plan_tier='pro_1'`, `pro_started_at=2026-06-09 07:39:03Z`, `pro_expires_at = pro_started_at + 30 days`.
 
-- New SQL function `public.get_capacity_snapshot()` returning DB size, analyses row count, monthly analyses count, active pro users.
-- `/api/public/hooks/usage-alerts` server route: reads the snapshot, and if DB size > 400 MB (80% of free tier) or monthly analyses > configurable threshold, inserts a `system_notifications` row of type `capacity_warning` targeted at super-admins.
-- `pg_cron` daily at 08:00 UTC.
+### 4. Auto-refresh the dashboard after a successful payment
+- In `src/routes/_authenticated/payment-callback.tsx`, after `verify(...)` resolves successfully, poll `getUserPlan` (or re-invalidate + refetch the `user-plan` query) up to ~10× at 1.5s intervals until `plan === 'pro'`, then redirect to `/dashboard`. This handles any residual replication lag.
+- In `src/routes/_authenticated/dashboard.tsx`, broaden the existing `user-plan` query to also `refetchInterval` while the tab is focused for the first 30 seconds after mount when `?upgraded=1` is present in the URL (the callback page will append this on redirect). This guarantees the badge/limits flip without a manual reload.
 
-## Files
-- migration: `resumes` bucket policies, `analyses.resume_storage_path`, `analysis_jobs` table + RLS + grants, `get_capacity_snapshot()`, pg_cron schedules.
-- `src/lib/resume-storage.functions.ts` — signed URL + upload helpers.
-- `src/lib/analyze.functions.ts` — add `enqueueAnalysis`, `getJob`; keep existing flow as internal worker.
-- `src/routes/api/public/hooks/process-analysis-jobs.ts` — worker route.
-- `src/routes/api/public/hooks/usage-alerts.ts` — alerts route.
-- `src/routes/_authenticated/dashboard.tsx` — switch to enqueue + poll, upload PDF to bucket.
+### 5. Verify
+- Re-run `verifyFlutterwavePayment` flow in preview (existing successful payment short-circuits via `alreadyVerified`, so testing requires a fresh transaction — not in scope, but logs from the next real payment will confirm).
+- Confirm the affected user's profile now shows `plan='pro'`, `plan_tier='pro_1'`, valid `pro_expires_at`.
+- Confirm dashboard reflects Pro plan immediately after redirect.
 
-No changes to pricing, auth, or billing logic.
+## Files touched
+- new migration: `activate_pro_plan` function + trigger hardening + grants
+- `src/lib/flutterwave.functions.ts` — call RPC, reorder writes
+- `src/routes/_authenticated/payment-callback.tsx` — poll + redirect with `?upgraded=1`
+- `src/routes/_authenticated/dashboard.tsx` — short refetch window when `?upgraded=1`
+- data fix for `opeyemioyeyemi00@gmail.com`
