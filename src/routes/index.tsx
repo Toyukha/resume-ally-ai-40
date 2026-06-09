@@ -205,7 +205,7 @@ function Landing() {
             <AccordionItem value="q6">
               <AccordionTrigger>What is the difference between the plans?</AccordionTrigger>
               <AccordionContent>
-                Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦5,000/month) gives you 10 full analyses including optimized resume, cover letter, missing-keyword report, and history. Pro Plan 2 (₦10,000/month) doubles that to 20 analyses per month and adds priority processing.
+                Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦5,000/month) gives you 10 full analyses including optimized resume, cover letter, and missing-keyword report. Pro Plan 2 (₦10,000/month) doubles that to 20 analyses per month and adds priority processing.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="q7">
