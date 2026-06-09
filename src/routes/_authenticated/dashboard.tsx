@@ -23,18 +23,24 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    upgraded: s.upgraded === 1 || s.upgraded === "1" ? 1 : undefined,
+  }),
   component: Dashboard,
 });
 
 
 
 function Dashboard() {
+  const search = Route.useSearch();
+  const justUpgraded = search.upgraded === 1;
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [pollWindowOpen, setPollWindowOpen] = useState(justUpgraded);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
@@ -43,6 +49,7 @@ function Dashboard() {
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
+    refetchInterval: pollWindowOpen ? 2000 : false,
   });
 
   const analyzeFn = useServerFn(analyzeResume);
