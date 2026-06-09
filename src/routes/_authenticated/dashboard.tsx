@@ -179,9 +179,23 @@ function Dashboard() {
                   )}
                 </div>
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => refreshMutation.mutate()}
+                disabled={refreshMutation.isPending}
+                title="Re-check your latest verified payment and update your plan"
+              >
+                {refreshMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="ml-1.5 hidden sm:inline">Refresh status</span>
+              </Button>
               {(isFree || planTier === "pro_1") && (
                 <Button size="sm" variant="gold" asChild>
-                  <Link to="/pricing">{isFree ? "Upgrade" : "Upgrade"}</Link>
+                  <Link to="/pricing">Upgrade</Link>
                 </Button>
               )}
             </Card>
