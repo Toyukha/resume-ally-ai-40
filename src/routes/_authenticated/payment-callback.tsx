@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
-import { verifyFlutterwavePayment, reportActivationTimeout } from "@/lib/flutterwave.functions";
+import { verifyFlutterwavePayment, reportActivationTimeout, recoverActivation } from "@/lib/flutterwave.functions";
 import { getUserPlan } from "@/lib/analyze.functions";
 import { z } from "zod";
 
@@ -35,8 +35,29 @@ function CallbackPage() {
   const verify = useServerFn(verifyFlutterwavePayment);
   const fetchPlan = useServerFn(getUserPlan);
   const reportTimeout = useServerFn(reportActivationTimeout);
+  const recover = useServerFn(recoverActivation);
   const [state, setState] = useState<State>({ kind: "verifying" });
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const ran = useRef(false);
+
+  async function handleRecover() {
+    if (!search.tx_ref) return;
+    setRecovering(true);
+    setRecoveryError(null);
+    try {
+      const r = await recover({ data: { tx_ref: search.tx_ref } });
+      await queryClient.invalidateQueries();
+      await router.invalidate();
+      setState({ kind: "success", planTier: r.planTier });
+      setTimeout(() => navigate({ to: "/dashboard", search: { upgraded: 1 } as never }), 1200);
+    } catch (e) {
+      setRecoveryError(e instanceof Error ? e.message : "Recovery failed. Please contact support.");
+    } finally {
+      setRecovering(false);
+    }
+  }
+
 
   useEffect(() => {
     if (ran.current) return;
@@ -191,17 +212,25 @@ function CallbackPage() {
                   <li>Still stuck? Reach out via <strong>Support</strong> and we&apos;ll fix it immediately.</li>
                 </ul>
               </div>
+              {recoveryError && (
+                <p className="mt-4 text-sm text-destructive">{recoveryError}</p>
+              )}
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <Button variant="outline" asChild>
                   <Link to="/dashboard">Go to Dashboard</Link>
                 </Button>
-                <Button variant="hero" onClick={() => window.location.reload()}>
-                  Retry Activation
+                <Button variant="hero" onClick={handleRecover} disabled={recovering}>
+                  {recovering ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Fixing…</>
+                  ) : (
+                    "Fix my plan"
+                  )}
                 </Button>
                 <Button variant="outline" asChild>
                   <Link to="/support">Contact Support</Link>
                 </Button>
               </div>
+
             </>
           )}
         </Card>

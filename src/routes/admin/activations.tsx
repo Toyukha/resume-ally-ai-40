@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { listActivationEvents } from "@/lib/admin.functions";
+import { listActivationEvents, reconcileStuckActivations } from "@/lib/admin.functions";
+import { Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/admin/activations")({
   head: () => ({ meta: [{ title: "Activation Diagnostics — Admin" }] }),
@@ -20,8 +21,13 @@ export const Route = createFileRoute("/admin/activations")({
 const EVENT_OPTIONS = [
   { value: "all", label: "All events" },
   { value: "activation_complete", label: "activation_complete" },
+  { value: "activation_self_healed", label: "activation_self_healed" },
+  { value: "activation_recovered", label: "activation_recovered" },
+  { value: "activation_recovered_via_webhook", label: "activation_recovered_via_webhook" },
+  { value: "activation_recovered_by_admin", label: "activation_recovered_by_admin" },
   { value: "already_verified", label: "already_verified" },
   { value: "activation_timeout", label: "activation_timeout" },
+  { value: "activation_no_effect", label: "activation_no_effect" },
   { value: "activate_pro_plan_failed", label: "activate_pro_plan_failed" },
   { value: "flw_verify_failed", label: "flw_verify_failed" },
   { value: "payment_not_found", label: "payment_not_found" },
@@ -43,6 +49,13 @@ function ActivationsPage() {
   const [status, setStatus] = useState<"all" | "failure" | "success">("failure");
   const [event, setEvent] = useState<string>("all");
   const [hours, setHours] = useState<number>(168);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState<
+    | { scanned: number; repaired: Array<{ tx_ref: string }>; failed: Array<{ tx_ref: string; reason: string }> }
+    | { error: string }
+    | null
+  >(null);
+  const reconcileFn = useServerFn(reconcileStuckActivations);
 
   const fn = useServerFn(listActivationEvents);
   const { data, isFetching, refetch } = useQuery({
@@ -81,9 +94,33 @@ function ActivationsPage() {
             Flutterwave payment activation events — surface failures, timeouts, and slow upgrades.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={async () => {
+              setReconciling(true);
+              setReconcileResult(null);
+              try {
+                const r = await reconcileFn({});
+                setReconcileResult(r);
+                await refetch();
+              } catch (e) {
+                setReconcileResult({ error: e instanceof Error ? e.message : "Reconcile failed" });
+              } finally {
+                setReconciling(false);
+              }
+            }}
+            disabled={reconciling}
+          >
+            <Wrench className={`mr-2 h-4 w-4 ${reconciling ? "animate-pulse" : ""}`} />
+            {reconciling ? "Reconciling…" : "Reconcile stuck activations"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -115,6 +152,32 @@ function ActivationsPage() {
           </div>
         </Card>
       </div>
+
+      {reconcileResult && (
+        <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+          {"error" in reconcileResult ? (
+            <p className="text-destructive">Reconcile failed: {reconcileResult.error}</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="font-medium">
+                Scanned {reconcileResult.scanned} payment{reconcileResult.scanned === 1 ? "" : "s"} ·
+                Repaired {reconcileResult.repaired.length} · Failed {reconcileResult.failed.length}
+              </p>
+              {reconcileResult.repaired.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Repaired: {reconcileResult.repaired.map((r) => r.tx_ref).join(", ")}
+                </p>
+              )}
+              {reconcileResult.failed.length > 0 && (
+                <p className="text-xs text-destructive">
+                  Failed: {reconcileResult.failed.map((r) => `${r.tx_ref} (${r.reason})`).join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
 
       <Card className="p-4">
         <form onSubmit={onSearch} className="flex flex-wrap items-center gap-2">

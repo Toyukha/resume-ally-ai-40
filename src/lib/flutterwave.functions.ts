@@ -80,9 +80,15 @@ const TERMINAL_FAILURE_EVENTS = new Set([
   "flw_verify_failed",
   "activate_pro_plan_failed",
   "payment_mark_successful_failed",
+  "activation_no_effect",
 ]);
 
-const SUCCESS_EVENTS = new Set(["activation_complete", "already_verified"]);
+const SUCCESS_EVENTS = new Set([
+  "activation_complete",
+  "already_verified",
+  "activation_self_healed",
+  "activation_recovered",
+]);
 
 async function persistActivationEvent(
   event: string,
@@ -189,17 +195,67 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
     }
 
     if (payment.status === "successful") {
-      logActivation("already_verified", {
-        user_id: userId,
-        tx_ref: data.tx_ref,
-        payment_id: payment.id,
-        plan_tier: payment.plan_tier,
-        last_known_plan: profileBefore?.plan,
-        last_known_plan_tier: profileBefore?.plan_tier,
-        elapsed_ms: elapsed(),
-      });
+      // Self-heal: payment row says successful, but the profile may not actually
+      // reflect the upgrade (we've seen this happen when the callback poll never
+      // observed the new plan). Re-run the RPC if the profile drifted.
+      const needsHeal =
+        profileBefore?.plan !== "pro" ||
+        profileBefore?.plan_tier !== payment.plan_tier ||
+        !profileBefore?.pro_expires_at ||
+        new Date(profileBefore.pro_expires_at as string) <= new Date();
+
+      if (needsHeal) {
+        const { error: healErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+          _user_id: userId,
+          _plan_tier: payment.plan_tier,
+          _days: 30,
+        });
+        const { data: profileAfter } = await supabaseAdmin
+          .from("profiles")
+          .select("plan, plan_tier, pro_expires_at")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (healErr || profileAfter?.plan !== "pro" || profileAfter?.plan_tier !== payment.plan_tier) {
+          logActivation("activation_no_effect", {
+            user_id: userId,
+            tx_ref: data.tx_ref,
+            payment_id: payment.id,
+            plan_tier: payment.plan_tier,
+            last_known_plan: profileBefore?.plan,
+            last_known_plan_tier: profileBefore?.plan_tier,
+            profile_after_plan: profileAfter?.plan,
+            profile_after_plan_tier: profileAfter?.plan_tier,
+            rpc_error: healErr?.message,
+            elapsed_ms: elapsed(),
+          });
+        } else {
+          logActivation("activation_self_healed", {
+            user_id: userId,
+            tx_ref: data.tx_ref,
+            payment_id: payment.id,
+            plan_tier: payment.plan_tier,
+            last_known_plan: profileBefore?.plan,
+            last_known_plan_tier: profileBefore?.plan_tier,
+            profile_after_plan: profileAfter?.plan,
+            profile_after_plan_tier: profileAfter?.plan_tier,
+            elapsed_ms: elapsed(),
+          });
+        }
+      } else {
+        logActivation("already_verified", {
+          user_id: userId,
+          tx_ref: data.tx_ref,
+          payment_id: payment.id,
+          plan_tier: payment.plan_tier,
+          last_known_plan: profileBefore?.plan,
+          last_known_plan_tier: profileBefore?.plan_tier,
+          elapsed_ms: elapsed(),
+        });
+      }
       return { ok: true, alreadyVerified: true, planTier: payment.plan_tier };
     }
+
 
     // Verify with Flutterwave
     const resp = await fetch(`${FLW_API}/transactions/${encodeURIComponent(data.transaction_id)}/verify`, {
@@ -306,18 +362,42 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
       throw new Error(payUpdErr.message);
     }
 
-    logActivation("activation_complete", {
-      user_id: userId,
-      tx_ref: data.tx_ref,
-      payment_id: payment.id,
-      plan_tier: payment.plan_tier,
-      previous_plan: profileBefore?.plan,
-      previous_plan_tier: profileBefore?.plan_tier,
-      elapsed_ms: elapsed(),
-    });
+    // Read back the profile to confirm the RPC actually landed.
+    const { data: profileAfter } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileAfter?.plan !== "pro" || profileAfter?.plan_tier !== payment.plan_tier) {
+      logActivation("activation_no_effect", {
+        user_id: userId,
+        tx_ref: data.tx_ref,
+        payment_id: payment.id,
+        plan_tier: payment.plan_tier,
+        previous_plan: profileBefore?.plan,
+        previous_plan_tier: profileBefore?.plan_tier,
+        profile_after_plan: profileAfter?.plan,
+        profile_after_plan_tier: profileAfter?.plan_tier,
+        elapsed_ms: elapsed(),
+      });
+    } else {
+      logActivation("activation_complete", {
+        user_id: userId,
+        tx_ref: data.tx_ref,
+        payment_id: payment.id,
+        plan_tier: payment.plan_tier,
+        previous_plan: profileBefore?.plan,
+        previous_plan_tier: profileBefore?.plan_tier,
+        profile_after_plan: profileAfter?.plan,
+        profile_after_plan_tier: profileAfter?.plan_tier,
+        elapsed_ms: elapsed(),
+      });
+    }
 
     return { ok: true, alreadyVerified: false, planTier: payment.plan_tier };
   });
+
 
 // Records a callback-side activation timeout so it surfaces in admin diagnostics.
 const ReportTimeoutSchema = z.object({
@@ -345,4 +425,60 @@ export const reportActivationTimeout = createServerFn({ method: "POST" })
       source: "callback",
     });
     return { ok: true };
+  });
+
+// Self-service recovery: re-run activation for a payment the caller owns.
+const RecoverSchema = z.object({
+  tx_ref: z.string().min(4).max(120),
+});
+
+export const recoverActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => RecoverSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: payment } = await supabaseAdmin
+      .from("payments")
+      .select("*")
+      .eq("tx_ref", data.tx_ref)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!payment) throw new Error("Payment not found for your account.");
+    if (payment.status !== "successful") {
+      throw new Error("This payment has not been verified yet. Try again from the payment page or contact support.");
+    }
+
+    const { error: rpcErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+      _user_id: userId,
+      _plan_tier: payment.plan_tier,
+      _days: 30,
+    });
+
+    const { data: profileAfter } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const ok = !rpcErr && profileAfter?.plan === "pro" && profileAfter?.plan_tier === payment.plan_tier;
+
+    await persistActivationEvent(ok ? "activation_recovered" : "activation_no_effect", {
+      user_id: userId,
+      tx_ref: data.tx_ref,
+      payment_id: payment.id,
+      plan_tier: payment.plan_tier,
+      profile_after_plan: profileAfter?.plan,
+      profile_after_plan_tier: profileAfter?.plan_tier,
+      rpc_error: rpcErr?.message,
+      source: "user_recovery",
+    });
+
+    if (!ok) {
+      throw new Error("We couldn't activate your plan automatically. Please contact support.");
+    }
+
+    return { ok: true, planTier: payment.plan_tier };
   });
