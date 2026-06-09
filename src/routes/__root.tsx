@@ -63,6 +63,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google-site-verification", content: "rB7Ap5LymVR8XCym6BiTkIr17uwjWbkvf-xHGbNXRcM" },
       { title: "Get That Job — AI Resume Optimizer" },
       { name: "description", content: "Get That Job is your AI career coach—optimize your CV, beat ATS systems, generate cover letters, and land more interviews." },
       { property: "og:site_name", content: "Get That Job" },
