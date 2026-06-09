@@ -5,8 +5,8 @@ import { PLANS } from "./plans";
 
 const InitSchema = z.object({
   planTier: z.enum(["pro_1", "pro_2"]),
-  origin: z.string().url(),
 });
+
 
 const VerifySchema = z.object({
   tx_ref: z.string().min(4).max(120),
@@ -14,6 +14,7 @@ const VerifySchema = z.object({
 });
 
 const FLW_API = "https://api.flutterwave.com/v3";
+
 
 export const initFlutterwavePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -43,7 +44,7 @@ export const initFlutterwavePayment = createServerFn({ method: "POST" })
     });
     if (insertErr) throw new Error(`Could not start payment: ${insertErr.message}`);
 
-    const redirectUrl = `${data.origin}/payment-callback`;
+    const redirectUrl = "https://thecareerboost.com/payment-callback";
 
     const resp = await fetch(`${FLW_API}/payments`, {
       method: "POST",

@@ -40,7 +40,7 @@ function PricingPage() {
         navigate({ to: "/auth", search: { redirect: "/pricing" } as never });
         throw new Error("redirect");
       }
-      return initFn({ data: { planTier, origin: window.location.origin } });
+      return initFn({ data: { planTier } });
     },
     onMutate: (planTier) => setLoadingTier(planTier),
     onSettled: () => setLoadingTier(null),
