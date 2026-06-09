@@ -40,14 +40,9 @@ export function Navbar() {
           <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>Support</Link>
           <a href="/#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
           {user && (
-            <>
-              <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                Dashboard
-              </Link>
-              <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                History
-              </Link>
-            </>
+            <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+              Dashboard
+            </Link>
           )}
         </nav>
 
