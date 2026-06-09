@@ -482,3 +482,103 @@ export const recoverActivation = createServerFn({ method: "POST" })
 
     return { ok: true, planTier: payment.plan_tier };
   });
+
+// Self-service: re-derive the authoritative plan from the user's latest
+// successful payment and reconcile the profile if it has drifted.
+export const refreshSubscriptionStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: payment } = await supabaseAdmin
+      .from("payments")
+      .select("id, tx_ref, plan_tier, status, created_at")
+      .eq("user_id", userId)
+      .eq("status", "successful")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!payment) {
+      return {
+        ok: true,
+        changed: false,
+        reason: "no_successful_payment" as const,
+        plan: profile?.plan ?? "free",
+        planTier: profile?.plan_tier ?? "free",
+        proExpiresAt: profile?.pro_expires_at ?? null,
+      };
+    }
+
+    const expired =
+      !profile?.pro_expires_at ||
+      new Date(profile.pro_expires_at).getTime() <= Date.now();
+    const drift =
+      profile?.plan !== "pro" ||
+      profile?.plan_tier !== payment.plan_tier ||
+      expired;
+
+    if (!drift) {
+      return {
+        ok: true,
+        changed: false,
+        reason: "in_sync" as const,
+        plan: profile?.plan ?? "free",
+        planTier: profile?.plan_tier ?? "free",
+        proExpiresAt: profile?.pro_expires_at ?? null,
+      };
+    }
+
+    const { error: rpcErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+      _user_id: userId,
+      _plan_tier: payment.plan_tier,
+      _days: 30,
+    });
+
+    const { data: profileAfter } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const ok =
+      !rpcErr &&
+      profileAfter?.plan === "pro" &&
+      profileAfter?.plan_tier === payment.plan_tier;
+
+    await persistActivationEvent(
+      ok ? "activation_recovered" : "activation_no_effect",
+      {
+        user_id: userId,
+        tx_ref: payment.tx_ref,
+        payment_id: payment.id,
+        plan_tier: payment.plan_tier,
+        profile_after_plan: profileAfter?.plan,
+        profile_after_plan_tier: profileAfter?.plan_tier,
+        rpc_error: rpcErr?.message,
+        source: "user_refresh",
+      },
+    );
+
+    if (!ok) {
+      throw new Error(
+        "We couldn't refresh your subscription automatically. Please contact support.",
+      );
+    }
+
+    return {
+      ok: true,
+      changed: true,
+      reason: "reconciled" as const,
+      plan: profileAfter?.plan ?? "pro",
+      planTier: profileAfter?.plan_tier ?? payment.plan_tier,
+      proExpiresAt: profileAfter?.pro_expires_at ?? null,
+    };
+  });
