@@ -52,6 +52,17 @@ function Dashboard() {
     refetchInterval: pollWindowOpen ? 2000 : false,
   });
 
+  // Stop polling once Pro is detected, and cap the polling window to 30s.
+  useEffect(() => {
+    if (!pollWindowOpen) return;
+    if (planQuery.data?.plan === "pro") {
+      setPollWindowOpen(false);
+      return;
+    }
+    const t = setTimeout(() => setPollWindowOpen(false), 30_000);
+    return () => clearTimeout(t);
+  }, [pollWindowOpen, planQuery.data?.plan]);
+
   const analyzeFn = useServerFn(analyzeResume);
 
   const mutation = useMutation({
