@@ -54,7 +54,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: "https://thecareerboost.com/auth" },
     });
     setLoading(false);
     if (error) toast.error(error.message);
