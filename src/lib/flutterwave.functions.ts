@@ -134,33 +134,24 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
       throw new Error(body.message || "Payment could not be verified.");
     }
 
-    // Activate plan for 30 days
-    const now = new Date();
-    const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    // Activate plan FIRST so a failure here prevents marking the payment successful.
+    const { error: rpcErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+      _user_id: userId,
+      _plan_tier: payment.plan_tier,
+      _days: 30,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
 
-    const updates = await Promise.all([
-      supabaseAdmin
-        .from("payments")
-        .update({
-          status: "successful",
-          flw_transaction_id: data.transaction_id,
-          flw_response: JSON.parse(JSON.stringify(body)),
-          verified_at: now.toISOString(),
-        })
-        .eq("id", payment.id),
-      supabaseAdmin
-        .from("profiles")
-        .update({
-          plan: "pro",
-          plan_tier: payment.plan_tier,
-          pro_started_at: now.toISOString(),
-          pro_expires_at: expires.toISOString(),
-        })
-        .eq("id", userId),
-    ]);
-    for (const u of updates) {
-      if (u.error) throw new Error(u.error.message);
-    }
+    const { error: payUpdErr } = await supabaseAdmin
+      .from("payments")
+      .update({
+        status: "successful",
+        flw_transaction_id: data.transaction_id,
+        flw_response: JSON.parse(JSON.stringify(body)),
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", payment.id);
+    if (payUpdErr) throw new Error(payUpdErr.message);
 
     return { ok: true, alreadyVerified: false, planTier: payment.plan_tier };
   });
