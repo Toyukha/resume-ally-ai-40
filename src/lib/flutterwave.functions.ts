@@ -3,15 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PLANS } from "./plans";
 
-const ALLOWED_ORIGINS = new Set([
-  "https://thecareerboost.com",
-  "https://www.thecareerboost.com",
-  "https://resume-ally-ai-40.lovable.app",
-]);
-
 const InitSchema = z.object({
   planTier: z.enum(["pro_1", "pro_2"]),
 });
+
 
 const VerifySchema = z.object({
   tx_ref: z.string().min(4).max(120),
