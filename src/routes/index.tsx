@@ -11,6 +11,16 @@ import { WhatsAppButton } from "@/components/whatsapp-button";
 import { Navbar } from "@/components/navbar";
 
 
+const HOME_FAQ: Array<[string, string]> = [
+  ["What file formats can I upload?", "We support PDF and DOCX files. Make sure your resume is text-based (not a scanned image) so our AI can read and optimize it accurately."],
+  ["How does the AI match score work?", "Our AI compares your resume against the job description, analyzing keyword overlap, skills alignment, experience relevance, and formatting quality. The score is a percentage — higher is better — and comes with specific improvement suggestions."],
+  ["Is my data private and secure?", "Absolutely. Your documents are encrypted in transit and at rest. They are tied to your account and never shared with third parties. We do not use your resume to train models."],
+  ["Can I export the optimized resume?", "Yes. Pro plan lets you copy or download the AI-optimized resume and cover letter. You can paste them directly into job portals or export as clean text."],
+  ["How long does an analysis take?", "Most analyses complete in under 60 seconds. Complex resumes or very detailed job descriptions may take a minute or two at most."],
+  ["What is the difference between the plans?", "Free gives you 1 CV analysis per month with a basic ATS score. Pro Plan 1 (₦5,000/month) gives you 10 full analyses including optimized resume, cover letter, and missing-keyword report. Pro Plan 2 (₦10,000/month) doubles that to 20 analyses per month and adds priority processing."],
+  ["How do payments work?", "Pro plans are billed as a one-time monthly payment via Flutterwave (₦5,000 or ₦10,000). Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in control of your budget."],
+];
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -21,6 +31,20 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://thecareerboost.com/" },
     ],
     links: [{ rel: "canonical", href: "https://thecareerboost.com/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: HOME_FAQ.map(([q, a]) => ({
+            "@type": "Question",
+            name: q,
+            acceptedAnswer: { "@type": "Answer", text: a },
+          })),
+        }),
+      },
+    ],
   }),
   component: Landing,
 });
