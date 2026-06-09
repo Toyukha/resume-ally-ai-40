@@ -42,6 +42,13 @@ function Dashboard() {
   const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [pollWindowOpen, setPollWindowOpen] = useState(justUpgraded);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugData, setDebugData] = useState<{
+    plan: Awaited<ReturnType<typeof getUserPlan>> | null;
+    refresh: Awaited<ReturnType<typeof refreshSubscriptionStatus>> | null;
+    at: string;
+  } | null>(null);
+  const [debugLoading, setDebugLoading] = useState(false);
 
   const planFn = useServerFn(getUserPlan);
   const planQuery = useQuery({
@@ -168,6 +175,25 @@ function Dashboard() {
     : planTier === "pro_legacy" ? "Pro (Legacy)"
     : "Free plan";
 
+  const runDebugCheck = async () => {
+    setDebugLoading(true);
+    try {
+      const [planRes, refreshRes] = await Promise.all([planFn(), refreshFn()]);
+      setDebugData({ plan: planRes, refresh: refreshRes, at: new Date().toISOString() });
+      setDebugOpen(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Debug check failed");
+    } finally {
+      setDebugLoading(false);
+    }
+  };
+
+  // The UI badge is rendered from planQuery.data (getUserPlan).
+  const uiSource = "getUserPlan (planQuery cache)";
+  const planTierFromPlan = debugData?.plan?.planTier ?? null;
+  const planTierFromRefresh = debugData?.refresh?.planTier ?? null;
+  const tiersAgree = planTierFromPlan === planTierFromRefresh;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -213,6 +239,58 @@ function Dashboard() {
             </Card>
           )}
         </div>
+
+        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus */}
+        <div className="mb-6">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={runDebugCheck}
+            disabled={debugLoading}
+            className="text-xs text-muted-foreground"
+          >
+            {debugLoading ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
+            Debug: compare plan sources
+          </Button>
+          {debugOpen && debugData && (
+            <Card className={`mt-2 p-4 text-xs ${tiersAgree ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="font-semibold">
+                  Plan source comparison · {tiersAgree ? "✅ in sync" : "⚠️ mismatch"}
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => setDebugOpen(false)} className="h-6 px-2">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="mb-2 text-muted-foreground">
+                UI is rendering from: <span className="font-mono text-foreground">{uiSource}</span> ·
+                {" "}badge tier: <span className="font-mono text-foreground">{planTier}</span> ·
+                {" "}checked at {new Date(debugData.at).toLocaleTimeString()}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <div className="mb-1 font-semibold">getUserPlan</div>
+                  <pre className="overflow-auto rounded bg-background/60 p-2 font-mono text-[10px]">
+{JSON.stringify(debugData.plan, null, 2)}
+                  </pre>
+                </div>
+                <div>
+                  <div className="mb-1 font-semibold">refreshSubscriptionStatus</div>
+                  <pre className="overflow-auto rounded bg-background/60 p-2 font-mono text-[10px]">
+{JSON.stringify(debugData.refresh, null, 2)}
+                  </pre>
+                </div>
+              </div>
+              {!tiersAgree && (
+                <div className="mt-2 text-destructive">
+                  planTier differs: getUserPlan={String(planTierFromPlan)} · refresh={String(planTierFromRefresh)}.
+                  Click "Refresh status" above to reconcile.
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
+
 
         {/* Usage widget — three counters tick down together (bundled per analysis) */}
         {planQuery.data && !isAdmin && monthlyLimit !== null && (
