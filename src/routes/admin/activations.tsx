@@ -82,9 +82,33 @@ function ActivationsPage() {
             Flutterwave payment activation events — surface failures, timeouts, and slow upgrades.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={async () => {
+              setReconciling(true);
+              setReconcileResult(null);
+              try {
+                const r = await reconcileFn({});
+                setReconcileResult(r);
+                await refetch();
+              } catch (e) {
+                setReconcileResult({ error: e instanceof Error ? e.message : "Reconcile failed" });
+              } finally {
+                setReconciling(false);
+              }
+            }}
+            disabled={reconciling}
+          >
+            <Wrench className={`mr-2 h-4 w-4 ${reconciling ? "animate-pulse" : ""}`} />
+            {reconciling ? "Reconciling…" : "Reconcile stuck activations"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
