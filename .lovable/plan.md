@@ -1,37 +1,49 @@
-## What I’ll fix
+## Goal
+Make the dashboard show the user’s real active subscription tier immediately after payment, refresh, and normal page loads.
 
-I verified the live record for `opeyemioyeyemi00@gmail.com`: the latest payment is `₦5,000`, marked successful, and the profile is already `pro / pro_1` with a valid expiry. I also found a live activation log showing the plan update completed successfully. That means the main problem is the app’s confirmation/sync flow, not the payment itself.
+## What I found
+- The live record for `opeyemioyeyemi00@gmail.com` is already correct in the backend: `plan=pro`, `plan_tier=pro_1`, valid expiry, latest successful payment `₦5,000`.
+- The screenshot shows two conflicting truths at once:
+  - toast: “Your subscription is already up to date.”
+  - dashboard badge: “Free plan · 1/1 analyses used this month”
+- That points to a **dashboard read/sync issue**, not a payment activation issue.
 
 ## Plan
+1. **Make the dashboard use one authoritative subscription source**
+   - Update the plan-read server function so it derives the effective tier from the latest verified payment + current profile in one place.
+   - Keep the intended mapping intact:
+     - `₦5,000` → `pro_1`
+     - `₦10,000` → `pro_2`
+   - Return a fully resolved dashboard shape so the UI never has to guess.
 
-1. **Make dashboard plan reads authoritative**
-   - Update the server-side plan read used by the dashboard so it can reconcile from the user’s **latest successful payment** before returning plan data.
-   - Ensure the returned dashboard tier reflects the user’s **current plan**, not an older or stale state.
-   - Preserve the intended mapping:
-     - `₦5,000` → **Pro Plan 1**
-     - `₦10,000` → **Pro Plan 2**
+2. **Stop silently falling back to Free on read gaps**
+   - Remove the misleading “default to free” behavior when the plan query is loading, stale, or errors.
+   - Show a proper loading/error state for the subscription badge instead of rendering Free prematurely.
 
-2. **Fix the payment callback confirmation flow**
-   - Adjust the callback page so it does not show the “We couldn’t confirm your upgrade” timeout when the backend has already verified and activated the plan.
-   - Use the successful verification/recovery result as the primary signal, then revalidate the dashboard state in the background.
-   - Keep the retry path only for true unresolved cases.
+3. **Make refresh update the dashboard immediately**
+   - After `refreshSubscriptionStatus`, write the returned reconciled plan directly into the query cache/state instead of relying only on a follow-up refetch.
+   - Then run a background refetch for confirmation.
 
-3. **Fix “Fix my plan” and dashboard refresh behavior**
-   - Strengthen the recovery/refresh server functions so they return the fully reconciled plan state after activation.
-   - Update the dashboard query handling so the UI refreshes immediately after recovery and does not continue displaying Free when the reconciled state is Pro.
-   - Add proper loading/error handling instead of silently defaulting to Free during sync gaps.
+4. **Align callback, recovery, and dashboard behavior**
+   - Ensure successful payment verification, “Fix my plan”, and dashboard refresh all feed the same normalized plan shape.
+   - Prevent one path from saying “up to date” while another still renders Free.
 
-4. **Validate both paid tiers end-to-end**
-   - Verify the final behavior for:
-     - **Pro Plan 1** (`₦5,000`)
-     - **Pro Plan 2** (`₦10,000`)
-   - Confirm the dashboard always shows the user’s **current active plan** after successful payment, retry, or manual refresh.
+5. **Add targeted diagnostics for future stuck cases**
+   - Add lightweight server logging around the dashboard plan read so if a user still sees Free, we can tell whether it was a read failure, stale cache, or profile/payment mismatch.
+
+6. **Validate both paid tiers end-to-end**
+   - Confirm dashboard rendering for:
+     - Pro Plan 1 (`₦5,000`)
+     - Pro Plan 2 (`₦10,000`)
+   - Verify the dashboard always shows the user’s current active plan after payment, refresh, and direct reload.
 
 ## Technical details
-
-- Likely code paths involved:
-  - `src/lib/analyze.functions.ts` (`getUserPlan`)
-  - `src/lib/flutterwave.functions.ts` (verify, recover, refresh)
-  - `src/routes/_authenticated/payment-callback.tsx`
+- Files to update:
+  - `src/lib/analyze.functions.ts`
+  - `src/lib/flutterwave.functions.ts`
   - `src/routes/_authenticated/dashboard.tsx`
-- I’ll keep the existing payment model and tighten the sync/reconciliation logic only where the incorrect UI state is being produced.
+  - possibly `src/routes/_authenticated/payment-callback.tsx` only if needed to normalize the returned plan payload
+- Likely root cause:
+  - the refresh path and the dashboard read path are not behaving as one authoritative source, and the dashboard currently masks read problems by defaulting to Free.
+- Validation target:
+  - `opeyemioyeyemi00@gmail.com` should render `Pro Plan 1` on dashboard, not `Free plan`.
