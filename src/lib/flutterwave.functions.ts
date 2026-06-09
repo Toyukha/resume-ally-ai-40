@@ -80,9 +80,15 @@ const TERMINAL_FAILURE_EVENTS = new Set([
   "flw_verify_failed",
   "activate_pro_plan_failed",
   "payment_mark_successful_failed",
+  "activation_no_effect",
 ]);
 
-const SUCCESS_EVENTS = new Set(["activation_complete", "already_verified"]);
+const SUCCESS_EVENTS = new Set([
+  "activation_complete",
+  "already_verified",
+  "activation_self_healed",
+  "activation_recovered",
+]);
 
 async function persistActivationEvent(
   event: string,
