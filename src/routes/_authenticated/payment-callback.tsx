@@ -51,15 +51,51 @@ function CallbackPage() {
     }
 
     (async () => {
+      const startedAt = Date.now();
+      const elapsed = () => Date.now() - startedAt;
+      const txRef = search.tx_ref!;
+      const txId = search.transaction_id!;
+      // Last known plan captured from each poll, surfaced in failure logs.
+      let lastKnownPlan: string | null = null;
+      let lastKnownPlanTier: string | null = null;
+      let userId: string | null = null;
+
+      const log = (event: string, extra: Record<string, unknown> = {}) => {
+        console.log(
+          "flw_callback " +
+            JSON.stringify({
+              event,
+              ts: new Date().toISOString(),
+              tx_ref: txRef,
+              transaction_id: txId,
+              user_id: userId,
+              last_known_plan: lastKnownPlan,
+              last_known_plan_tier: lastKnownPlanTier,
+              elapsed_ms: elapsed(),
+              ...extra,
+            }),
+        );
+      };
+
       try {
-        const r = await verify({ data: { tx_ref: search.tx_ref!, transaction_id: search.transaction_id! } });
+        log("verify_request");
+        const r = await verify({ data: { tx_ref: txRef, transaction_id: txId } });
+        log("verify_response", { plan_tier: r.planTier, already_verified: r.alreadyVerified });
 
         // Poll the user-plan until it reflects Pro (up to ~30 s).
         let confirmed = false;
         for (let i = 0; i < 20; i++) {
-          const plan = await fetchPlan().catch(() => null);
+          const plan = await fetchPlan().catch((err) => {
+            log("fetch_plan_error", { attempt: i + 1, error: err instanceof Error ? err.message : String(err) });
+            return null;
+          });
+          if (plan) {
+            lastKnownPlan = plan.plan ?? null;
+            lastKnownPlanTier = plan.planTier ?? null;
+          }
           if (plan?.plan === "pro") {
             confirmed = true;
+            log("plan_confirmed", { attempt: i + 1 });
             break;
           }
           await new Promise((res) => setTimeout(res, 1500));
@@ -69,10 +105,12 @@ function CallbackPage() {
         await router.invalidate();
 
         if (!confirmed) {
+          log("activation_timeout", { plan_tier: r.planTier });
           setState({ kind: "timeout", planTier: r.planTier });
           return;
         }
 
+        log("activation_success", { plan_tier: r.planTier });
         setState({ kind: "success", planTier: r.planTier });
 
         // Auto-redirect to dashboard after a brief moment so the user sees the success state.
@@ -80,7 +118,9 @@ function CallbackPage() {
           navigate({ to: "/dashboard", search: { upgraded: 1 } as never });
         }, 1500);
       } catch (e) {
-        setState({ kind: "error", message: e instanceof Error ? e.message : "Verification failed" });
+        const message = e instanceof Error ? e.message : "Verification failed";
+        log("verify_exception", { error: message });
+        setState({ kind: "error", message });
       }
     })();
   }, [search, verify, fetchPlan, queryClient, router, navigate]);
