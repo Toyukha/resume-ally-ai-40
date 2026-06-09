@@ -18,15 +18,6 @@ import {
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Navbar } from "@/components/navbar";
-import {
-  analyzeResume,
-  getUserPlan,
-  type AnalysisResult,
-} from "@/lib/analyze.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
