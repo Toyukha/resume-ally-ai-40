@@ -34,6 +34,7 @@ function CallbackPage() {
   const queryClient = useQueryClient();
   const verify = useServerFn(verifyFlutterwavePayment);
   const fetchPlan = useServerFn(getUserPlan);
+  const reportTimeout = useServerFn(reportActivationTimeout);
   const [state, setState] = useState<State>({ kind: "verifying" });
   const ran = useRef(false);
 
