@@ -85,6 +85,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&family=Epilogue:wght@400;500;600;700&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://thecareerboost.com/#organization",
+              name: "Get That Job",
+              url: "https://thecareerboost.com/",
+              logo: "https://storage.googleapis.com/gpt-engineer-file-uploads/2ol1ORJhQXPJl9ggRkXm0n4dsRc2/social-images/social-1780936156818-ChatGPT_Image_Jun_8,_2026,_05_27_56_PM.webp",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://thecareerboost.com/#website",
+              name: "Get That Job",
+              url: "https://thecareerboost.com/",
+              publisher: { "@id": "https://thecareerboost.com/#organization" },
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
