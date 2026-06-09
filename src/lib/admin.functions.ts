@@ -435,3 +435,70 @@ export const listActivationEvents = createServerFn({ method: "POST" })
 
     return (rows ?? []).map((r) => ({ ...r, user_email: r.user_id ? emailMap[r.user_id] ?? null : null }));
   });
+
+// Reconcile payments that are 'successful' but whose owning profile is not on
+// the matching pro plan. Re-runs activate_pro_plan idempotently.
+export const reconcileStuckActivations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    requireAdmin(await loadCurrentRoles(supabase, userId));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const since = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
+    const { data: payments } = await supabaseAdmin
+      .from("payments")
+      .select("id, user_id, tx_ref, plan_tier, created_at")
+      .eq("status", "successful")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    const repaired: Array<{ tx_ref: string; user_id: string; plan_tier: string }> = [];
+    const failed: Array<{ tx_ref: string; user_id: string; reason: string }> = [];
+    let scanned = 0;
+
+    for (const p of payments ?? []) {
+      scanned++;
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("plan, plan_tier, pro_expires_at")
+        .eq("id", p.user_id)
+        .maybeSingle();
+
+      const expired = prof?.pro_expires_at ? new Date(prof.pro_expires_at as string) <= new Date() : true;
+      const matches = prof?.plan === "pro" && prof?.plan_tier === p.plan_tier && !expired;
+      if (matches) continue;
+
+      const { error: rpcErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+        _user_id: p.user_id,
+        _plan_tier: p.plan_tier,
+        _days: 30,
+      });
+
+      const { data: after } = await supabaseAdmin
+        .from("profiles")
+        .select("plan, plan_tier")
+        .eq("id", p.user_id)
+        .maybeSingle();
+
+      const ok = !rpcErr && after?.plan === "pro" && after?.plan_tier === p.plan_tier;
+      await supabaseAdmin.from("payment_activation_events").insert({
+        event: ok ? "activation_recovered_by_admin" : "activation_no_effect",
+        success: ok,
+        user_id: p.user_id,
+        tx_ref: p.tx_ref,
+        payment_id: p.id,
+        plan_tier: p.plan_tier,
+        last_known_plan: prof?.plan,
+        last_known_plan_tier: prof?.plan_tier,
+        error_message: rpcErr?.message ?? null,
+        metadata: { source: "admin_reconcile", admin_user_id: userId } as never,
+      });
+
+      if (ok) repaired.push({ tx_ref: p.tx_ref, user_id: p.user_id, plan_tier: p.plan_tier });
+      else failed.push({ tx_ref: p.tx_ref, user_id: p.user_id, reason: rpcErr?.message ?? "profile not updated" });
+    }
+
+    return { scanned, repaired, failed };
+  });
