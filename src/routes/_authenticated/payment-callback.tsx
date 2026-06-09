@@ -54,15 +54,25 @@ function CallbackPage() {
       try {
         const r = await verify({ data: { tx_ref: search.tx_ref!, transaction_id: search.transaction_id! } });
 
-        // Poll the user-plan until it reflects Pro (handles any replication lag).
-        for (let i = 0; i < 8; i++) {
+        // Poll the user-plan until it reflects Pro (up to ~30 s).
+        let confirmed = false;
+        for (let i = 0; i < 20; i++) {
           const plan = await fetchPlan().catch(() => null);
-          if (plan?.plan === "pro") break;
-          await new Promise((res) => setTimeout(res, 1200));
+          if (plan?.plan === "pro") {
+            confirmed = true;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 1500));
         }
 
         await queryClient.invalidateQueries();
         await router.invalidate();
+
+        if (!confirmed) {
+          setState({ kind: "timeout", planTier: r.planTier });
+          return;
+        }
+
         setState({ kind: "success", planTier: r.planTier });
 
         // Auto-redirect to dashboard after a brief moment so the user sees the success state.
