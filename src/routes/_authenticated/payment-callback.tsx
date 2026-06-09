@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
-import { verifyFlutterwavePayment } from "@/lib/flutterwave.functions";
+import { verifyFlutterwavePayment, reportActivationTimeout } from "@/lib/flutterwave.functions";
 import { getUserPlan } from "@/lib/analyze.functions";
 import { z } from "zod";
 
