@@ -3,9 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PLANS } from "./plans";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://thecareerboost.com",
+  "https://www.thecareerboost.com",
+  "https://resume-ally-ai-40.lovable.app",
+]);
+
 const InitSchema = z.object({
   planTier: z.enum(["pro_1", "pro_2"]),
-  origin: z.string().url(),
 });
 
 const VerifySchema = z.object({
@@ -14,6 +19,7 @@ const VerifySchema = z.object({
 });
 
 const FLW_API = "https://api.flutterwave.com/v3";
+
 
 export const initFlutterwavePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
