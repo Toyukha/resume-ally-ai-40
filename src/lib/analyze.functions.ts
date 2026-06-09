@@ -82,7 +82,13 @@ export const getUserPlan = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const admin = await isAdminUser(supabase as never, userId);
-    let { data } = await supabase
+
+    // Read the profile via the admin client (scoped to the authenticated
+    // userId from the verified bearer) so the dashboard never reads back
+    // null due to a transient RLS/auth-context gap and silently falls
+    // back to "free" while the DB actually says pro.
+    const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
+    let { data } = await adminClient
       .from("profiles")
       .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
@@ -94,7 +100,6 @@ export const getUserPlan = createServerFn({ method: "GET" })
     // profile from the latest verified payment. Keeps the dashboard truthful
     // even if the callback poll or webhook missed updating the profile.
     if (!admin && status.effectivePlan !== "pro") {
-      const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
       const { data: latestPayment } = await adminClient
         .from("payments")
         .select("plan_tier, verified_at, created_at")
@@ -118,8 +123,16 @@ export const getUserPlan = createServerFn({ method: "GET" })
             _plan_tier: latestPayment.plan_tier as "pro_1" | "pro_2",
             _days: remainingDays,
           });
+          console.log(
+            "getUserPlan self_heal " +
+              JSON.stringify({
+                user_id: userId,
+                plan_tier: latestPayment.plan_tier,
+                rpc_error: healErr?.message ?? null,
+              }),
+          );
           if (!healErr) {
-            const { data: healed } = await supabase
+            const { data: healed } = await adminClient
               .from("profiles")
               .select("plan, plan_tier, pro_started_at, pro_expires_at")
               .eq("id", userId)
@@ -173,15 +186,17 @@ export const analyzeResume = createServerFn({ method: "POST" })
 
     const admin = await isAdminUser(supabase as never, userId);
 
-    // Determine plan & subscription status
-    const { data: profile } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Determine plan & subscription status (admin-scoped read by userId
+    // so analysis gating cannot misread the profile due to a transient
+    // RLS/auth-context gap).
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
       .maybeSingle();
     const status = resolvePlanStatus(profile as PlanRow | null);
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Admins bypass all subscription gating
     if (!admin) {

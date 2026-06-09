@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
@@ -66,9 +66,21 @@ function Dashboard() {
 
   const analyzeFn = useServerFn(analyzeResume);
   const refreshFn = useServerFn(refreshSubscriptionStatus);
+  const queryClient = useQueryClient();
   const refreshMutation = useMutation({
     mutationFn: () => refreshFn(),
     onSuccess: (res) => {
+      // Seed the cache from the authoritative refresh result so the badge
+      // updates immediately, then refetch in the background to pick up
+      // usage counters and admin flags.
+      const reconciledPlan: "free" | "pro" = res.planTier && res.planTier !== "free" ? "pro" : "free";
+      queryClient.setQueryData(["user-plan"], (prev: Record<string, unknown> | undefined) => ({
+        ...(prev ?? {}),
+        plan: reconciledPlan,
+        planTier: res.planTier ?? "free",
+        proExpiresAt: res.proExpiresAt ?? null,
+        proExpired: false,
+      }));
       planQuery.refetch();
       if (res.changed) {
         toast.success(`Subscription updated to ${res.planTier === "pro_2" ? "Pro Plan 2" : res.planTier === "pro_1" ? "Pro Plan 1" : res.planTier}.`);
