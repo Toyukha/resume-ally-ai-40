@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "The Career Boost"
+const SITE_NAME = "resume-ally-ai-40"
 const SENDER_DOMAIN = "notify.thecareerboost.com"
 const ROOT_DOMAIN = "thecareerboost.com"
 const FROM_DOMAIN = "thecareerboost.com"
