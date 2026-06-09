@@ -148,6 +148,32 @@ function ActivationsPage() {
         </Card>
       </div>
 
+      {reconcileResult && (
+        <Card className="border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+          {"error" in reconcileResult ? (
+            <p className="text-destructive">Reconcile failed: {reconcileResult.error}</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="font-medium">
+                Scanned {reconcileResult.scanned} payment{reconcileResult.scanned === 1 ? "" : "s"} ·
+                Repaired {reconcileResult.repaired.length} · Failed {reconcileResult.failed.length}
+              </p>
+              {reconcileResult.repaired.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Repaired: {reconcileResult.repaired.map((r) => r.tx_ref).join(", ")}
+                </p>
+              )}
+              {reconcileResult.failed.length > 0 && (
+                <p className="text-xs text-destructive">
+                  Failed: {reconcileResult.failed.map((r) => `${r.tx_ref} (${r.reason})`).join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+
       <Card className="p-4">
         <form onSubmit={onSearch} className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[260px] flex-1">
