@@ -35,8 +35,29 @@ function CallbackPage() {
   const verify = useServerFn(verifyFlutterwavePayment);
   const fetchPlan = useServerFn(getUserPlan);
   const reportTimeout = useServerFn(reportActivationTimeout);
+  const recover = useServerFn(recoverActivation);
   const [state, setState] = useState<State>({ kind: "verifying" });
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const ran = useRef(false);
+
+  async function handleRecover() {
+    if (!search.tx_ref) return;
+    setRecovering(true);
+    setRecoveryError(null);
+    try {
+      const r = await recover({ data: { tx_ref: search.tx_ref } });
+      await queryClient.invalidateQueries();
+      await router.invalidate();
+      setState({ kind: "success", planTier: r.planTier });
+      setTimeout(() => navigate({ to: "/dashboard", search: { upgraded: 1 } as never }), 1200);
+    } catch (e) {
+      setRecoveryError(e instanceof Error ? e.message : "Recovery failed. Please contact support.");
+    } finally {
+      setRecovering(false);
+    }
+  }
+
 
   useEffect(() => {
     if (ran.current) return;
