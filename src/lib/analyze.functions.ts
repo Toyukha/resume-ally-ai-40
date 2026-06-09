@@ -186,15 +186,17 @@ export const analyzeResume = createServerFn({ method: "POST" })
 
     const admin = await isAdminUser(supabase as never, userId);
 
-    // Determine plan & subscription status
-    const { data: profile } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Determine plan & subscription status (admin-scoped read by userId
+    // so analysis gating cannot misread the profile due to a transient
+    // RLS/auth-context gap).
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("plan, plan_tier, pro_started_at, pro_expires_at")
       .eq("id", userId)
       .maybeSingle();
     const status = resolvePlanStatus(profile as PlanRow | null);
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Admins bypass all subscription gating
     if (!admin) {
