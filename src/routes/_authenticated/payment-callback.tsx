@@ -92,7 +92,6 @@ function CallbackPage() {
           if (plan) {
             lastKnownPlan = plan.plan ?? null;
             lastKnownPlanTier = plan.planTier ?? null;
-            userId = plan.userId ?? userId;
           }
           if (plan?.plan === "pro") {
             confirmed = true;
