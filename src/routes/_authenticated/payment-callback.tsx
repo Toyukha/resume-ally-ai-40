@@ -107,6 +107,16 @@ function CallbackPage() {
 
         if (!confirmed) {
           log("activation_timeout", { plan_tier: r.planTier });
+          await reportTimeout({
+            data: {
+              tx_ref: txRef,
+              transaction_id: txId,
+              plan_tier: r.planTier as "pro_1" | "pro_2",
+              elapsed_ms: elapsed(),
+              last_known_plan: lastKnownPlan ?? undefined,
+              last_known_plan_tier: lastKnownPlanTier ?? undefined,
+            },
+          }).catch((err) => log("report_timeout_failed", { error: err instanceof Error ? err.message : String(err) }));
           setState({ kind: "timeout", planTier: r.planTier });
           return;
         }
