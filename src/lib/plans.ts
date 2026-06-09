@@ -38,7 +38,6 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
       "Cover Letter Generation",
       "CV Strength & Weakness Analysis",
       "Missing Keyword Recommendations",
-      "Analysis History",
     ],
   },
   pro_1: {
