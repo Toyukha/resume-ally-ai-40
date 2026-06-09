@@ -38,7 +38,6 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
       "Cover Letter Generation",
       "CV Strength & Weakness Analysis",
       "Missing Keyword Recommendations",
-      "Analysis History",
     ],
   },
   pro_1: {
@@ -59,7 +58,6 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
       "CV Strength & Weakness Analysis",
       "Missing Keyword Recommendations",
       "10 Optimized CV Generations",
-      "Analysis History",
     ],
   },
   pro_2: {
@@ -78,7 +76,7 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
       "CV Strength & Weakness Analysis",
       "Missing Keyword Recommendations",
       "20 Optimized CV Generations",
-      "Analysis History",
+      
       "Priority Processing",
     ],
   },

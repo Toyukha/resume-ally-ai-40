@@ -279,6 +279,6 @@ const COMPARE_ROWS: Array<{ label: string; free: boolean | string | number; pro1
   { label: "Missing Keyword Recommendations", free: false, pro1: true, pro2: true },
   { label: "Optimized Resume Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
   { label: "Cover Letter Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
-  { label: "Analysis History", free: false, pro1: true, pro2: true },
+  
   { label: "Priority Processing", free: false, pro1: false, pro2: true },
 ];

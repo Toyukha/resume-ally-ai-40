@@ -26,8 +26,6 @@ import { Route as AdminAnalysesRouteImport } from './routes/admin/analyses'
 import { Route as AdminAdminsRouteImport } from './routes/admin/admins'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedHistoryIndexRouteImport } from './routes/_authenticated/history.index'
-import { Route as AuthenticatedHistoryIdRouteImport } from './routes/_authenticated.history.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -119,17 +117,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedHistoryIndexRoute =
-  AuthenticatedHistoryIndexRouteImport.update({
-    id: '/history/',
-    path: '/history/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedHistoryIdRoute = AuthenticatedHistoryIdRouteImport.update({
-  id: '/history/$id',
-  path: '/history/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -176,8 +163,6 @@ export interface FileRoutesByFullPath {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
-  '/history/$id': typeof AuthenticatedHistoryIdRoute
-  '/history/': typeof AuthenticatedHistoryIndexRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -200,8 +185,6 @@ export interface FileRoutesByTo {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
-  '/history/$id': typeof AuthenticatedHistoryIdRoute
-  '/history': typeof AuthenticatedHistoryIndexRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -227,8 +210,6 @@ export interface FileRoutesById {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
-  '/_authenticated/history/$id': typeof AuthenticatedHistoryIdRoute
-  '/_authenticated/history/': typeof AuthenticatedHistoryIndexRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -254,8 +235,6 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/admin/'
-    | '/history/$id'
-    | '/history/'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
     | '/lovable/email/auth/preview'
@@ -278,8 +257,6 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/admin'
-    | '/history/$id'
-    | '/history'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
     | '/lovable/email/auth/preview'
@@ -304,8 +281,6 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/admin/'
-    | '/_authenticated/history/$id'
-    | '/_authenticated/history/'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
     | '/lovable/email/auth/preview'
@@ -449,20 +424,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/history/': {
-      id: '/_authenticated/history/'
-      path: '/history'
-      fullPath: '/history/'
-      preLoaderRoute: typeof AuthenticatedHistoryIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/history/$id': {
-      id: '/_authenticated/history/$id'
-      path: '/history/$id'
-      fullPath: '/history/$id'
-      preLoaderRoute: typeof AuthenticatedHistoryIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -504,15 +465,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
-  AuthenticatedHistoryIdRoute: typeof AuthenticatedHistoryIdRoute
-  AuthenticatedHistoryIndexRoute: typeof AuthenticatedHistoryIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
-  AuthenticatedHistoryIdRoute: AuthenticatedHistoryIdRoute,
-  AuthenticatedHistoryIndexRoute: AuthenticatedHistoryIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -562,13 +519,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
