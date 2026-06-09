@@ -73,6 +73,46 @@ export const initFlutterwavePayment = createServerFn({ method: "POST" })
     return { checkoutUrl: body.data.link, txRef };
   });
 
+const TERMINAL_FAILURE_EVENTS = new Set([
+  "config_missing",
+  "payment_lookup_error",
+  "payment_not_found",
+  "flw_verify_failed",
+  "activate_pro_plan_failed",
+  "payment_mark_successful_failed",
+]);
+
+const SUCCESS_EVENTS = new Set(["activation_complete", "already_verified"]);
+
+async function persistActivationEvent(
+  event: string,
+  fields: Record<string, unknown>,
+) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("payment_activation_events").insert({
+      event,
+      success: SUCCESS_EVENTS.has(event),
+      user_id: (fields.user_id as string) ?? null,
+      tx_ref: (fields.tx_ref as string) ?? null,
+      payment_id: (fields.payment_id as string) ?? null,
+      plan_tier: (fields.plan_tier as string) ?? null,
+      last_known_plan: (fields.last_known_plan as string) ?? null,
+      last_known_plan_tier: (fields.last_known_plan_tier as string) ?? null,
+      elapsed_ms:
+        typeof fields.elapsed_ms === "number" ? (fields.elapsed_ms as number) : null,
+      error_message:
+        (fields.error as string) ??
+        (fields.rpc_error as string) ??
+        (fields.flw_message as string) ??
+        null,
+      metadata: fields as never,
+    });
+  } catch (err) {
+    console.error("persist_activation_event_failed", err);
+  }
+}
+
 function logActivation(
   event: string,
   fields: Record<string, unknown>,
@@ -83,6 +123,10 @@ function logActivation(
     "flw_activation " +
       JSON.stringify({ event, ts: new Date().toISOString(), ...fields }),
   );
+  if (TERMINAL_FAILURE_EVENTS.has(event) || SUCCESS_EVENTS.has(event)) {
+    // Fire-and-forget: never let logging failures break the activation flow.
+    void persistActivationEvent(event, fields);
+  }
 }
 
 export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
@@ -273,4 +317,32 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
     });
 
     return { ok: true, alreadyVerified: false, planTier: payment.plan_tier };
+  });
+
+// Records a callback-side activation timeout so it surfaces in admin diagnostics.
+const ReportTimeoutSchema = z.object({
+  tx_ref: z.string().min(4).max(120),
+  transaction_id: z.string().min(1).max(60).optional(),
+  plan_tier: z.enum(["pro_1", "pro_2"]).optional(),
+  elapsed_ms: z.number().int().min(0).max(600000).optional(),
+  last_known_plan: z.string().max(20).optional(),
+  last_known_plan_tier: z.string().max(20).optional(),
+});
+
+export const reportActivationTimeout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ReportTimeoutSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    await persistActivationEvent("activation_timeout", {
+      user_id: userId,
+      tx_ref: data.tx_ref,
+      transaction_id: data.transaction_id,
+      plan_tier: data.plan_tier,
+      elapsed_ms: data.elapsed_ms,
+      last_known_plan: data.last_known_plan,
+      last_known_plan_tier: data.last_known_plan_tier,
+      source: "callback",
+    });
+    return { ok: true };
   });

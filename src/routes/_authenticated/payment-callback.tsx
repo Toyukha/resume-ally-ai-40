@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
-import { verifyFlutterwavePayment } from "@/lib/flutterwave.functions";
+import { verifyFlutterwavePayment, reportActivationTimeout } from "@/lib/flutterwave.functions";
 import { getUserPlan } from "@/lib/analyze.functions";
 import { z } from "zod";
 
@@ -34,6 +34,7 @@ function CallbackPage() {
   const queryClient = useQueryClient();
   const verify = useServerFn(verifyFlutterwavePayment);
   const fetchPlan = useServerFn(getUserPlan);
+  const reportTimeout = useServerFn(reportActivationTimeout);
   const [state, setState] = useState<State>({ kind: "verifying" });
   const ran = useRef(false);
 
@@ -106,6 +107,16 @@ function CallbackPage() {
 
         if (!confirmed) {
           log("activation_timeout", { plan_tier: r.planTier });
+          await reportTimeout({
+            data: {
+              tx_ref: txRef,
+              transaction_id: txId,
+              plan_tier: r.planTier as "pro_1" | "pro_2",
+              elapsed_ms: elapsed(),
+              last_known_plan: lastKnownPlan ?? undefined,
+              last_known_plan_tier: lastKnownPlanTier ?? undefined,
+            },
+          }).catch((err) => log("report_timeout_failed", { error: err instanceof Error ? err.message : String(err) }));
           setState({ kind: "timeout", planTier: r.planTier });
           return;
         }
@@ -123,7 +134,7 @@ function CallbackPage() {
         setState({ kind: "error", message });
       }
     })();
-  }, [search, verify, fetchPlan, queryClient, router, navigate]);
+  }, [search, verify, fetchPlan, reportTimeout, queryClient, router, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

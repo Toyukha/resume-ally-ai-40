@@ -250,6 +250,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_activation_events: {
+        Row: {
+          created_at: string
+          elapsed_ms: number | null
+          error_message: string | null
+          event: string
+          id: string
+          last_known_plan: string | null
+          last_known_plan_tier: string | null
+          metadata: Json
+          payment_id: string | null
+          plan_tier: string | null
+          success: boolean
+          tx_ref: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          elapsed_ms?: number | null
+          error_message?: string | null
+          event: string
+          id?: string
+          last_known_plan?: string | null
+          last_known_plan_tier?: string | null
+          metadata?: Json
+          payment_id?: string | null
+          plan_tier?: string | null
+          success?: boolean
+          tx_ref?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          elapsed_ms?: number | null
+          error_message?: string | null
+          event?: string
+          id?: string
+          last_known_plan?: string | null
+          last_known_plan_tier?: string | null
+          metadata?: Json
+          payment_id?: string | null
+          plan_tier?: string | null
+          success?: boolean
+          tx_ref?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

@@ -25,6 +25,7 @@ import { Route as AdminLogsRouteImport } from './routes/admin/logs'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminAnalysesRouteImport } from './routes/admin/analyses'
 import { Route as AdminAdminsRouteImport } from './routes/admin/admins'
+import { Route as AdminActivationsRouteImport } from './routes/admin/activations'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -112,6 +113,11 @@ const AdminAdminsRoute = AdminAdminsRouteImport.update({
   path: '/admins',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminActivationsRoute = AdminActivationsRouteImport.update({
+  id: '/activations',
+  path: '/activations',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AuthenticatedPaymentCallbackRoute =
   AuthenticatedPaymentCallbackRouteImport.update({
     id: '/payment-callback',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
+  '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
   '/admin/analyses': typeof AdminAnalysesRoute
   '/admin/login': typeof AdminLoginRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/dashboard'
     | '/payment-callback'
+    | '/admin/activations'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/dashboard'
     | '/payment-callback'
+    | '/admin/activations'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/_authenticated/dashboard'
     | '/_authenticated/payment-callback'
+    | '/admin/activations'
     | '/admin/admins'
     | '/admin/analyses'
     | '/admin/login'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/activations': {
+      id: '/admin/activations'
+      path: '/activations'
+      fullPath: '/admin/activations'
+      preLoaderRoute: typeof AdminActivationsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_authenticated/payment-callback': {
       id: '/_authenticated/payment-callback'
       path: '/payment-callback'
@@ -496,6 +515,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
+  AdminActivationsRoute: typeof AdminActivationsRoute
   AdminAdminsRoute: typeof AdminAdminsRoute
   AdminAnalysesRoute: typeof AdminAnalysesRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -507,6 +527,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminActivationsRoute: AdminActivationsRoute,
   AdminAdminsRoute: AdminAdminsRoute,
   AdminAnalysesRoute: AdminAnalysesRoute,
   AdminLoginRoute: AdminLoginRoute,

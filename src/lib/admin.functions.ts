@@ -375,3 +375,63 @@ export const listActivityLogs = createServerFn({ method: "GET" })
       .limit(200);
     return data ?? [];
   });
+
+// ---------- Activation diagnostics ----------
+const ActivationEventsSchema = z.object({
+  search: z.string().trim().max(200).optional(),
+  status: z.enum(["all", "failure", "success"]).default("all"),
+  event: z.string().max(60).optional(),
+  hours: z.number().int().min(1).max(720).default(168),
+}).partial({ search: true, event: true });
+
+export const listActivationEvents = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => ActivationEventsSchema.parse(i ?? {}))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    requireAdmin(await loadCurrentRoles(supabase, userId));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const since = new Date(Date.now() - (data.hours ?? 168) * 3600_000).toISOString();
+    let query = supabaseAdmin
+      .from("payment_activation_events")
+      .select("id, created_at, event, success, user_id, tx_ref, payment_id, plan_tier, last_known_plan, last_known_plan_tier, elapsed_ms, error_message, metadata")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (data.status === "failure") query = query.eq("success", false);
+    if (data.status === "success") query = query.eq("success", true);
+    if (data.event) query = query.eq("event", data.event);
+
+    const search = data.search?.trim();
+    if (search) {
+      const escaped = search.replace(/[%,]/g, "");
+      const isUuid = /^[0-9a-f-]{36}$/i.test(search);
+      let userIdFromEmail: string | null = null;
+      if (search.includes("@")) {
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const u = users.users.find((x) => (x.email ?? "").toLowerCase().includes(search.toLowerCase()));
+        userIdFromEmail = u?.id ?? null;
+      }
+      const noMatch = "00000000-0000-0000-0000-000000000000";
+      query = query.or(
+        `tx_ref.ilike.%${escaped}%,user_id.eq.${isUuid ? search : userIdFromEmail ?? noMatch},error_message.ilike.%${escaped}%,plan_tier.ilike.%${escaped}%`,
+      );
+    }
+
+    const { data: rows, error } = await query;
+    if (error) failSafely("activation_events", error);
+
+    // Resolve emails for the users in the result set.
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]));
+    const emailMap: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      for (const u of users.users) {
+        if (userIds.includes(u.id) && u.email) emailMap[u.id] = u.email;
+      }
+    }
+
+    return (rows ?? []).map((r) => ({ ...r, user_email: r.user_id ? emailMap[r.user_id] ?? null : null }));
+  });
