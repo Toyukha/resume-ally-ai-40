@@ -426,3 +426,59 @@ export const reportActivationTimeout = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// Self-service recovery: re-run activation for a payment the caller owns.
+const RecoverSchema = z.object({
+  tx_ref: z.string().min(4).max(120),
+});
+
+export const recoverActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => RecoverSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: payment } = await supabaseAdmin
+      .from("payments")
+      .select("*")
+      .eq("tx_ref", data.tx_ref)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!payment) throw new Error("Payment not found for your account.");
+    if (payment.status !== "successful") {
+      throw new Error("This payment has not been verified yet. Try again from the payment page or contact support.");
+    }
+
+    const { error: rpcErr } = await supabaseAdmin.rpc("activate_pro_plan", {
+      _user_id: userId,
+      _plan_tier: payment.plan_tier,
+      _days: 30,
+    });
+
+    const { data: profileAfter } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const ok = !rpcErr && profileAfter?.plan === "pro" && profileAfter?.plan_tier === payment.plan_tier;
+
+    await persistActivationEvent(ok ? "activation_recovered" : "activation_no_effect", {
+      user_id: userId,
+      tx_ref: data.tx_ref,
+      payment_id: payment.id,
+      plan_tier: payment.plan_tier,
+      profile_after_plan: profileAfter?.plan,
+      profile_after_plan_tier: profileAfter?.plan_tier,
+      rpc_error: rpcErr?.message,
+      source: "user_recovery",
+    });
+
+    if (!ok) {
+      throw new Error("We couldn't activate your plan automatically. Please contact support.");
+    }
+
+    return { ok: true, planTier: payment.plan_tier };
+  });
