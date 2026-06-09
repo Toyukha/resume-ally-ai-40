@@ -362,18 +362,42 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
       throw new Error(payUpdErr.message);
     }
 
-    logActivation("activation_complete", {
-      user_id: userId,
-      tx_ref: data.tx_ref,
-      payment_id: payment.id,
-      plan_tier: payment.plan_tier,
-      previous_plan: profileBefore?.plan,
-      previous_plan_tier: profileBefore?.plan_tier,
-      elapsed_ms: elapsed(),
-    });
+    // Read back the profile to confirm the RPC actually landed.
+    const { data: profileAfter } = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_tier, pro_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileAfter?.plan !== "pro" || profileAfter?.plan_tier !== payment.plan_tier) {
+      logActivation("activation_no_effect", {
+        user_id: userId,
+        tx_ref: data.tx_ref,
+        payment_id: payment.id,
+        plan_tier: payment.plan_tier,
+        previous_plan: profileBefore?.plan,
+        previous_plan_tier: profileBefore?.plan_tier,
+        profile_after_plan: profileAfter?.plan,
+        profile_after_plan_tier: profileAfter?.plan_tier,
+        elapsed_ms: elapsed(),
+      });
+    } else {
+      logActivation("activation_complete", {
+        user_id: userId,
+        tx_ref: data.tx_ref,
+        payment_id: payment.id,
+        plan_tier: payment.plan_tier,
+        previous_plan: profileBefore?.plan,
+        previous_plan_tier: profileBefore?.plan_tier,
+        profile_after_plan: profileAfter?.plan,
+        profile_after_plan_tier: profileAfter?.plan_tier,
+        elapsed_ms: elapsed(),
+      });
+    }
 
     return { ok: true, alreadyVerified: false, planTier: payment.plan_tier };
   });
+
 
 // Records a callback-side activation timeout so it surfaces in admin diagnostics.
 const ReportTimeoutSchema = z.object({
