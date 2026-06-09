@@ -65,6 +65,21 @@ function Dashboard() {
   }, [pollWindowOpen, planQuery.data?.plan]);
 
   const analyzeFn = useServerFn(analyzeResume);
+  const refreshFn = useServerFn(refreshSubscriptionStatus);
+  const refreshMutation = useMutation({
+    mutationFn: () => refreshFn(),
+    onSuccess: (res) => {
+      planQuery.refetch();
+      if (res.changed) {
+        toast.success(`Subscription updated to ${res.planTier === "pro_2" ? "Pro Plan 2" : res.planTier === "pro_1" ? "Pro Plan 1" : res.planTier}.`);
+      } else if (res.reason === "no_successful_payment") {
+        toast.info("No verified payment found on your account.");
+      } else {
+        toast.success("Your subscription is already up to date.");
+      }
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Refresh failed"),
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
