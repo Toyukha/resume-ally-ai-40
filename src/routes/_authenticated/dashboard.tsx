@@ -73,8 +73,8 @@ function Dashboard() {
       // Seed the cache from the authoritative refresh result so the badge
       // updates immediately, then refetch in the background to pick up
       // usage counters and admin flags.
-      const reconciledPlan = res.planTier && res.planTier !== "free" ? "pro" : "free";
-      queryClient.setQueryData(["user-plan"], (prev: ReturnType<typeof planQuery.data extends infer T ? () => T : never> | undefined) => ({
+      const reconciledPlan: "free" | "pro" = res.planTier && res.planTier !== "free" ? "pro" : "free";
+      queryClient.setQueryData(["user-plan"], (prev: Record<string, unknown> | undefined) => ({
         ...(prev ?? {}),
         plan: reconciledPlan,
         planTier: res.planTier ?? "free",
