@@ -134,7 +134,7 @@ function CallbackPage() {
         setState({ kind: "error", message });
       }
     })();
-  }, [search, verify, fetchPlan, queryClient, router, navigate]);
+  }, [search, verify, fetchPlan, reportTimeout, queryClient, router, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
