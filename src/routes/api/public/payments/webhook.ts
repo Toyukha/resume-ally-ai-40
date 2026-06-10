@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyWebhook, EventName, type PaddleEnv } from "@/lib/paddle.server";
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _supabase: SupabaseClient<any, "public", any> | null = null;
 function getSupabase() {
   if (!_supabase) {
     _supabase = createClient(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) as SupabaseClient<any, "public", any>;
   }
   return _supabase;
 }

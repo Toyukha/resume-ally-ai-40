@@ -35,6 +35,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/public/hooks/usage-alerts'
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
@@ -170,6 +171,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksUsageAlertsRoute =
   ApiPublicHooksUsageAlertsRouteImport.update({
     id: '/api/public/hooks/usage-alerts',
@@ -215,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -244,6 +252,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -276,6 +285,7 @@ export interface FileRoutesById {
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -368,6 +380,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -388,6 +401,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFlutterwaveRoute: typeof ApiPublicHooksFlutterwaveRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -577,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/usage-alerts': {
       id: '/api/public/hooks/usage-alerts'
       path: '/api/public/hooks/usage-alerts'
@@ -660,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
   ApiPublicHooksUsageAlertsRoute: ApiPublicHooksUsageAlertsRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
