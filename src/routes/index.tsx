@@ -293,6 +293,12 @@ function Landing() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Career Boost. Crafted for serious job seekers.
           </p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link to="/refund" className="hover:text-foreground transition-colors">Refund Policy</Link>
+            <Link to="/support" className="hover:text-foreground transition-colors">Support</Link>
+          </nav>
           <Link
             to="/admin/login"
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
