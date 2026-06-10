@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Sparkles, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Sparkles, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +93,7 @@ function AuthPage() {
               <TabsContent value="signin">
                 <form onSubmit={signIn} className="space-y-4 pt-4">
                   <Field id="email" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
-                  <Field id="password" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} />
+                  <Field id="password" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} isPassword />
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -124,7 +124,7 @@ function AuthPage() {
               <TabsContent value="signup">
                 <form onSubmit={signUp} className="space-y-4 pt-4">
                   <Field id="email2" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
-                  <Field id="password2" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} minLength={6} />
+                  <Field id="password2" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} minLength={6} isPassword />
                   <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                     {loading ? "Creating..." : "Create account"}
                   </Button>
@@ -138,19 +138,31 @@ function AuthPage() {
   );
 }
 
-function Field({ id, label, type, icon: Icon, value, onChange, minLength }: {
+function Field({ id, label, type, icon: Icon, value, onChange, minLength, isPassword }: {
   id: string; label: string; type: string; icon: typeof Mail;
-  value: string; onChange: (v: string) => void; minLength?: number;
+  value: string; onChange: (v: string) => void; minLength?: number; isPassword?: boolean;
 }) {
+  const [show, setShow] = useState(false);
+  const inputType = isPassword ? (show ? "text" : "password") : type;
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          id={id} type={type} required value={value} minLength={minLength}
-          onChange={(e) => onChange(e.target.value)} className="pl-9"
+          id={id} type={inputType} required value={value} minLength={minLength}
+          onChange={(e) => onChange(e.target.value)} className={isPassword ? "pl-9 pr-10" : "pl-9"}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Hide password" : "Show password"}
+            className="absolute right-2 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
       </div>
     </div>
   );
