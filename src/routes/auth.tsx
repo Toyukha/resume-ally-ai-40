@@ -124,7 +124,7 @@ function AuthPage() {
               <TabsContent value="signup">
                 <form onSubmit={signUp} className="space-y-4 pt-4">
                   <Field id="email2" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
-                  <Field id="password2" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} minLength={6} />
+                  <Field id="password2" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} minLength={6} isPassword />
                   <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                     {loading ? "Creating..." : "Create account"}
                   </Button>
