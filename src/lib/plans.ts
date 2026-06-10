@@ -8,7 +8,10 @@ export type PlanDef = {
   name: string;
   subtitle: string;
   priceNGN: number;          // amount charged via Flutterwave
-  priceLabel: string;        // pretty label e.g. "₦4,900"
+  priceLabel: string;        // pretty NGN label e.g. "₦4,900"
+  priceUSD: number;          // amount charged via Paddle (whole dollars)
+  priceLabelUSD: string;     // pretty USD label e.g. "$10"
+  paddlePriceId?: string;    // human-readable Paddle price ID (created in catalog)
   period: string;
   monthlyLimit: number | null; // null = unlimited
   featured?: boolean;
