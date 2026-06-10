@@ -138,19 +138,31 @@ function AuthPage() {
   );
 }
 
-function Field({ id, label, type, icon: Icon, value, onChange, minLength }: {
+function Field({ id, label, type, icon: Icon, value, onChange, minLength, isPassword }: {
   id: string; label: string; type: string; icon: typeof Mail;
-  value: string; onChange: (v: string) => void; minLength?: number;
+  value: string; onChange: (v: string) => void; minLength?: number; isPassword?: boolean;
 }) {
+  const [show, setShow] = useState(false);
+  const inputType = isPassword ? (show ? "text" : "password") : type;
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          id={id} type={type} required value={value} minLength={minLength}
-          onChange={(e) => onChange(e.target.value)} className="pl-9"
+          id={id} type={inputType} required value={value} minLength={minLength}
+          onChange={(e) => onChange(e.target.value)} className={isPassword ? "pl-9 pr-10" : "pl-9"}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Hide password" : "Show password"}
+            className="absolute right-2 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
+            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
       </div>
     </div>
   );
