@@ -1,7 +1,8 @@
-import { AbsoluteFill, Img, Sequence, staticFile, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
+import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
 import { loadFont as loadDisplay } from "@remotion/google-fonts/Fraunces";
 import { loadFont as loadBody } from "@remotion/google-fonts/Inter";
 import { C } from "../theme";
+import { FrameSequence } from "../FrameSequence";
 
 const { fontFamily: display } = loadDisplay("normal", { weights: ["700"], subsets: ["latin"] });
 const { fontFamily: body } = loadBody("normal", { weights: ["400", "600", "700"], subsets: ["latin"] });
@@ -41,8 +42,9 @@ const BrowserFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </div>
 );
 
-const ClipBlock: React.FC<{ src: string; chip: string; title: string; sub: string; startFrame: number; durFrames: number }> = ({
-  src,
+const ClipBlock: React.FC<{ dir: string; totalFrames: number; chip: string; title: string; sub: string; startFrame: number; durFrames: number }> = ({
+  dir,
+  totalFrames,
   chip,
   title,
   sub,
@@ -52,12 +54,10 @@ const ClipBlock: React.FC<{ src: string; chip: string; title: string; sub: strin
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const local = frame - startFrame;
-  // Card spring in
   const cardS = spring({ frame: local, fps, config: { damping: 18 } });
   const cardX = interpolate(cardS, [0, 1], [-60, 0]);
   const cardOp = interpolate(local, [0, 14], [0, 1], { extrapolateRight: "clamp" });
 
-  // Caption pop
   const capS = spring({ frame: local - 10, fps, config: { damping: 14 } });
   const capX = interpolate(capS, [0, 1], [120, 0]);
   const capOp = interpolate(local, [10, 28], [0, 1], { extrapolateRight: "clamp" });
@@ -70,14 +70,14 @@ const ClipBlock: React.FC<{ src: string; chip: string; title: string; sub: strin
         <div style={{ transform: `translateX(${cardX}px)`, opacity: cardOp }}>
           <BrowserFrame>
             <div style={{ width: 1600, height: 864, overflow: "hidden" }}>
-              <Img
-                src={staticFile(src)}
+              <FrameSequence
+                dir={dir}
+                totalFrames={totalFrames}
                 style={{
                   width: 1700,
                   height: 918,
                   display: "block",
                   objectFit: "cover",
-                  transform: `translate(${-interpolate(local, [0, durFrames], [0, 60])}px, ${-interpolate(local, [0, durFrames], [0, 40])}px) scale(${interpolate(local, [0, durFrames], [1, 1.06])})`,
                   transformOrigin: "center",
                 }}
               />
@@ -137,13 +137,13 @@ export const Scene4Product: React.FC = () => {
       </div>
 
       <Sequence from={0} durationInFrames={210}>
-        <ClipBlock src="clips/cb-1.jpg" chip="STEP 01" title="Land more interviews." sub="Built for today's local and international recruitment standards." startFrame={0} durFrames={210} />
+        <ClipBlock dir="clips/c1" totalFrames={169} chip="STEP 01" title="Land more interviews." sub="Built for today's local and international recruitment standards." startFrame={0} durFrames={210} />
       </Sequence>
       <Sequence from={200} durationInFrames={220}>
-        <ClipBlock src="clips/cb-2.jpg" chip="STEP 02" title="Drop in your resume." sub="Paste the job description. The Career Boost reads both like a recruiter." startFrame={200} durFrames={220} />
+        <ClipBlock dir="clips/c2" totalFrames={169} chip="STEP 02" title="Drop in your resume." sub="Paste the job description. The Career Boost reads both like a recruiter." startFrame={0} durFrames={220} />
       </Sequence>
       <Sequence from={410} durationInFrames={220}>
-        <ClipBlock src="clips/cb-3.jpg" chip="STEP 03" title="See exactly what to fix." sub="Match score, strengths, weaknesses, and missing keywords — instantly." startFrame={410} durFrames={220} />
+        <ClipBlock dir="clips/c3" totalFrames={170} chip="STEP 03" title="See exactly what to fix." sub="Match score, strengths, weaknesses, and missing keywords — instantly." startFrame={0} durFrames={220} />
       </Sequence>
     </AbsoluteFill>
   );
