@@ -8,7 +8,10 @@ export type PlanDef = {
   name: string;
   subtitle: string;
   priceNGN: number;          // amount charged via Flutterwave
-  priceLabel: string;        // pretty label e.g. "₦4,900"
+  priceLabel: string;        // pretty NGN label e.g. "₦4,900"
+  priceUSD: number;          // amount charged via Paddle (whole dollars)
+  priceLabelUSD: string;     // pretty USD label e.g. "$10"
+  paddlePriceId?: string;    // human-readable Paddle price ID (created in catalog)
   period: string;
   monthlyLimit: number | null; // null = unlimited
   featured?: boolean;
@@ -25,6 +28,8 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
     subtitle: "Get started with basic insights.",
     priceNGN: 0,
     priceLabel: "₦0",
+    priceUSD: 0,
+    priceLabelUSD: "$0",
     period: "",
     monthlyLimit: 1,
     cta: "Get Started",
@@ -46,6 +51,9 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
     subtitle: "For job seekers.",
     priceNGN: 5000,
     priceLabel: "₦5,000",
+    priceUSD: 10,
+    priceLabelUSD: "$10",
+    paddlePriceId: "pro_plan_1_monthly",
     period: "/ month",
     monthlyLimit: 10,
     featured: true,
@@ -66,6 +74,9 @@ export const PLANS: Record<Exclude<PlanTier, "pro_legacy">, PlanDef> = {
     subtitle: "For serious job seekers.",
     priceNGN: 10000,
     priceLabel: "₦10,000",
+    priceUSD: 20,
+    priceLabelUSD: "$20",
+    paddlePriceId: "pro_plan_2_monthly",
     period: "/ month",
     monthlyLimit: 20,
     cta: "Get Pro Plus",
