@@ -23,7 +23,6 @@ export const LAUNCH_DURATION = S1 + S2 + S3 + S4 + S6 + S7 - 5 * T;
 export const LaunchVideo: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: "#06122B" }}>
-      <Audio src={staticFile("audio/launch-music.mp3")} volume={0.55} />
       <Background />
       <TransitionSeries>
         <TransitionSeries.Sequence durationInFrames={S1}>
