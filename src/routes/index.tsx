@@ -51,11 +51,11 @@ export const Route = createFileRoute("/")({
 
 const FEATURES = [
   { icon: Target, title: "ATS Match Score", desc: "Instantly see how well your resume matches a target job — backed by recruiter-grade analysis." },
-  { icon: Wand2, title: "AI Optimization", desc: "Rewrite your resume with tailored phrasing, strong verbs, and the keywords that matter." },
+  { icon: Wand2, title: "Resume Optimization", desc: "Rewrite your resume with tailored phrasing, strong verbs, and the keywords that matter." },
   { icon: FileText, title: "Cover Letter Generator", desc: "Get a polished, role-specific cover letter that sounds like you — not a robot." },
   { icon: Zap, title: "Lightning Fast", desc: "Upload a PDF or DOCX, paste the job spec, and get results in under a minute." },
   { icon: Shield, title: "Private by Design", desc: "Your documents never leave your account. Encrypted in transit and at rest." },
-  { icon: Sparkles, title: "Modern AI Models", desc: "Powered by the latest frontier models for nuanced, recruiter-quality output." },
+  { icon: Sparkles, title: "Recruiter quality", desc: "Powered by the latest frontier models for nuanced, recruiter-quality output." },
 ];
 
 import { PLANS, PLAN_ORDER } from "@/lib/plans";
