@@ -75,7 +75,7 @@ function SupportPage() {
               className="px-6 py-3 text-base"
             />
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">+234 813 890 8924</p>
+          <p className="mt-3 text-sm text-muted-foreground"></p>
         </Card>
 
         {/* Support Topics */}
