@@ -511,3 +511,88 @@ export const reconcileStuckActivations = createServerFn({ method: "POST" })
 
     return { scanned, repaired, failed };
   });
+
+// ---------- Health snapshot (analyses/hr, token estimate, webhook failures) ----------
+const APPROX_TOKENS_PER_ANALYSIS = 6000; // ~4k input + ~2k output rough estimate
+
+export const getHealthSnapshot = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    requireAdmin(await loadCurrentRoles(supabase, userId));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const now = new Date();
+    const last24h = new Date(now.getTime() - 24 * 3600_000);
+    const last1h = new Date(now.getTime() - 3600_000);
+    const startOfMonth = new Date(now); startOfMonth.setUTCDate(1); startOfMonth.setUTCHours(0, 0, 0, 0);
+    const startOfDay = new Date(now); startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const [
+      { data: analyses24h },
+      { count: analysesLastHour },
+      { count: analysesToday },
+      { count: analysesMonth },
+      { count: jobsPending },
+      { count: jobsFailed24h },
+      { data: recentFailedJobs },
+      { count: activationsFailed24h },
+      { count: activationsOk24h },
+      { data: recentActivationFailures },
+    ] = await Promise.all([
+      supabaseAdmin.from("analyses").select("created_at").gte("created_at", last24h.toISOString()),
+      supabaseAdmin.from("analyses").select("id", { count: "exact", head: true }).gte("created_at", last1h.toISOString()),
+      supabaseAdmin.from("analyses").select("id", { count: "exact", head: true }).gte("created_at", startOfDay.toISOString()),
+      supabaseAdmin.from("analyses").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
+      supabaseAdmin.from("analysis_jobs").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("analysis_jobs").select("id", { count: "exact", head: true }).eq("status", "failed").gte("created_at", last24h.toISOString()),
+      supabaseAdmin.from("analysis_jobs").select("id, user_id, error, created_at, attempts").eq("status", "failed").gte("created_at", last24h.toISOString()).order("created_at", { ascending: false }).limit(10),
+      supabaseAdmin.from("payment_activation_events").select("id", { count: "exact", head: true }).eq("success", false).gte("created_at", last24h.toISOString()),
+      supabaseAdmin.from("payment_activation_events").select("id", { count: "exact", head: true }).eq("success", true).gte("created_at", last24h.toISOString()),
+      supabaseAdmin.from("payment_activation_events").select("id, created_at, event, tx_ref, user_email, error_message").eq("success", false).gte("created_at", last24h.toISOString()).order("created_at", { ascending: false }).limit(10),
+    ]);
+
+    // Hourly buckets for last 24h
+    const hourly: { hour: string; analyses: number }[] = [];
+    for (let i = 23; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 3600_000);
+      d.setMinutes(0, 0, 0);
+      hourly.push({ hour: d.toISOString().slice(11, 16), analyses: 0 });
+    }
+    const baseTime = new Date(now); baseTime.setMinutes(0, 0, 0);
+    (analyses24h ?? []).forEach((r: { created_at: string }) => {
+      const t = new Date(r.created_at);
+      const diffHours = Math.floor((baseTime.getTime() - t.getTime()) / 3600_000);
+      const idx = 23 - diffHours;
+      if (idx >= 0 && idx < 24) hourly[idx].analyses++;
+    });
+
+    const analyses24hCount = analyses24h?.length ?? 0;
+
+    return {
+      generatedAt: now.toISOString(),
+      analysesLastHour: analysesLastHour ?? 0,
+      analysesToday: analysesToday ?? 0,
+      analyses24h: analyses24hCount,
+      analysesMonth: analysesMonth ?? 0,
+      tokensEstimate: {
+        perAnalysis: APPROX_TOKENS_PER_ANALYSIS,
+        last24h: analyses24hCount * APPROX_TOKENS_PER_ANALYSIS,
+        thisMonth: (analysesMonth ?? 0) * APPROX_TOKENS_PER_ANALYSIS,
+      },
+      jobs: {
+        pending: jobsPending ?? 0,
+        failed24h: jobsFailed24h ?? 0,
+        recentFailures: recentFailedJobs ?? [],
+      },
+      webhooks: {
+        failed24h: activationsFailed24h ?? 0,
+        successful24h: activationsOk24h ?? 0,
+        failureRate: (activationsFailed24h ?? 0) + (activationsOk24h ?? 0) > 0
+          ? Math.round(((activationsFailed24h ?? 0) / ((activationsFailed24h ?? 0) + (activationsOk24h ?? 0))) * 1000) / 10
+          : 0,
+        recentFailures: recentActivationFailures ?? [],
+      },
+      hourly,
+    };
+  });
