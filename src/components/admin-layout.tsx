@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, FileBarChart2, CreditCard, Activity,
-  ShieldCheck, BellRing, LogOut, Sparkles, Menu, X, AlertTriangle,
+  ShieldCheck, BellRing, LogOut, Sparkles, Menu, X, AlertTriangle, HeartPulse,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/admin/health", label: "Health", icon: HeartPulse },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { to: "/admin/analyses", label: "Analyses", icon: FileBarChart2 },
