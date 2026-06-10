@@ -93,7 +93,7 @@ function AuthPage() {
               <TabsContent value="signin">
                 <form onSubmit={signIn} className="space-y-4 pt-4">
                   <Field id="email" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
-                  <Field id="password" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} />
+                  <Field id="password" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} isPassword />
                   <div className="flex justify-end">
                     <button
                       type="button"
