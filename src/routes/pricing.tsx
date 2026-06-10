@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  CheckCircle2, XCircle, Sparkles, ShieldCheck, Lock, Zap, Loader2, Crown, ArrowRight,
+  CheckCircle2, XCircle, Sparkles, ShieldCheck, Lock, Zap, Loader2, Crown, ArrowRight, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Navbar } from "@/components/navbar";
 import { PLANS, PLAN_ORDER, type PlanTier } from "@/lib/plans";
 import { initFlutterwavePayment } from "@/lib/flutterwave.functions";
+import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -55,7 +56,9 @@ export const Route = createFileRoute("/pricing")({
 function PricingPage() {
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
+  const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
   const initFn = useServerFn(initFlutterwavePayment);
+  const { openCheckout: openPaddle } = usePaddleCheckout();
 
   const startCheckout = useMutation({
     mutationFn: async (planTier: "pro_1" | "pro_2") => {
@@ -64,12 +67,24 @@ function PricingPage() {
         navigate({ to: "/auth", search: { redirect: "/pricing" } as never });
         throw new Error("redirect");
       }
-      return initFn({ data: { planTier } });
+      if (currency === "NGN") {
+        return initFn({ data: { planTier } });
+      }
+      // USD via Paddle
+      const plan = PLANS[planTier];
+      if (!plan.paddlePriceId) throw new Error("USD checkout not configured");
+      await openPaddle({
+        priceId: plan.paddlePriceId,
+        userId: session.session.user.id,
+        customerEmail: session.session.user.email ?? undefined,
+        planTier,
+      });
+      return { checkoutUrl: null as string | null };
     },
     onMutate: (planTier) => setLoadingTier(planTier),
     onSettled: () => setLoadingTier(null),
-    onSuccess: ({ checkoutUrl }) => {
-      window.location.href = checkoutUrl;
+    onSuccess: (res) => {
+      if (res?.checkoutUrl) window.location.href = res.checkoutUrl;
     },
     onError: (e) => {
       if (e instanceof Error && e.message === "redirect") return;
