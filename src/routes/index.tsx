@@ -267,7 +267,7 @@ function Landing() {
               Chat on WhatsApp
             </a>
           </Button>
-          <p className="mt-3 text-sm text-muted-foreground">+234 813 890 8924</p>
+          <p className="mt-3 text-sm text-muted-foreground"></p>
         </div>
       </section>
 
