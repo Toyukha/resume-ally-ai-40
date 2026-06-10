@@ -81,7 +81,7 @@ export const Scene4Optimize: React.FC = () => {
           }}
         >
           <div style={{ fontFamily: body, color: COLORS.gold, letterSpacing: 3, fontSize: 13, marginBottom: 18 }}>
-            AFTER ✨
+            AFTER
           </div>
           {AFTER.map((t, i) => {
             const start = 30 + i * 12;
