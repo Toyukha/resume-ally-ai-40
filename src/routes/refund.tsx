@@ -31,8 +31,13 @@ function RefundPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">1. 7-day refund window (unused plans)</h2>
-            <p>If you have <strong>not used any Pro analysis</strong> in your current 30-day window, you may request a full refund within <strong>7 days</strong> of the payment date. Refunds are issued back to the original payment method.</p>
+            <h2 className="font-display text-xl font-semibold text-foreground">1. Refund window (unused plans)</h2>
+            <p>If you have <strong>not used any Pro analysis</strong> in your current 30-day window, you may request a full refund within:</p>
+            <ul className="mt-2 list-disc space-y-1 pl-6">
+              <li><strong>14 days</strong> of the payment date for international (USD) purchases processed by Paddle.</li>
+              <li><strong>7 days</strong> of the payment date for local (NGN) purchases processed by Flutterwave.</li>
+            </ul>
+            <p className="mt-2">Refunds are issued back to the original payment method.</p>
           </section>
 
           <section>
