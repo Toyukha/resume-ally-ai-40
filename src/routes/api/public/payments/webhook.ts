@@ -20,6 +20,48 @@ function isPlanTier(v: unknown): v is PlanTier {
   return v === "pro_1" || v === "pro_2";
 }
 
+// Resolve the plan tier from a Paddle event item. The catalog uses
+// external IDs `pro_plan_1` / `pro_plan_2`; the checkout also passes
+// `planTier` in customData. Prefer customData (most explicit), fall back to
+// the product external_id mapping.
+function resolvePlanTier(
+  productExternalId: string | undefined,
+  customDataPlanTier: unknown,
+): PlanTier | null {
+  if (isPlanTier(customDataPlanTier)) return customDataPlanTier;
+  if (productExternalId === "pro_plan_1" || productExternalId === "pro_1") return "pro_1";
+  if (productExternalId === "pro_plan_2" || productExternalId === "pro_2") return "pro_2";
+  return null;
+}
+
+// Activate Pro with the Paddle billing-period end. If that is missing or
+// already past (rare, but can happen on delayed events), fall back to a
+// 30-day window so the user is not stranded on Free after a successful
+// payment.
+async function activatePro(
+  supabase: SupabaseClient,
+  userId: string,
+  tier: PlanTier,
+  expiresAt: string | undefined,
+) {
+  const expiresDate = expiresAt ? new Date(expiresAt) : null;
+  if (expiresDate && expiresDate.getTime() > Date.now()) {
+    const { error } = await supabase.rpc("activate_pro_plan_until", {
+      _user_id: userId,
+      _plan_tier: tier,
+      _expires_at: expiresDate.toISOString(),
+    });
+    if (!error) return;
+    console.error("activate_pro_plan_until failed, falling back to +30d:", error.message);
+  }
+  const { error } = await supabase.rpc("activate_pro_plan", {
+    _user_id: userId,
+    _plan_tier: tier,
+    _days: 30,
+  });
+  if (error) console.error("activate_pro_plan fallback failed:", error.message);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
   const { id, customerId, items, status, currentBillingPeriod, customData } = data;
@@ -29,14 +71,15 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     return;
   }
   const item = items?.[0];
-  const priceId: string | undefined = item?.price?.importMeta?.externalId;
-  const productId: string | undefined = item?.product?.importMeta?.externalId;
-  if (!priceId || !productId) {
-    console.warn("paddle_webhook: missing importMeta.externalId", { id, rawPriceId: item?.price?.id });
-    return;
-  }
-  if (!isPlanTier(productId)) {
-    console.warn("paddle_webhook: unknown product_id, not activating", { productId });
+  const priceExternalId: string | undefined = item?.price?.importMeta?.externalId;
+  const productExternalId: string | undefined = item?.product?.importMeta?.externalId;
+  const tier = resolvePlanTier(productExternalId, customData?.planTier);
+  if (!tier) {
+    console.warn("paddle_webhook: could not resolve plan tier", {
+      id,
+      productExternalId,
+      customDataPlanTier: customData?.planTier,
+    });
     return;
   }
 
@@ -46,8 +89,8 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
       user_id: userId,
       paddle_subscription_id: id,
       paddle_customer_id: customerId,
-      product_id: productId,
-      price_id: priceId,
+      product_id: tier, // store canonical tier so reads stay consistent
+      price_id: priceExternalId ?? `${tier}_monthly`,
       status,
       current_period_start: currentBillingPeriod?.startsAt ?? null,
       current_period_end: currentBillingPeriod?.endsAt ?? null,
@@ -57,34 +100,25 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     { onConflict: "paddle_subscription_id" },
   );
 
-  // Activate Pro for the user using the real billing-period end so cancel
-  // grants access until period end automatically.
-  const expiresAt = currentBillingPeriod?.endsAt;
-  if (expiresAt) {
-    const { error } = await supabase.rpc("activate_pro_plan_until", {
-      _user_id: userId,
-      _plan_tier: productId,
-      _expires_at: expiresAt,
-    });
-    if (error) console.error("activate_pro_plan_until failed (created):", error.message);
-  }
+  await activatePro(supabase, userId, tier, currentBillingPeriod?.endsAt);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
-  const { id, status, currentBillingPeriod, scheduledChange, items } = data;
+  const { id, status, currentBillingPeriod, scheduledChange, items, customData } = data;
   const supabase = getSupabase();
 
   const item = items?.[0];
-  const priceId: string | undefined = item?.price?.importMeta?.externalId;
-  const productId: string | undefined = item?.product?.importMeta?.externalId;
+  const priceExternalId: string | undefined = item?.price?.importMeta?.externalId;
+  const productExternalId: string | undefined = item?.product?.importMeta?.externalId;
+  const tier = resolvePlanTier(productExternalId, customData?.planTier);
 
   await supabase
     .from("subscriptions")
     .update({
       status,
-      product_id: productId ?? undefined,
-      price_id: priceId ?? undefined,
+      product_id: tier ?? undefined,
+      price_id: priceExternalId ?? (tier ? `${tier}_monthly` : undefined),
       current_period_start: currentBillingPeriod?.startsAt ?? null,
       current_period_end: currentBillingPeriod?.endsAt ?? null,
       cancel_at_period_end: scheduledChange?.action === "cancel",
@@ -94,31 +128,24 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
     .eq("environment", env);
 
   // Re-activate or update plan tier (covers upgrades/downgrades + renewals).
-  // We only touch the profile when Paddle reports the sub is healthy AND we
-  // know the tier. Canceled / past_due rows leave pro_expires_at alone so the
-  // existing grace period naturally elapses.
-  const expiresAt = currentBillingPeriod?.endsAt;
-  if (
-    expiresAt &&
-    isPlanTier(productId) &&
-    (status === "active" || status === "trialing")
-  ) {
-    // Find the owning user
-    const { data: subRow } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("paddle_subscription_id", id)
-      .eq("environment", env)
-      .maybeSingle();
-
-    const userId = subRow?.user_id as string | undefined;
+  // Only touch the profile while Paddle reports the sub is healthy.
+  // Canceled / past_due rows leave pro_expires_at alone so the existing
+  // grace period naturally elapses.
+  if (tier && (status === "active" || status === "trialing")) {
+    // Prefer userId from event customData (avoids a race when update arrives
+    // before created has finished inserting). Fall back to the DB row.
+    let userId: string | undefined = customData?.userId;
+    if (!userId) {
+      const { data: subRow } = await supabase
+        .from("subscriptions")
+        .select("user_id")
+        .eq("paddle_subscription_id", id)
+        .eq("environment", env)
+        .maybeSingle();
+      userId = subRow?.user_id as string | undefined;
+    }
     if (userId) {
-      const { error } = await supabase.rpc("activate_pro_plan_until", {
-        _user_id: userId,
-        _plan_tier: productId,
-        _expires_at: expiresAt,
-      });
-      if (error) console.error("activate_pro_plan_until failed (updated):", error.message);
+      await activatePro(supabase, userId, tier, currentBillingPeriod?.endsAt);
     }
   }
 }
