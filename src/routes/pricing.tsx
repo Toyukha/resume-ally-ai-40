@@ -79,6 +79,7 @@ function PricingPage() {
         userId: session.session.user.id,
         customerEmail: session.session.user.email ?? undefined,
         planTier,
+        successUrl: `${window.location.origin}/dashboard?upgraded=1`,
       });
       return { checkoutUrl: null as string | null };
     },
