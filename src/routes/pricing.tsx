@@ -124,6 +124,35 @@ function PricingPage() {
         <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
           Choose the plan that best fits your job search journey.
         </p>
+
+        {/* Currency toggle */}
+        <div className="mt-6 inline-flex items-center rounded-full border border-border bg-card p-1">
+          <button
+            type="button"
+            onClick={() => setCurrency("NGN")}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              currency === "NGN" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+            aria-pressed={currency === "NGN"}
+          >
+            ₦ NGN
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrency("USD")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              currency === "USD" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+            aria-pressed={currency === "USD"}
+          >
+            <Globe className="h-3.5 w-3.5" /> USD
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {currency === "NGN"
+            ? "Local payments in Naira via Flutterwave"
+            : "International payments in USD via Paddle (auto-renewing)"}
+        </p>
       </section>
 
       {/* Plans */}
@@ -160,7 +189,9 @@ function PricingPage() {
                 <p className="mt-1 text-sm text-muted-foreground">{p.subtitle}</p>
 
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-display text-5xl font-bold">{p.priceLabel}</span>
+                  <span className="font-display text-5xl font-bold">
+                    {currency === "USD" ? p.priceLabelUSD : p.priceLabel}
+                  </span>
                   <span className="text-sm text-muted-foreground">{p.period}</span>
                 </div>
 
@@ -195,7 +226,9 @@ function PricingPage() {
                   </Button>
                   {tier !== "free" && (
                     <p className="mt-2 text-center text-xs text-muted-foreground">
-                      Secured by Flutterwave · 30 days access
+                      {currency === "USD"
+                        ? "Secured by Paddle · auto-renews monthly"
+                        : "Secured by Flutterwave · 30 days access"}
                     </p>
                   )}
                 </div>
