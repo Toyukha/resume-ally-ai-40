@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const search = Route.useSearch();
-  const justUpgraded = search.upgraded === 1;
+  const justUpgraded = search.upgraded === 1 || search.checkout === "success";
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
