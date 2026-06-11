@@ -262,11 +262,28 @@ function Dashboard() {
                   <Link to="/pricing">Upgrade</Link>
                 </Button>
               )}
+              {!isFree && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => portalMutation.mutate()}
+                  disabled={portalMutation.isPending}
+                  title="Update card, view invoices, or cancel"
+                >
+                  {portalMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="h-4 w-4" />
+                  )}
+                  <span className="ml-1.5 hidden sm:inline">Manage</span>
+                </Button>
+              )}
             </Card>
           )}
         </div>
 
-        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus */}
+        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus (admin-only) */}
+        {isAdmin && (
         <div className="mb-6">
           <Button
             size="sm"
