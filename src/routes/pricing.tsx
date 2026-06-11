@@ -286,48 +286,12 @@ function PricingPage() {
         </div>
         <div className="mx-auto mt-10 max-w-3xl">
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="q1">
-              <AccordionTrigger>How does billing work?</AccordionTrigger>
-              <AccordionContent>
-                Pro Plan 1 and Pro Plan 2 are one-time monthly payments of ₦5,000 and ₦10,000 respectively, processed securely through Flutterwave. Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in full control.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q2">
-              <AccordionTrigger>How are monthly limits counted?</AccordionTrigger>
-              <AccordionContent>
-                Every CV analysis includes the matching ATS score, optimized resume, cover letter and missing-keyword report as one bundled credit. Pro Plan 1 gives you 10 of these per month; Pro Plan 2 gives you 20. Usage resets at the start of each calendar month.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q3">
-              <AccordionTrigger>What payment methods are supported?</AccordionTrigger>
-              <AccordionContent>
-                Flutterwave supports Nigerian and international cards (Visa, Mastercard, Verve), bank transfer, USSD, mobile money and more. You'll see the full list at checkout.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q4">
-              <AccordionTrigger>Can I upgrade from Pro Plan 1 to Pro Plan 2?</AccordionTrigger>
-              <AccordionContent>
-                Yes — just purchase the higher plan. Your new 30-day window starts from the date of the new payment.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q5">
-              <AccordionTrigger>Will I be auto-charged next month?</AccordionTrigger>
-              <AccordionContent>
-                No. Plans do not renew automatically. When your 30 days end, you'll be prompted to renew if you want to keep Pro features.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q6">
-              <AccordionTrigger>Do you offer refunds?</AccordionTrigger>
-              <AccordionContent>
-                Because Pro features are delivered immediately, payments are non-refundable once analyses have been used. Reach out on WhatsApp from the home page if you run into trouble — we're happy to help.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q7">
-              <AccordionTrigger>Is my data private?</AccordionTrigger>
-              <AccordionContent>
-                Your documents are encrypted in transit and at rest, tied to your account, and never shared. We do not use your resume to train models.
-              </AccordionContent>
-            </AccordionItem>
+            {PRICING_FAQ.map(([q, a], i) => (
+              <AccordionItem key={q} value={`q${i + 1}`}>
+                <AccordionTrigger>{q}</AccordionTrigger>
+                <AccordionContent>{a}</AccordionContent>
+              </AccordionItem>
+            ))}
           </Accordion>
         </div>
         <div className="mt-12 text-center">
