@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw, Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
+import { createPaddlePortalSession } from "@/lib/paddle-portal.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     upgraded: s.upgraded === 1 || s.upgraded === "1" ? 1 : undefined,
+    checkout: s.checkout === "success" ? ("success" as const) : undefined,
   }),
   component: Dashboard,
 });
