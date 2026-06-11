@@ -16,12 +16,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const PRICING_FAQ: Array<[string, string]> = [
-  ["How does billing work?", "Pro Plan 1 and Pro Plan 2 are one-time monthly payments of ₦5,000 and ₦10,000 respectively, processed securely through Flutterwave. Each payment unlocks the plan for 30 days — there is no automatic renewal, so you stay in full control."],
+  ["How does billing work?", "Pro Plan 1 and Pro Plan 2 cost ₦5,000 / $10 and ₦10,000 / $20 respectively. Local (Naira) payments go through Flutterwave as a one-time 30-day pass — no auto-renewal. International (USD) payments go through Paddle as an auto-renewing monthly subscription you can cancel any time from your dashboard."],
   ["How are monthly limits counted?", "Every CV analysis includes the matching ATS score, optimized resume, cover letter and missing-keyword report as one bundled credit. Pro Plan 1 gives you 10 of these per month; Pro Plan 2 gives you 20. Usage resets at the start of each calendar month."],
-  ["What payment methods are supported?", "Flutterwave supports Nigerian and international cards (Visa, Mastercard, Verve), bank transfer, USSD, mobile money and more. You'll see the full list at checkout."],
-  ["Can I upgrade from Pro Plan 1 to Pro Plan 2?", "Yes — just purchase the higher plan. Your new 30-day window starts from the date of the new payment."],
-  ["Will I be auto-charged next month?", "No. Plans do not renew automatically. When your 30 days end, you'll be prompted to renew if you want to keep Pro features."],
-  ["Do you offer refunds?", "Because Pro features are delivered immediately, payments are non-refundable once analyses have been used. Reach out on WhatsApp from the home page if you run into trouble — we're happy to help."],
+  ["What payment methods are supported?", "Flutterwave (NGN) supports Nigerian and international cards (Visa, Mastercard, Verve), bank transfer, USSD, and mobile money. Paddle (USD) supports Visa, Mastercard, Amex, Apple Pay, Google Pay, PayPal, and more."],
+  ["Can I upgrade from Pro Plan 1 to Pro Plan 2?", "Yes. On Flutterwave, just purchase the higher plan and your new 30-day window starts immediately. On Paddle, switching plans is pro-rated automatically — you only pay the difference for the remainder of the current billing cycle."],
+  ["Will I be auto-charged next month?", "Only on the USD/Paddle plan, which auto-renews monthly until you cancel. The NGN/Flutterwave plan is a one-time 30-day pass with no automatic renewal."],
+  ["How do I cancel?", "USD/Paddle subscribers can cancel any time from the dashboard via the Manage button — you keep Pro access until the end of the period you already paid for. NGN/Flutterwave plans simply expire after 30 days; there is nothing to cancel."],
+  ["Do you offer refunds?", "Yes. International (USD/Paddle) purchases are refundable within 14 days if unused. Local (NGN/Flutterwave) purchases are refundable within 7 days if unused. See the Refund Policy for full details."],
   ["Is my data private?", "Your documents are encrypted in transit and at rest, tied to your account, and never shared. We do not use your resume to train models."],
 ];
 
