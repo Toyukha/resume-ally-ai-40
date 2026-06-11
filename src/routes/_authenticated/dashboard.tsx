@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw, Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
+import { createPaddlePortalSession } from "@/lib/paddle-portal.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     upgraded: s.upgraded === 1 || s.upgraded === "1" ? 1 : undefined,
+    checkout: s.checkout === "success" ? ("success" as const) : undefined,
   }),
   component: Dashboard,
 });
@@ -34,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const search = Route.useSearch();
-  const justUpgraded = search.upgraded === 1;
+  const justUpgraded = search.upgraded === 1 || search.checkout === "success";
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
@@ -71,6 +73,14 @@ function Dashboard() {
     return () => clearTimeout(t);
   }, [pollWindowOpen, planQuery.data?.plan]);
 
+  // Show a one-time toast when arriving from a Paddle/Flutterwave success redirect.
+  useEffect(() => {
+    if (search.upgraded === 1 || search.checkout === "success") {
+      toast.success("Payment received — activating your Pro plan…");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const analyzeFn = useServerFn(analyzeResume);
   const refreshFn = useServerFn(refreshSubscriptionStatus);
   const queryClient = useQueryClient();
@@ -98,6 +108,22 @@ function Dashboard() {
       }
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Refresh failed"),
+  });
+
+  const portalFn = useServerFn(createPaddlePortalSession);
+  const portalMutation = useMutation({
+    mutationFn: () => portalFn(),
+    onSuccess: (res) => {
+      if (res?.url) window.open(res.url, "_blank", "noopener,noreferrer");
+    },
+    onError: (e) =>
+      toast.error(
+        e instanceof Error
+          ? e.message === "No subscription found"
+            ? "We couldn't find an international (USD) subscription on your account."
+            : e.message
+          : "Could not open the billing portal",
+      ),
   });
 
   const mutation = useMutation({
@@ -236,11 +262,28 @@ function Dashboard() {
                   <Link to="/pricing">Upgrade</Link>
                 </Button>
               )}
+              {!isFree && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => portalMutation.mutate()}
+                  disabled={portalMutation.isPending}
+                  title="Update card, view invoices, or cancel"
+                >
+                  {portalMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Settings className="h-4 w-4" />
+                  )}
+                  <span className="ml-1.5 hidden sm:inline">Manage</span>
+                </Button>
+              )}
             </Card>
           )}
         </div>
 
-        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus */}
+        {/* Debug: compare getUserPlan vs refreshSubscriptionStatus (admin-only) */}
+        {isAdmin && (
         <div className="mb-6">
           <Button
             size="sm"
@@ -290,6 +333,9 @@ function Dashboard() {
             </Card>
           )}
         </div>
+        )}
+
+
 
 
         {/* Usage widget — three counters tick down together (bundled per analysis) */}
