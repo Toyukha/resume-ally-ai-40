@@ -242,8 +242,8 @@ function PricingPage() {
         {/* Trust badges */}
         <div className="mx-auto mt-14 flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Encrypted in transit & at rest</span>
-          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> PCI-DSS payments via Flutterwave</span>
-          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> Cancel any time — no auto-renewal</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> PCI-DSS payments via Flutterwave & Paddle</span>
+          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> {currency === "USD" ? "Cancel any time from your dashboard" : "One-time payment — no auto-renewal"}</span>
         </div>
       </section>
 
