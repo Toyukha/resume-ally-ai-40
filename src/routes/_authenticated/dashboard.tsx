@@ -110,6 +110,22 @@ function Dashboard() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Refresh failed"),
   });
 
+  const portalFn = useServerFn(createPaddlePortalSession);
+  const portalMutation = useMutation({
+    mutationFn: () => portalFn(),
+    onSuccess: (res) => {
+      if (res?.url) window.open(res.url, "_blank", "noopener,noreferrer");
+    },
+    onError: (e) =>
+      toast.error(
+        e instanceof Error
+          ? e.message === "No subscription found"
+            ? "We couldn't find an international (USD) subscription on your account."
+            : e.message
+          : "Could not open the billing portal",
+      ),
+  });
+
   const mutation = useMutation({
     mutationFn: async () => {
       // Best-effort: upload the original file to the private `resumes` bucket.
