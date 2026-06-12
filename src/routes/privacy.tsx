@@ -4,10 +4,10 @@ import { Navbar } from "@/components/navbar";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Career Boost" },
-      { name: "description", content: "How Career Boost collects, uses, stores, and protects your personal information and uploaded documents." },
-      { property: "og:title", content: "Privacy Policy — Career Boost" },
-      { property: "og:description", content: "How we handle your data at Career Boost." },
+      { title: "Privacy Policy — The Career Boost" },
+      { name: "description", content: "How The Career Boost collects, uses, stores, and protects your personal information and uploaded documents." },
+      { property: "og:title", content: "Privacy Policy — The Career Boost" },
+      { property: "og:description", content: "How we handle your data at The Career Boost." },
       { property: "og:url", content: "https://thecareerboost.com/privacy" },
     ],
     links: [{ rel: "canonical", href: "https://thecareerboost.com/privacy" }],
@@ -27,16 +27,18 @@ function PrivacyPage() {
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">1. Who we are</h2>
-            <p>Career Boost ("we", "us") operates thecareerboost.com and provides AI-powered resume optimization. This policy explains what data we collect and how we use it.</p>
+            <p>The Career Boost ("we", "us") operates thecareerboost.com and provides AI-powered resume optimization. For the purposes of data protection law, The Career Boost is the data controller of the personal data we collect and process. This policy explains what data we collect and how we use it.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">2. Information we collect</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">2. Information we collect and legal basis</h2>
+            <p>We process personal data on the following legal bases:</p>
             <ul className="list-disc space-y-1 pl-6">
-              <li><strong>Account data</strong>: email, name, authentication identifiers.</li>
-              <li><strong>Uploaded content</strong>: resumes, CVs, and job descriptions you submit for analysis.</li>
-              <li><strong>Usage data</strong>: pages viewed, features used, analysis history, device and browser information.</li>
-              <li><strong>Payment data</strong>: handled directly by Flutterwave (NGN) and Paddle (USD). We receive only the transaction status and the last 4 digits of cards — never full card numbers.</li>
+              <li><strong>Account data</strong> (email, name, authentication identifiers) — <em>Legal basis: contract performance</em> — necessary to create and manage your account and provide the Service.</li>
+              <li><strong>Uploaded content</strong> (resumes, CVs, and job descriptions you submit for analysis) — <em>Legal basis: contract performance</em> — necessary to deliver CV analyses, ATS scores, and optimized resumes.</li>
+              <li><strong>Usage data</strong> (pages viewed, features used, analysis history, device and browser information) — <em>Legal basis: legitimate interest</em> — to operate, secure, and improve the Service.</li>
+              <li><strong>Payment data</strong> — handled directly by Flutterwave (NGN) and Paddle (USD). We receive only the transaction status and the last 4 digits of cards — never full card numbers. <em>Legal basis: contract performance and legal obligation</em> — to process payments and meet tax and accounting requirements.</li>
+              <li><strong>Transactional emails</strong> (sign-in, receipts, plan expiry) — <em>Legal basis: contract performance</em> — to deliver the Service. Marketing emails require your explicit consent.</li>
             </ul>
           </section>
 
