@@ -56,27 +56,32 @@ function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">7. AI Output Disclaimer</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">7. Our Intellectual Property</h2>
+            <p>All rights, title, and interest in and to the Service — including software, code, algorithms, user interfaces, designs, graphics, text, logos, branding, documentation, and all other materials provided by The Career Boost — are owned by The Career Boost or its licensors. These Terms do not grant you any right, title, or interest in our IP except for the limited right to use the Service as permitted herein. You may not copy, modify, distribute, sell, or lease any part of the Service or its content without our express written permission.</p>
+          </section>
+
+          <section>
+            <h2 className="font-display text-xl font-semibold text-foreground">8. AI Output Disclaimer</h2>
             <p>AI-generated content may contain inaccuracies or omissions. We do not guarantee any particular outcome (e.g., interviews or job offers) from using the Service.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">8. Termination</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">9. Termination</h2>
             <p>We may suspend or terminate access for breach of these Terms. You may stop using the Service at any time. Sections that by their nature should survive termination will survive.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">9. Limitation of Liability</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">10. Limitation of Liability</h2>
             <p>To the maximum extent permitted by law, The Career Boost is provided "as is" without warranties of any kind. Our aggregate liability for any claim relating to the Service is limited to the amount you paid us in the 3 months preceding the claim.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">10. Changes</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">11. Changes</h2>
             <p>We may update these Terms from time to time. Material changes will be communicated via the Service or by email. Continued use after changes take effect constitutes acceptance.</p>
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">11. Contact</h2>
+            <h2 className="font-display text-xl font-semibold text-foreground">12. Contact</h2>
             <p>Questions? Reach us via the <Link to="/support" className="text-primary-glow underline">Support</Link> page.</p>
           </section>
         </div>
