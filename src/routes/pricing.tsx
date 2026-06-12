@@ -12,6 +12,7 @@ import { Navbar } from "@/components/navbar";
 import { PLANS, PLAN_ORDER, type PlanTier } from "@/lib/plans";
 import { initFlutterwavePayment } from "@/lib/flutterwave.functions";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -57,6 +58,8 @@ export const Route = createFileRoute("/pricing")({
 function PricingPage() {
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
+  const paddleEnv = getPaddleEnvironment();
+  const usdAvailable = paddleEnv === "sandbox";
   const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
   const initFn = useServerFn(initFlutterwavePayment);
   const { openCheckout: openPaddle } = usePaddleCheckout();
@@ -68,7 +71,7 @@ function PricingPage() {
         navigate({ to: "/auth", search: { redirect: "/pricing" } as never });
         throw new Error("redirect");
       }
-      if (currency === "NGN") {
+      if (currency === "NGN" || !usdAvailable) {
         return initFn({ data: { planTier } });
       }
       // USD via Paddle
@@ -128,30 +131,37 @@ function PricingPage() {
         </p>
 
         {/* Currency toggle */}
-        <div className="mt-6 inline-flex items-center rounded-full border border-border bg-card p-1">
-          <button
-            type="button"
-            onClick={() => setCurrency("NGN")}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              currency === "NGN" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            aria-pressed={currency === "NGN"}
-          >
-            ₦ NGN
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrency("USD")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              currency === "USD" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            aria-pressed={currency === "USD"}
-          >
-            <Globe className="h-3.5 w-3.5" /> USD
-          </button>
-        </div>
+        {usdAvailable ? (
+          <div className="mt-6 inline-flex items-center rounded-full border border-border bg-card p-1">
+            <button
+              type="button"
+              onClick={() => setCurrency("NGN")}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                currency === "NGN" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={currency === "NGN"}
+            >
+              ₦ NGN
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrency("USD")}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                currency === "USD" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={currency === "USD"}
+            >
+              <Globe className="h-3.5 w-3.5" /> USD
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 inline-flex items-center rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
+            <Globe className="mr-1.5 h-3.5 w-3.5" />
+            USD checkout coming soon
+          </div>
+        )}
         <p className="mt-2 text-xs text-muted-foreground">
-          {currency === "NGN"
+          {currency === "NGN" || !usdAvailable
             ? "Local payments in Naira via Flutterwave"
             : "International payments in USD via Paddle (auto-renewing)"}
         </p>
@@ -192,7 +202,7 @@ function PricingPage() {
 
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="font-display text-5xl font-bold">
-                    {currency === "USD" ? p.priceLabelUSD : p.priceLabel}
+                    {currency === "USD" && usdAvailable ? p.priceLabelUSD : p.priceLabel}
                   </span>
                   <span className="text-sm text-muted-foreground">{p.period}</span>
                 </div>
@@ -228,7 +238,7 @@ function PricingPage() {
                   </Button>
                   {tier !== "free" && (
                     <p className="mt-2 text-center text-xs text-muted-foreground">
-                      {currency === "USD"
+                      {currency === "USD" && usdAvailable
                         ? "Secured by Paddle · auto-renews monthly"
                         : "Secured by Flutterwave · 30 days access"}
                     </p>
@@ -243,7 +253,7 @@ function PricingPage() {
         <div className="mx-auto mt-14 flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Encrypted in transit & at rest</span>
           <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> PCI-DSS payments via Flutterwave & Paddle</span>
-          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> {currency === "USD" ? "Cancel any time from your dashboard" : "One-time payment — no auto-renewal"}</span>
+          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> {currency === "USD" && usdAvailable ? "Cancel any time from your dashboard" : "One-time payment — no auto-renewal"}</span>
         </div>
       </section>
 
