@@ -4,10 +4,10 @@ import { Navbar } from "@/components/navbar";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Career Boost" },
-      { name: "description", content: "How Career Boost collects, uses, stores, and protects your personal information and uploaded documents." },
-      { property: "og:title", content: "Privacy Policy — Career Boost" },
-      { property: "og:description", content: "How we handle your data at Career Boost." },
+      { title: "Privacy Policy — The Career Boost" },
+      { name: "description", content: "How The Career Boost collects, uses, stores, and protects your personal information and uploaded documents." },
+      { property: "og:title", content: "Privacy Policy — The Career Boost" },
+      { property: "og:description", content: "How we handle your data at The Career Boost." },
       { property: "og:url", content: "https://thecareerboost.com/privacy" },
     ],
     links: [{ rel: "canonical", href: "https://thecareerboost.com/privacy" }],
