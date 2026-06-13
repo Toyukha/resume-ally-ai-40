@@ -148,7 +148,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster richColors position="top-right" />
-      <WhatsAppButton variant="fab" location="floating_button" />
+      <AiChatWidget />
     </QueryClientProvider>
   );
 }
