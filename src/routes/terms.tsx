@@ -42,7 +42,7 @@ function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">4. Plans, Payments and Renewals</h2>
-            <p>The Career Boost offers a Free plan and paid plans (Pro Plan 1 and Pro Plan 2). Local payments are processed by Flutterwave (NGN); international payments are processed by Paddle (USD), who acts as the merchant of record for international transactions. Each paid plan unlocks Pro features for 30 days from the date of payment and does <strong>not</strong> auto-renew. Monthly analysis credits do not roll over.</p>
+            <p>The Career Boost offers a Free plan and paid plans (Pro Plan 1 and Pro Plan 2). Payments are processed by Flutterwave; international customers can pay with any Visa, Mastercard, or Verve card by selecting the Card option at checkout. Each paid plan unlocks Pro features for 30 days from the date of payment and does <strong>not</strong> auto-renew. Monthly analysis credits do not roll over.</p>
           </section>
 
           <section>
