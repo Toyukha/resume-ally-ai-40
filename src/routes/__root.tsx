@@ -10,7 +10,7 @@ import {
 
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+import { AiChatWidget } from "@/components/ai-chat-widget";
 
 
 import appCss from "../styles.css?url";
@@ -148,7 +148,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster richColors position="top-right" />
-      <WhatsAppButton variant="fab" location="floating_button" />
+      <AiChatWidget />
     </QueryClientProvider>
   );
 }
