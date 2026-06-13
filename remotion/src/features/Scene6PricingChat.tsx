@@ -7,9 +7,9 @@ const { fontFamily: body } = loadBody("normal", { weights: ["400", "600", "700"]
 const { fontFamily: display } = loadDisplay("normal", { weights: ["700"], subsets: ["latin"] });
 
 const TIERS = [
-  { name: "Free", price: "$0", features: ["1 analysis", "Basic score", "PDF export"], featured: false },
-  { name: "Pro", price: "$12", features: ["Unlimited", "AI rewrite", "Cover letter"], featured: true },
-  { name: "Premium", price: "$29", features: ["Everything in Pro", "Priority support", "1-on-1 coaching"], featured: false },
+  { name: "Free", price: "₦0", period: "", features: ["1 CV Analysis / month", "ATS Score", "Basic Resume Assessment"], featured: false },
+  { name: "Pro Plan 1", price: "₦5,000", period: "/ month", features: ["10 CV Analyses", "10 Optimized Cover Letters", "10 Optimized CVs"], featured: true },
+  { name: "Pro Plan 2", price: "₦10,000", period: "/ month", features: ["20 CV Analyses", "20 Optimized CVs", "Priority Processing"], featured: false },
 ];
 
 export const Scene6PricingChat: React.FC = () => {
