@@ -12,6 +12,7 @@ import { getAdminMe } from "@/lib/admin.functions";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { countryLabel, getCountry } from "@/lib/countries";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/users")({
@@ -55,7 +56,7 @@ function UsersPage() {
       <Card className="p-4">
         <div className="relative max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search by email or user ID…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          <Input placeholder="Search by email, user ID, or country (e.g. NG)…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
         </div>
       </Card>
 
@@ -70,6 +71,7 @@ function UsersPage() {
               <thead className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="p-3">Email</th>
+                  <th className="p-3">Country</th>
                   <th className="p-3">Plan</th>
                   <th className="p-3">Roles</th>
                   <th className="p-3">Analyses</th>
@@ -82,6 +84,16 @@ function UsersPage() {
                 {(data ?? []).map((u) => (
                   <tr key={u.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="p-3 font-medium">{u.email || u.id.slice(0, 8)}</td>
+                    <td className="p-3" title={getCountry(u.country_code)?.name ?? ""}>
+                      {u.country_code ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="text-base leading-none">{getCountry(u.country_code)?.flag ?? "🏳️"}</span>
+                          <span className="text-xs text-muted-foreground">{u.country_code}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <div className="flex flex-col gap-1">
                         <Badge variant={u.plan === "pro" ? "default" : "secondary"}>
@@ -133,7 +145,7 @@ function UsersPage() {
                   </tr>
                 ))}
                 {data && data.length === 0 && (
-                  <tr><td colSpan={7} className="p-10 text-center text-muted-foreground">No users found.</td></tr>
+                  <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">No users found.</td></tr>
                 )}
               </tbody>
             </table>

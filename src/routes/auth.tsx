@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { CountrySelect, guessCountryFromTimezone } from "@/components/country-select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -29,6 +30,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [country, setCountry] = useState<string>(() => guessCountryFromTimezone());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -50,11 +52,18 @@ function AuthPage() {
 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!country) {
+      toast.error("Please select your country.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: "https://thecareerboost.com/auth" },
+      options: {
+        emailRedirectTo: "https://thecareerboost.com/auth",
+        data: { country_code: country },
+      },
     });
     setLoading(false);
     if (error) toast.error(error.message);
@@ -125,6 +134,10 @@ function AuthPage() {
                 <form onSubmit={signUp} className="space-y-4 pt-4">
                   <Field id="email2" label="Email" type="email" icon={Mail} value={email} onChange={setEmail} />
                   <Field id="password2" label="Password" type="password" icon={Lock} value={password} onChange={setPassword} minLength={6} isPassword />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="country">Country</Label>
+                    <CountrySelect id="country" value={country} onChange={setCountry} />
+                  </div>
                   <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                     {loading ? "Creating..." : "Create account"}
                   </Button>
