@@ -37,7 +37,7 @@ function PrivacyPage() {
               <li><strong>Account data</strong> (email, name, authentication identifiers) — <em>Legal basis: contract performance</em> — necessary to create and manage your account and provide the Service.</li>
               <li><strong>Uploaded content</strong> (resumes, CVs, and job descriptions you submit for analysis) — <em>Legal basis: contract performance</em> — necessary to deliver CV analyses, ATS scores, and optimized resumes.</li>
               <li><strong>Usage data</strong> (pages viewed, features used, analysis history, device and browser information) — <em>Legal basis: legitimate interest</em> — to operate, secure, and improve the Service.</li>
-              <li><strong>Payment data</strong> — handled directly by Flutterwave (NGN) and Paddle (USD). We receive only the transaction status and the last 4 digits of cards — never full card numbers. <em>Legal basis: contract performance and legal obligation</em> — to process payments and meet tax and accounting requirements.</li>
+              <li><strong>Payment data</strong> — handled directly by Flutterwave. We receive only the transaction status and the last 4 digits of cards — never full card numbers. <em>Legal basis: contract performance and legal obligation</em> — to process payments and meet tax and accounting requirements.</li>
               <li><strong>Transactional emails</strong> (sign-in, receipts, plan expiry) — <em>Legal basis: contract performance</em> — to deliver the Service. Marketing emails require your explicit consent.</li>
             </ul>
           </section>
@@ -59,7 +59,7 @@ function PrivacyPage() {
             <ul className="list-disc space-y-1 pl-6">
               <li>Hosting & database: Lovable Cloud (Supabase).</li>
               <li>AI processing: model providers via the Lovable AI Gateway.</li>
-              <li>Payments: Flutterwave (NGN), Paddle (USD, merchant of record for international transactions).</li>
+              <li>Payments: Flutterwave (cards, bank transfer, USSD, mobile money).</li>
               <li>Email delivery: our transactional email provider.</li>
             </ul>
           </section>
