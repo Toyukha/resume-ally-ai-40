@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, FileText, Sparkles, Loader2, Target, TrendingUp,
-  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw, Settings,
+  AlertTriangle, KeyRound, FileCheck, Mail, Copy, Check, X, Lock, Crown, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,6 @@ import {
   type AnalysisResult,
 } from "@/lib/analyze.functions";
 import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
-import { createPaddlePortalSession } from "@/lib/paddle-portal.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -110,21 +109,6 @@ function Dashboard() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Refresh failed"),
   });
 
-  const portalFn = useServerFn(createPaddlePortalSession);
-  const portalMutation = useMutation({
-    mutationFn: () => portalFn(),
-    onSuccess: (res) => {
-      if (res?.url) window.open(res.url, "_blank", "noopener,noreferrer");
-    },
-    onError: (e) =>
-      toast.error(
-        e instanceof Error
-          ? e.message === "No subscription found"
-            ? "We couldn't find an international (USD) subscription on your account."
-            : e.message
-          : "Could not open the billing portal",
-      ),
-  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -260,22 +244,6 @@ function Dashboard() {
               {(isFree || planTier === "pro_1") && (
                 <Button size="sm" variant="gold" asChild>
                   <Link to="/pricing">Upgrade</Link>
-                </Button>
-              )}
-              {!isFree && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => portalMutation.mutate()}
-                  disabled={portalMutation.isPending}
-                  title="Update card, view invoices, or cancel"
-                >
-                  {portalMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Settings className="h-4 w-4" />
-                  )}
-                  <span className="ml-1.5 hidden sm:inline">Manage</span>
                 </Button>
               )}
             </Card>

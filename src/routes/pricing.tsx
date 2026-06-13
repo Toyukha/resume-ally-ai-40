@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  CheckCircle2, XCircle, Sparkles, ShieldCheck, Lock, Zap, Loader2, Crown, ArrowRight, Globe,
+  CheckCircle2, XCircle, Sparkles, ShieldCheck, Lock, Zap, Loader2, Crown, ArrowRight, Globe, CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,19 +11,17 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Navbar } from "@/components/navbar";
 import { PLANS, PLAN_ORDER, type PlanTier } from "@/lib/plans";
 import { initFlutterwavePayment } from "@/lib/flutterwave.functions";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { getPaddleEnvironment } from "@/lib/paddle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const PRICING_FAQ: Array<[string, string]> = [
-  ["How does billing work?", "Pro Plan 1 and Pro Plan 2 cost ₦5,000 / $10 and ₦10,000 / $20 respectively. Local (Naira) payments go through Flutterwave as a one-time 30-day pass — no auto-renewal. International (USD) payments go through Paddle as an auto-renewing monthly subscription you can cancel any time from your dashboard."],
+  ["How does billing work?", "Pro Plan 1 (₦5,000) and Pro Plan 2 (₦10,000) are one-time payments that unlock Pro features for 30 days. International customers can pay with any Visa, Mastercard, or Verve card — just choose the Card option at checkout."],
   ["How are monthly limits counted?", "Every CV analysis includes the matching ATS score, optimized resume, cover letter and missing-keyword report as one bundled credit. Pro Plan 1 gives you 10 of these per month; Pro Plan 2 gives you 20. Usage resets at the start of each calendar month."],
-  ["What payment methods are supported?", "Flutterwave (NGN) supports Nigerian and international cards (Visa, Mastercard, Verve), bank transfer, USSD, and mobile money. Paddle (USD) supports Visa, Mastercard, Amex, Apple Pay, Google Pay, PayPal, and more."],
-  ["Can I upgrade from Pro Plan 1 to Pro Plan 2?", "Yes. On Flutterwave, just purchase the higher plan and your new 30-day window starts immediately. On Paddle, switching plans is pro-rated automatically — you only pay the difference for the remainder of the current billing cycle."],
-  ["Will I be auto-charged next month?", "Only on the USD/Paddle plan, which auto-renews monthly until you cancel. The NGN/Flutterwave plan is a one-time 30-day pass with no automatic renewal."],
-  ["How do I cancel?", "USD/Paddle subscribers can cancel any time from the dashboard via the Manage button — you keep Pro access until the end of the period you already paid for. NGN/Flutterwave plans simply expire after 30 days; there is nothing to cancel."],
-  ["Do you offer refunds?", "Yes. International (USD/Paddle) purchases are refundable within 14 days if unused. Local (NGN/Flutterwave) purchases are refundable within 7 days if unused. See the Refund Policy for full details."],
+  ["What payment methods are supported?", "Flutterwave accepts Nigerian and international cards (Visa, Mastercard, Verve), bank transfer, USSD, and mobile money. Paying from outside Nigeria? Pick the Card option at checkout."],
+  ["Can I upgrade from Pro Plan 1 to Pro Plan 2?", "Yes. Just purchase the higher plan and your new 30-day window starts immediately."],
+  ["Will I be auto-charged next month?", "No. Every Pro plan is a one-time 30-day pass with no automatic renewal. When the 30 days end, you simply purchase again to continue."],
+  ["How do I cancel?", "There is nothing to cancel — Pro plans expire automatically after 30 days and you are never billed again unless you choose to renew."],
+  ["Do you offer refunds?", "Yes. If you have not used any Pro analysis, you can request a full refund within 7 days of payment. See the Refund Policy for full details."],
   ["Is my data private?", "Your documents are encrypted in transit and at rest, tied to your account, and never shared. We do not use your resume to train models."],
 ];
 
@@ -58,11 +56,7 @@ export const Route = createFileRoute("/pricing")({
 function PricingPage() {
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
-  const paddleEnv = getPaddleEnvironment();
-  const usdAvailable = paddleEnv === "sandbox";
-  const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
   const initFn = useServerFn(initFlutterwavePayment);
-  const { openCheckout: openPaddle } = usePaddleCheckout();
 
   const startCheckout = useMutation({
     mutationFn: async (planTier: "pro_1" | "pro_2") => {
@@ -71,20 +65,7 @@ function PricingPage() {
         navigate({ to: "/auth", search: { redirect: "/pricing" } as never });
         throw new Error("redirect");
       }
-      if (currency === "NGN" || !usdAvailable) {
-        return initFn({ data: { planTier } });
-      }
-      // USD via Paddle
-      const plan = PLANS[planTier];
-      if (!plan.paddlePriceId) throw new Error("USD checkout not configured");
-      await openPaddle({
-        priceId: plan.paddlePriceId,
-        userId: session.session.user.id,
-        customerEmail: session.session.user.email ?? undefined,
-        planTier,
-        successUrl: `${window.location.origin}/dashboard?upgraded=1`,
-      });
-      return { checkoutUrl: null as string | null };
+      return initFn({ data: { planTier } });
     },
     onMutate: (planTier) => setLoadingTier(planTier),
     onSettled: () => setLoadingTier(null),
@@ -121,7 +102,7 @@ function PricingPage() {
       </section>
 
       {/* Header */}
-      <section className="container mx-auto px-4 pt-16 pb-10 text-center">
+      <section className="container mx-auto px-4 pt-16 pb-6 text-center">
         <p className="text-sm font-medium text-primary-glow">PRICING</p>
         <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">
           Simple, Transparent Pricing
@@ -129,42 +110,30 @@ function PricingPage() {
         <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
           Choose the plan that best fits your job search journey.
         </p>
+      </section>
 
-        {/* Currency toggle */}
-        {usdAvailable ? (
-          <div className="mt-6 inline-flex items-center rounded-full border border-border bg-card p-1">
-            <button
-              type="button"
-              onClick={() => setCurrency("NGN")}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                currency === "NGN" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={currency === "NGN"}
-            >
-              ₦ NGN
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrency("USD")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                currency === "USD" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={currency === "USD"}
-            >
-              <Globe className="h-3.5 w-3.5" /> USD
-            </button>
+      {/* International payment callout */}
+      <section className="container mx-auto px-4 pb-10">
+        <div className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border-2 border-gold/40 bg-hero p-[2px] shadow-elegant">
+          <div className="relative rounded-[14px] bg-card/95 px-6 py-5 backdrop-blur md:px-8 md:py-6">
+            <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-foreground shadow-sm">
+              <Globe className="h-3 w-3" /> Paying from outside Nigeria?
+            </div>
+            <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant">
+                <CreditCard className="h-7 w-7" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-xl font-bold leading-tight md:text-2xl">
+                  Select <span className="text-gradient">“Card”</span> at checkout to subscribe with any international card.
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Pay in seconds with any <strong className="text-foreground">Visa, Mastercard, or Verve</strong> — issued anywhere in the world. Your Pro plan activates instantly.
+                </p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="mt-6 inline-flex items-center rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
-            <Globe className="mr-1.5 h-3.5 w-3.5" />
-            USD checkout coming soon
-          </div>
-        )}
-        <p className="mt-2 text-xs text-muted-foreground">
-          {currency === "NGN" || !usdAvailable
-            ? "Local payments in Naira via Flutterwave"
-            : "International payments in USD via Paddle (auto-renewing)"}
-        </p>
+        </div>
       </section>
 
       {/* Plans */}
@@ -201,9 +170,7 @@ function PricingPage() {
                 <p className="mt-1 text-sm text-muted-foreground">{p.subtitle}</p>
 
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-display text-5xl font-bold">
-                    {currency === "USD" && usdAvailable ? p.priceLabelUSD : p.priceLabel}
-                  </span>
+                  <span className="font-display text-5xl font-bold">{p.priceLabel}</span>
                   <span className="text-sm text-muted-foreground">{p.period}</span>
                 </div>
 
@@ -238,9 +205,7 @@ function PricingPage() {
                   </Button>
                   {tier !== "free" && (
                     <p className="mt-2 text-center text-xs text-muted-foreground">
-                      {currency === "USD" && usdAvailable
-                        ? "Secured by Paddle · auto-renews monthly"
-                        : "Secured by Flutterwave · 30 days access"}
+                      Secured by Flutterwave · 30 days access
                     </p>
                   )}
                 </div>
@@ -252,8 +217,8 @@ function PricingPage() {
         {/* Trust badges */}
         <div className="mx-auto mt-14 flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Encrypted in transit & at rest</span>
-          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> PCI-DSS payments via Flutterwave & Paddle</span>
-          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> {currency === "USD" && usdAvailable ? "Cancel any time from your dashboard" : "One-time payment — no auto-renewal"}</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> PCI-DSS payments via Flutterwave</span>
+          <span className="flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-gold" /> One-time payment — no auto-renewal</span>
         </div>
       </section>
 
@@ -327,6 +292,6 @@ const COMPARE_ROWS: Array<{ label: string; free: boolean | string | number; pro1
   { label: "Missing Keyword Recommendations", free: false, pro1: true, pro2: true },
   { label: "Optimized Resume Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
   { label: "Cover Letter Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
-  
+
   { label: "Priority Processing", free: false, pro1: false, pro2: true },
 ];

@@ -5,7 +5,7 @@ export const Route = createFileRoute("/refund")({
   head: () => ({
     meta: [
       { title: "Refund Policy — Career Boost" },
-      { name: "description", content: "How refunds work for Career Boost Pro plans paid via Flutterwave or Paddle." },
+      { name: "description", content: "How refunds work for Career Boost Pro plans paid via Flutterwave." },
       { property: "og:title", content: "Refund Policy — Career Boost" },
       { property: "og:description", content: "Our refund policy for Career Boost Pro plans." },
       { property: "og:url", content: "https://thecareerboost.com/refund" },
@@ -22,7 +22,7 @@ function RefundPage() {
       <article className="container mx-auto max-w-3xl px-4 py-16">
         <p className="text-sm font-medium text-primary-glow">LEGAL</p>
         <h1 className="mt-2 font-display text-4xl font-bold">Refund Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 10, 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 13, 2026</p>
 
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <section>
@@ -32,12 +32,7 @@ function RefundPage() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground">1. Refund window (unused plans)</h2>
-            <p>If you have <strong>not used any Pro analysis</strong> in your current 30-day window, you may request a full refund within:</p>
-            <ul className="mt-2 list-disc space-y-1 pl-6">
-              <li><strong>14 days</strong> of the payment date for international (USD) purchases processed by Paddle.</li>
-              <li><strong>7 days</strong> of the payment date for local (NGN) purchases processed by Flutterwave.</li>
-            </ul>
-            <p className="mt-2">Refunds are issued back to the original payment method.</p>
+            <p>If you have <strong>not used any Pro analysis</strong> in your current 30-day window, you may request a full refund within <strong>7 days</strong> of the payment date. Refunds are issued back to the original payment method.</p>
           </section>
 
           <section>
@@ -62,8 +57,8 @@ function RefundPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground">5. Payment processors</h2>
-            <p>Local payments (NGN) are processed by Flutterwave and refunded to the original card or bank account. International payments (USD) are processed by Paddle, who acts as the merchant of record and issues refunds on our behalf.</p>
+            <h2 className="font-display text-xl font-semibold text-foreground">5. Payment processor</h2>
+            <p>All payments — local and international — are processed by Flutterwave and refunded to the original card or bank account.</p>
           </section>
 
           <section>
