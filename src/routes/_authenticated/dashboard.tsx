@@ -72,7 +72,7 @@ function Dashboard() {
     return () => clearTimeout(t);
   }, [pollWindowOpen, planQuery.data?.plan]);
 
-  // Show a one-time toast when arriving from a Paddle/Flutterwave success redirect.
+  // Show a one-time toast when arriving from a Flutterwave success redirect.
   useEffect(() => {
     if (search.upgraded === 1 || search.checkout === "success") {
       toast.success("Payment received — activating your Pro plan…");
