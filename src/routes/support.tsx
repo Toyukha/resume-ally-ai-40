@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MessageCircle, HelpCircle, FileText, Mail, Clock, Shield, Sparkles } from "lucide-react";
+import { HelpCircle, FileText, Mail, Clock, Shield, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import { WhatsAppButton } from "@/components/whatsapp-button";
@@ -63,31 +63,20 @@ function SupportPage() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-md">
             <Sparkles className="h-7 w-7" />
           </div>
-          <h2 className="mt-4 font-display text-2xl font-bold">Ask our AI Assistant</h2>
+          <h2 className="mt-4 font-display text-2xl font-bold">Chat with our AI Assistant</h2>
           <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-            Instant answers about pricing, payments, refunds, and how Career Boost works. Open the chat bubble at the bottom-right of any page.
+            Instant answers about pricing, payments, refunds, and how Career Boost works. Our AI Assistant is available 24/7 — no waiting.
           </p>
+          <button
+            onClick={() => window.dispatchEvent(new Event("careerboost:open-chat"))}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-br from-primary to-primary-glow px-6 py-3 text-base font-medium text-primary-foreground shadow-md transition-all hover:opacity-90 hover:shadow-lg"
+          >
+            <Sparkles className="h-4 w-4" />
+            Start AI Chat
+          </button>
           <p className="mt-3 text-xs text-muted-foreground">Available 24/7 · No waiting</p>
         </Card>
 
-        {/* WhatsApp escalation */}
-        <Card className="mb-10 overflow-hidden border-[#25D366]/30 bg-[#25D366]/5 p-8 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-md">
-            <MessageCircle className="h-7 w-7" />
-          </div>
-          <h2 className="mt-4 font-display text-2xl font-bold">Talk to a human on WhatsApp</h2>
-          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-            For account-specific issues, billing disputes, or anything the AI can't resolve — our team is one message away.
-          </p>
-          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <WhatsAppButton
-              variant="inline"
-              label="Start WhatsApp Chat"
-              location="support_page_cta"
-              className="px-6 py-3 text-base"
-            />
-          </div>
-        </Card>
 
         {/* Support Topics */}
         <div className="grid gap-4 sm:grid-cols-2">

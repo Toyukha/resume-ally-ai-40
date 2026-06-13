@@ -41,6 +41,12 @@ export function AiChatWidget() {
     if (open && !isBusy) inputRef.current?.focus();
   }, [open, isBusy]);
 
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("careerboost:open-chat", handler);
+    return () => window.removeEventListener("careerboost:open-chat", handler);
+  }, []);
+
   const submit = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isBusy) return;
