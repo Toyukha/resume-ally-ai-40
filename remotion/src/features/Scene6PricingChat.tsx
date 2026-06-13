@@ -71,7 +71,7 @@ export const Scene6PricingChat: React.FC = () => {
               <div style={{ fontFamily: display, fontSize: 32, color: COLORS.text }}>{t.name}</div>
               <div style={{ fontFamily: body, fontSize: 44, color: COLORS.text, fontWeight: 700 }}>
                 {t.price}
-                <span style={{ fontSize: 16, color: COLORS.textDim, fontWeight: 400 }}> /mo</span>
+                {t.period && <span style={{ fontSize: 16, color: COLORS.textDim, fontWeight: 400 }}> {t.period}</span>}
               </div>
               <div style={{ height: 1, background: `${COLORS.gold}22` }} />
               {t.features.map((f) => (
