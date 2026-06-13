@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MessageCircle, HelpCircle, FileText, Mail, Clock, Shield, Sparkles } from "lucide-react";
+import { HelpCircle, FileText, Mail, Clock, Shield, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import { WhatsAppButton } from "@/components/whatsapp-button";
