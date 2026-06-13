@@ -128,7 +128,7 @@ function PricingPage() {
                   Select <span className="text-gradient">“Card”</span> at checkout to subscribe with any international card.
                 </h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  Pay in seconds with any <strong className="text-foreground">Visa, Mastercard, or Verve</strong> — issued anywhere in the world. Your Pro plan activates instantly.
+                  Pay in seconds with any <strong className="text-foreground">Visa, Mastercard, Discover, Diners Club, and Verve</strong> — issued anywhere in the world. Your Pro plan activates instantly.
                 </p>
               </div>
             </div>
