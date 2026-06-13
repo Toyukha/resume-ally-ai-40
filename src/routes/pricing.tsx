@@ -116,8 +116,8 @@ function PricingPage() {
       <section className="container mx-auto px-4 pb-10">
         <div className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border-2 border-gold/40 bg-hero p-[2px] shadow-elegant">
           <div className="relative rounded-[14px] bg-card/95 px-6 py-5 backdrop-blur md:px-8 md:py-6">
-            <div className="absolute -top-3 left-6 inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-foreground shadow-sm">
-              <Globe className="h-3 w-3" /> Paying from outside Nigeria?
+            <div className="absolute -top-4 left-6 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-gold-foreground shadow-md">
+              <Globe className="h-4 w-4" /> Paying from outside Nigeria?
             </div>
             <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant">
