@@ -12,7 +12,7 @@ import { getAdminMe } from "@/lib/admin.functions";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { countryLabel, getCountry } from "@/lib/countries";
+import { getCountry } from "@/lib/countries";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/users")({
