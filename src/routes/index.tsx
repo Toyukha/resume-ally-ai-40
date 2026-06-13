@@ -246,30 +246,26 @@ function Landing() {
       <section id="contact" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-            <MessageCircle className="h-3 w-3 text-gold" />
+            <Sparkles className="h-3 w-3 text-gold" />
             We are here to help
           </div>
-          <h2 className="font-display text-4xl font-bold md:text-5xl">You can reach out to us</h2>
+          <h2 className="font-display text-4xl font-bold md:text-5xl">Chat with our AI Assistant</h2>
           <p className="mt-4 text-muted-foreground">
-            Have a question, feedback, or need help with your account? Drop us a message on WhatsApp and we will get back to you quickly.
+            Get instant answers about pricing, payments, refunds, and how Career Boost works — 24/7. Need a human? Our assistant can hand you over to our team.
           </p>
-          <Button size="lg" variant="hero" className="mt-8" asChild>
-            <a
-              href="https://wa.me/2348138908924?text=Hello%2C%20I%20would%20like%20assistance%20with%20my%20CV%20and%20job%20application."
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(e.currentTarget.href, "_blank", "noopener,noreferrer");
-              }}
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Chat on WhatsApp
-            </a>
+          <Button
+            size="lg"
+            variant="hero"
+            className="mt-8"
+            onClick={() => window.dispatchEvent(new Event("careerboost:open-chat"))}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Chat with AI Assistant
           </Button>
-          <p className="mt-3 text-sm text-muted-foreground"></p>
+          <p className="mt-3 text-sm text-muted-foreground">Available 24/7 · No waiting</p>
         </div>
       </section>
+
 
       {/* CTA */}
       <section className="container mx-auto px-4 pb-24">
