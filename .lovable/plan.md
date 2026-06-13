@@ -1,55 +1,55 @@
-## Launch Demo Video — "The Career Boost"
+# Remove Paddle, route everyone through Flutterwave
 
-A ~70-second motion-graphics demo in the style of Notion/Grammarly ads, built in Remotion (1920×1080, 30 fps). No voiceover — bold kinetic typography + music + 2–3 embedded clips from your screen recording. Final MP4 saved to `/mnt/documents/career-boost-launch.mp4`.
+Goal: Strip Paddle from the user-facing site entirely. Replace the "USD checkout coming soon" pill with an eye-catching banner telling international users to pick **Card** in the Flutterwave checkout to subscribe. NGN remains the only displayed currency; Flutterwave already accepts international Visa/Mastercard via its Card option.
 
-### Brand system (from the uploaded logo)
-- Navy `#0A1F44` (background), deep blue `#0E2A6B`, electric blue `#1E6BFF`, teal `#2BD4B0`, soft white `#F5F8FF`
-- Display font: **Fraunces** (matches the logo's confident serif energy) for hero lines
-- UI/body font: **Inter** for captions and stat labels
-- Motion direction: **Kinetic Energy** — fast cuts, staggered character reveals, springy transitions, blue→teal gradient sweeps as the recurring motif
+## Pricing page (`src/routes/pricing.tsx`)
 
-### Structure (~2,100 frames @ 30 fps ≈ 70s)
+- Remove imports/usage of `usePaddleCheckout`, `getPaddleEnvironment`, and the Paddle branch in `startCheckout` — every Pro purchase calls `initFlutterwavePayment`.
+- Delete the currency toggle and the "USD checkout coming soon" pill. Always show NGN prices (`priceLabel`), no currency state.
+- Replace the toggle area with a **bold, stylish callout** aimed at international users:
 
-```text
- 0–9s   Scene 1  Hook         "Applied to 50 jobs… still no interviews?"
- 9–17s  Scene 2  Problem      Messy CV + ATS-REJECTED stamps thudding in
-17–24s  Scene 3  Logo reveal  CB logo + tagline "Turn Applications Into Interviews"
-24–45s  Scene 4  Product      3 trimmed clips from your screen recording with overlay captions
-45–57s  Scene 6  Transform    ATS 42% → 84% animated ring, "Interview invitation" toast
-57–70s  Scene 7  CTA          Pricing flash → "Start Free Today" → thecareerboost.com
-```
-(Scene 5 is intentionally skipped per your script.)
+  > 🌍 **Outside Nigeria?** Choose **"Card"** at checkout to pay with any international Visa, Mastercard, or Verve — instant access in seconds.
 
-### Screen-recording handling
-- `ffprobe` the 3-min recording (1920×1200, h264+aac, 179s) and pick three ~5s highlights — I'll scan frames to auto-locate: (a) upload/dashboard, (b) analysis in progress, (c) results view. Down-scaled/letterboxed to fit 1920×1080 inside a rounded-corner browser frame mock with subtle drop shadow and parallax pan.
-- Audio from the recording is muted; a single licensed-style royalty-free background track (upbeat, builds to crescendo) plays throughout. Track file dropped in `remotion/public/audio/` — if you have a preferred track tell me, otherwise I'll use a CC-0 instrumental.
+  Styling: full-width rounded gradient card (uses `--gradient-primary` token), gold accent border, globe icon, large display font for "Outside Nigeria?", supporting line beneath. Sits where the toggle used to.
+- Update trust badge line + per-card subtext to drop "Paddle" — keep "Secured by Flutterwave · 30 days access".
+- Update FAQ entries: remove Paddle/USD/auto-renew wording. Billing answer becomes "Pro Plan 1 (₦5,000) and Pro Plan 2 (₦10,000) are one-time 30-day passes via Flutterwave. International cards are accepted — choose the Card option at checkout." Adjust the auto-renew, cancel, methods, and upgrade Q&As accordingly. Refund answer: single 7-day window if unused.
 
-### Motion details per scene
-- **Scene 1** — dim navy bg, single line of Fraunces text per-character spring stagger, faint scrolling "Rejected" email rows ghosting behind, vignette pulse on the question mark.
-- **Scene 2** — angled CV mock (CSS, not an image), three red `ATS REJECTED` stamps thud in with rotation + shake, paper desaturates.
-- **Scene 3** — logo zooms from 0.3→1 with spring overshoot, particle dots from the logo fan outward, tagline types in. Music shifts from minor to major (volume envelope cue).
-- **Scene 4** — browser-chrome frame (traffic lights, URL bar showing thecareerboost.com), `<OffthreadVideo>` plays the trimmed clip, side caption panel slides in with the on-screen copy from your script.
-- **Scene 6** — split before/after: animated circular progress ring counts 42→84, color morphs red→teal, toast notification "🎉 Interview invitation" springs in, then 3 stacked stat lines stagger ("More Visibility / Confidence / Interviews").
-- **Scene 7** — three pricing cards fan in, dissolve into a giant CTA pill that pulses, URL `www.thecareerboost.com` underlines via clip-path, final tagline.
+## Dashboard (`src/routes/_authenticated/dashboard.tsx`)
 
-### Implementation
-- Extend the existing `/remotion` project (it already has `MainVideo`, transitions, fonts setup). Add a new composition `id="launch"` so the old `main` composition stays renderable.
-- New files:
-  - `remotion/src/launch/LaunchVideo.tsx` (TransitionSeries wiring)
-  - `remotion/src/launch/theme.ts` (logo palette)
-  - `remotion/src/launch/scenes/Scene1Hook.tsx … Scene7CTA.tsx`
-  - `remotion/src/launch/components/BrowserFrame.tsx`, `AtsRing.tsx`, `CvMock.tsx`
-  - `remotion/public/clips/cb-1.mp4`, `cb-2.mp4`, `cb-3.mp4` (trimmed via ffmpeg from the upload)
-  - `remotion/public/audio/launch-music.mp3`
-- Register the new composition in `remotion/src/Root.tsx`.
-- Render with the existing `scripts/render-remotion.mjs` (override composition id + output path) → `/mnt/documents/career-boost-launch.mp4`.
-- After render, ffprobe + extract 5 still frames for spot-checks; fix any layout issues before delivering.
+- Remove the `createPaddlePortalSession` import, `portalFn`, `portalMutation`, and the **Manage** button (Paddle-only). Flutterwave plans simply expire — no portal needed.
+- Keep the existing **Refresh status** button and Upgrade button.
+- Keep the `?checkout=success` / `?upgraded=1` polling — Flutterwave callback also benefits from it.
 
-### Deliverable
-- `career-boost-launch.mp4` (1920×1080, ~70s, H.264, with music) presented via `<presentation-artifact>` so you can download it.
-- All Remotion source committed under `remotion/src/launch/` so we can iterate (swap clips, tweak copy, re-export 9:16 vertical later).
+## Refund policy (`src/routes/refund.tsx`)
 
-### Out of scope (call out if you want them)
-- 9:16 vertical cut for Reels/TikTok
-- Spoken voiceover (you opted for text + music)
-- Subtitle/caption file (.srt) export
+- Collapse the split policy to a single 7-day refund window (Flutterwave only), and drop Paddle references.
+
+## Files deleted
+
+- `src/hooks/usePaddleCheckout.ts`
+- `src/lib/paddle.ts`
+- `src/lib/paddle.server.ts`
+- `src/lib/paddle-portal.functions.ts`
+- `src/components/PaymentTestModeBanner.tsx` (Paddle-only banner; not referenced elsewhere after pricing cleanup — will verify before deleting)
+- `src/routes/api/public/payments/webhook.ts` (Paddle webhook route)
+
+If `PaymentTestModeBanner` is still mounted from `__root.tsx`, remove that import/usage too.
+
+## Files kept (intentionally)
+
+- `src/lib/payments.functions.ts` — only used by Paddle currently; will be deleted if no other consumer remains after the pricing edit.
+- Flutterwave files untouched.
+- Legal pages (terms, privacy) keep the generic "third-party payment processor" wording; only Paddle-specific lines are removed.
+
+## DB / migrations
+
+No schema changes. The `subscriptions` table's `paddle_*` columns stay (historical data); they're simply unused going forward. No new migrations.
+
+## Verification
+
+After edits, the type-check must pass with zero references to `paddle` outside the auto-generated `routeTree.gen.ts` (which regenerates) and the `subscriptions` table columns. I'll grep `paddle` / `Paddle` and confirm only DB column names remain.
+
+## Out of scope
+
+- Secrets cleanup (Paddle env vars) — these can stay set; no code reads them anymore.
+- Removing `paddle_*` columns from the DB.
