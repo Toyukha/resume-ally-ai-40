@@ -28,9 +28,9 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/career-boost-features.mp4",
+  outputLocation: "/mnt/documents/career-boost-features-silent.mp4",
   puppeteerInstance: browser,
-  muted: false,
+  muted: true,
   concurrency: 1,
 });
 
