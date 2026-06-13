@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { WhatsAppButton } from "@/components/whatsapp-button";
+
 import { Navbar } from "@/components/navbar";
 
 
