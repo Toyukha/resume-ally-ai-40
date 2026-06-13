@@ -150,7 +150,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
 
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
-      .select("id, plan, plan_tier, suspended, pro_started_at, pro_expires_at, created_at")
+      .select("id, plan, plan_tier, suspended, pro_started_at, pro_expires_at, created_at, country_code")
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -178,7 +178,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
       rolesMap.set(r.user_id, arr);
     });
 
-    const rows = (profiles ?? []).map((p: { id: string; plan: string; plan_tier: string | null; suspended: boolean; pro_expires_at: string | null; created_at: string }) => ({
+    const rows = (profiles ?? []).map((p: { id: string; plan: string; plan_tier: string | null; suspended: boolean; pro_expires_at: string | null; created_at: string; country_code: string | null }) => ({
       id: p.id,
       email: emailMap.get(p.id) ?? "",
       plan: p.plan,
@@ -186,12 +186,19 @@ export const listAllUsers = createServerFn({ method: "GET" })
       suspended: p.suspended,
       pro_expires_at: p.pro_expires_at,
       created_at: p.created_at,
+      country_code: p.country_code,
       analyses: countMap.get(p.id) ?? 0,
       roles: rolesMap.get(p.id) ?? [],
     }));
 
     const q = data.search?.toLowerCase().trim();
-    return q ? rows.filter((r) => r.email.toLowerCase().includes(q) || r.id.includes(q)) : rows;
+    return q
+      ? rows.filter((r) =>
+          r.email.toLowerCase().includes(q) ||
+          r.id.includes(q) ||
+          (r.country_code ?? "").toLowerCase().includes(q),
+        )
+      : rows;
   });
 
 export const setUserSuspended = createServerFn({ method: "POST" })

@@ -345,6 +345,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          country_code: string | null
           created_at: string
           id: string
           plan: string
@@ -355,6 +356,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          country_code?: string | null
           created_at?: string
           id: string
           plan?: string
@@ -365,6 +367,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          country_code?: string | null
           created_at?: string
           id?: string
           plan?: string
