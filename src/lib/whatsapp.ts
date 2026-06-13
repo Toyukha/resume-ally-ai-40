@@ -1,9 +1,7 @@
 export const WHATSAPP_NUMBER = "2348138908924";
-export const WHATSAPP_PREFILL = "Hello I am interested in your services";
 
 export function getWhatsAppUrl() {
-  const encoded = encodeURIComponent(WHATSAPP_PREFILL);
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}`;
 }
 
 export function trackWhatsAppClick(location: string) {
