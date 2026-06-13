@@ -21,6 +21,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin/subscriptions'
 import { Route as AdminRevenueRouteImport } from './routes/admin/revenue'
@@ -97,6 +98,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/chat': typeof ApiChatRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/admin/revenue': typeof AdminRevenueRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/subscriptions'
     | '/admin/users'
+    | '/api/chat'
     | '/admin/'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/subscriptions'
     | '/admin/users'
+    | '/api/chat'
     | '/admin'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/subscriptions'
     | '/admin/users'
+    | '/api/chat'
     | '/admin/'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  ApiChatRoute: typeof ApiChatRoute
   ApiPublicHooksFlutterwaveRoute: typeof ApiPublicHooksFlutterwaveRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
@@ -478,6 +491,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
       id: '/admin/users'
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  ApiChatRoute: ApiChatRoute,
   ApiPublicHooksFlutterwaveRoute: ApiPublicHooksFlutterwaveRoute,
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
