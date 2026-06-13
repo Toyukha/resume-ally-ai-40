@@ -114,10 +114,10 @@ function PricingPage() {
 
       {/* International payment callout */}
       <section className="container mx-auto px-4 pb-10">
-        <div className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border-2 border-gold/40 bg-hero p-[2px] shadow-elegant">
-          <div className="relative rounded-[14px] bg-card/95 px-6 py-5 backdrop-blur md:px-8 md:py-6">
-            <div className="absolute -top-4 left-6 inline-flex items-center gap-2 rounded-full bg-gold px-4 py-1.5 text-sm font-bold uppercase tracking-wider text-gold-foreground shadow-md">
-              <Globe className="h-4 w-4" /> Paying from outside Nigeria?
+        <div className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border-2 border-gold/60 bg-hero p-[2px] shadow-elegant">
+          <div className="relative rounded-[14px] bg-card/95 px-6 py-6 backdrop-blur md:px-8 md:py-7">
+            <div className="absolute -top-4 left-6 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2 text-sm font-black uppercase tracking-wider text-gold-foreground shadow-lg ring-2 ring-gold-foreground/20">
+              <Globe className="h-5 w-5" /> Paying from outside Nigeria?
             </div>
             <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant">
@@ -130,6 +130,14 @@ function PricingPage() {
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   Pay in seconds with any <strong className="text-foreground">Visa, Mastercard, Discover, Diners Club, and Verve</strong> — issued anywhere in the world. Your Pro plan activates instantly.
                 </p>
+                <div className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-semibold text-foreground">
+                  <span className="font-bold text-gold">Note:</span> The Naira equivalent of your currency will be deducted — not your local currency.
+                  <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-bold">
+                    <span>₦5,000 ≈ $3.67</span>
+                    <span className="text-muted-foreground">|</span>
+                    <span>₦10,000 ≈ $7.35</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
