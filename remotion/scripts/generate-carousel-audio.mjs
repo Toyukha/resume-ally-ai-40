@@ -52,7 +52,7 @@ async function sfx(name, text, duration) {
 
 await sfx("swipe.mp3", "Short crisp UI swipe whoosh transition, fast", 0.5);
 await sfx("stamp.mp3", "Hard rubber stamp thud impact with paper", 0.6);
-await sfx("chip-pop.mp3", "Soft UI bubble pop chip notification", 0.3);
+await sfx("chip-pop.mp3", "Soft UI bubble pop chip notification", 0.5);
 await sfx("carousel-success.mp3", "Bright uplifting positive success chime, short sparkle", 1.0);
 await sfx("carousel-cta.mp3", "Confident futuristic UI impact, deep low boom with sparkle", 0.9);
 
