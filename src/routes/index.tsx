@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
-  CheckCircle2, ArrowRight, Star,
-  ShieldCheck,
+  CheckCircle2, ArrowRight, Star, Volume2, VolumeX,
+  ShieldCheck, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 import { Navbar } from "@/components/navbar";
+import walkthroughVideo from "@/assets/walkthrough.mp4.asset.json";
+import walkthroughPoster from "@/assets/walkthrough-poster.jpg.asset.json";
 
 
 const HOME_FAQ: Array<[string, string]> = [
