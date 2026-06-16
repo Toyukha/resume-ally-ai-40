@@ -313,3 +313,70 @@ function Landing() {
     </div>
   );
 }
+
+function WalkthroughSection() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [started, setStarted] = useState(false);
+
+  const handleUnmute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = false;
+    v.volume = 0.9;
+    setMuted(false);
+    void v.play();
+  };
+
+  const handleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    setMuted(true);
+  };
+
+  return (
+    <section aria-label="Product walkthrough" className="container mx-auto px-4 pb-16 md:pb-24">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-6 text-center">
+          <p className="text-sm font-medium text-primary-glow">SEE IT IN ACTION</p>
+          <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
+            From application to <span className="text-gradient">interview invitation</span>.
+          </h2>
+          <p className="mt-3 text-muted-foreground">Watch how Career Boost tailors your resume in under a minute.</p>
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
+          <video
+            ref={videoRef}
+            className="block aspect-video w-full"
+            src={walkthroughVideo.url}
+            poster={walkthroughPoster.url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onPlay={() => setStarted(true)}
+          />
+          <button
+            type="button"
+            onClick={muted ? handleUnmute : handleMute}
+            aria-label={muted ? "Unmute walkthrough" : "Mute walkthrough"}
+            className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-background/80 px-4 py-2 text-sm font-medium text-foreground backdrop-blur transition-all hover:bg-background"
+          >
+            {muted ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            {muted ? "Watch with sound" : "Mute"}
+          </button>
+          {!started && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 text-primary-foreground shadow-lg">
+                <Play className="h-6 w-6 translate-x-0.5 fill-current" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
