@@ -48,11 +48,7 @@ async function sfx(name, text, duration) {
   console.log("  wrote", buf.length, "bytes");
 }
 
-await music(
-  "carousel-music.mp3",
-  "Modern tech SaaS pulse, driving synth arpeggio, soft sub bass, steady 120 BPM, building tension into confident uplifting resolution near the end, instrumental, no vocals, polished launch trailer energy",
-  32,
-);
+// Music is composed from existing tracks via ffmpeg (Music API requires paid ElevenLabs plan).
 
 await sfx("swipe.mp3", "Short crisp UI swipe whoosh transition, fast", 0.5);
 await sfx("stamp.mp3", "Hard rubber stamp thud impact with paper", 0.6);
