@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence, Audio, staticFile, useVideoConfig, useCurrentFrame, interpolate } from "remotion";
+import { AbsoluteFill, Sequence, useVideoConfig, useCurrentFrame, interpolate } from "remotion";
 import { Background } from "./Background";
 import { Chrome } from "./Chrome";
 import { Slide1 } from "./scenes/Slide1";

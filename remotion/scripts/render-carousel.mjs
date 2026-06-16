@@ -2,6 +2,7 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition, openBrowser } from "@remotion/renderer";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,28 +18,36 @@ const browser = await openBrowser("chrome", {
   chromeMode: "chrome-for-testing",
 });
 
+const mix = path.resolve(__dirname, "../public/audio/carousel-mix.mp3");
+
 const targets = [
   { id: "carousel-9x16", out: "/mnt/documents/career-boost-carousel-9x16.mp4" },
   { id: "carousel-1x1", out: "/mnt/documents/career-boost-carousel-1x1.mp4" },
 ];
 
 for (const t of targets) {
-  console.log("Rendering", t.id, "->", t.out);
+  console.log("Rendering", t.id);
   const composition = await selectComposition({
     serveUrl: bundled,
     id: t.id,
     puppeteerInstance: browser,
   });
-  console.log("  frames:", composition.durationInFrames);
+  const silent = t.out.replace(".mp4", ".silent.mp4");
   await renderMedia({
     composition,
     serveUrl: bundled,
     codec: "h264",
-    outputLocation: t.out,
+    outputLocation: silent,
     puppeteerInstance: browser,
-    muted: false,
+    muted: true,
     concurrency: 1,
   });
+  console.log("  muxing audio ->", t.out);
+  execSync(
+    `ffmpeg -y -i "${silent}" -i "${mix}" -c:v copy -c:a aac -b:a 192k -shortest "${t.out}"`,
+    { stdio: "inherit" },
+  );
+  execSync(`rm -f "${silent}"`);
   console.log("  done");
 }
 
