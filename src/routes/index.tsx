@@ -105,6 +105,9 @@ function Landing() {
         </div>
       </section>
 
+      {/* Walkthrough video */}
+      <WalkthroughSection />
+
       {/* Features */}
       <section id="features" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
