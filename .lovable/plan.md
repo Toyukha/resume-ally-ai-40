@@ -1,67 +1,76 @@
 ## Goal
 
-Upgrade the existing Career Boost walkthrough video into a fully-finished launch asset: cinematic electronic score, layered UI sound effects, burned-in captions for sound-off viewing, and an embedded hero video on the homepage.
+Build a punchy, scroll-stopping animated carousel video from the 6 supplied slides. Modern tech gradient aesthetic (electric blue → teal → violet), pulsing motion, music + SFX, ~30s total (~5s/slide). Export 9:16 (Reels/TikTok/Status) and 1:1 (Instagram/LinkedIn feed) MP4s.
 
-## 1. Audio production (ElevenLabs)
+## 1. Remotion composition
 
-**Connector check first.** Verify ElevenLabs is linked via `standard_connectors--list_connections`; if not, prompt linking. Then call `api.elevenlabs.io` server-side.
+New folder `remotion/src/carousel/` with its own composition registered in `remotion/src/Root.tsx`:
+- `carousel-9x16` — 1080×1920, 30 fps, 900 frames (30s)
+- `carousel-1x1` — 1080×1080, 30 fps, 900 frames
 
-**Background music** — one continuous ~90s track via `/v1/music`:
-> "Modern tech SaaS launch score, pulsing electronic, driving synth arpeggios, soft 808 sub, rising tension into uplifting motivational crescendo at 60s, confident resolution at 85s, instrumental, no vocals, 90 seconds, 110 BPM"
+Shared `CarouselVideo.tsx` reads `format` prop (`'9x16' | '1x1'`) to adjust type scale, line widths, and safe-area padding. Both compositions use the same scene components.
 
-**Sound effects** via `/v1/sound-generation`, generated as separate stems and placed on the timeline:
-- `whoosh-transition.mp3` (0.6s) — between every scene cut
-- `keyboard-type.mp3` (1.5s) — Scene 4 (job description typing)
-- `upload-complete.mp3` (0.8s) — Scene 3 (CV upload success ding)
-- `scan-pulse.mp3` (2.5s) — Scene 5 (AI analysis ring)
-- `chat-pop.mp3` (0.4s) — Scene 7 (AI chat bubbles)
-- `success-chime.mp3` (1.2s) — Scene 8 (interview invitation)
-- `cta-impact.mp3` (1.0s) — Scene 9 (final logo)
+## 2. Visual direction — "Modern Tech Gradient"
 
-All saved to `remotion/public/audio/` so Remotion's `<Audio>` can reference them via `staticFile()`. A small Node script (`remotion/scripts/generate-audio.mjs`) batches the generations and writes the files.
+- **Palette**: deep navy `#0A0F2C` base, electric blue `#3B82F6`, cyan `#22D3EE`, violet `#A78BFA`, soft white `#F5F8FF`.
+- **Persistent layers (full duration)**:
+  - Animated mesh-gradient background drifting via `interpolate(frame, [...], [...])` on background-position.
+  - Floating blurred orbs (CSS `filter: blur()`, kept to 3 elements to stay performant in headless Chromium).
+  - Subtle 1px grid overlay at 6% opacity for "tech" texture.
+- **Typography**: Inter 800 (headlines), Inter 500 (body), JetBrains Mono 500 (slide counter `01 / 06`).
+- **Motion system**:
+  - Default entrance: blur-to-sharp + slide-up 40px, spring `{ damping: 18, stiffness: 140 }`.
+  - Exit: opacity → 0 + slide-up 30px over 12 frames.
+  - Words split into spans, staggered 3 frames each (kinetic typography).
+  - Accent: pulsing dot/underline driven by `Math.sin(frame / 6)`.
+- **Scene transitions**: `TransitionSeries` with `slide({ direction: 'from-bottom' })` between slides, `springTiming({ durationInFrames: 18 })` — fast, decisive cuts.
 
-## 2. Captions (burned-in)
+## 3. Scene-by-scene
 
-A new `remotion/src/walkthrough/Captions.tsx` component sits as a top layer in `WalkthroughVideo.tsx`. Caption cues are hard-coded as `{ from, duration, text }` tuples per scene (no SRT parsing needed — fully deterministic). Styling:
-- Bottom-aligned, 8% from bottom (responsive scales)
-- Black 80%-opacity rounded pill background, white text, Inter 600
-- 6-frame fade in/out via `interpolate()`
-- Auto-wrap to 2 lines on 9:16
+Each scene ~150 frames (5s), built as `scenes/Slide{N}.tsx`:
 
-Captions cover every overlay text from the brief verbatim (Hook, Intro, Step 1–3, AI Analysis, Optimization, AI Support, Success — using "Improve your chances" wording — and Closing CTA).
+1. **Slide 1 — Hook**: "You're qualified." appears first (large), beat, then "So why aren't you getting interviews?" slides in below with a pulsing question-mark accent. Slight zoom on full text near end.
+2. **Slide 2 — ATS**: Animated "ATS" badge in a scanning frame. Resume card slides in, red ✕ stamps over it on word "reject". Subtitle types in below.
+3. **Slide 3 — Keywords**: Floating keyword chips (`React`, `TypeScript`, `Leadership`, etc.) drift in; half fade to 20% opacity on the word "missing"; a falling visibility meter graph reinforces "hurt visibility".
+4. **Slide 4 — Generic CVs**: Grid of 6 identical grey resume thumbnails; one in the center is highlighted but still grey — illustrating "rarely stand out". Headline kinetic-types in.
+5. **Slide 5 — Solution**: Logo wordmark "The Career Boost" assembles letter-by-letter; checkmark + gradient sweep crosses the screen; "helps you fix this" reveals with confident spring.
+6. **Slide 6 — CTA**: Big URL `www.thecareerboost.com` with cursor blink, pulsing gradient pill underneath, slide counter resolves to `06 / 06`.
 
-## 3. Audio timeline wiring
+Persistent chrome on every slide: top-left small wordmark, top-right slide counter `0N / 06`, bottom progress bar filling 0→100% over the full video.
 
-In `WalkthroughVideo.tsx`:
-- Top-level `<Audio src={staticFile('audio/music.mp3')} volume={0.55} />` for the full duration
-- Per-scene `<Sequence from={...}><Audio src={...} volume={...} /></Sequence>` for each SFX cue
-- Music ducks to 0.35 during voice-over-style scenes via `interpolate(frame, [...], [...])` on the volume prop
+## 4. Captions (burned-in)
 
-## 4. Re-render all 3 variants
+Already-large headline text effectively serves as captions. Add a small bottom-aligned secondary caption strip only on slides 2-5 mirroring the supporting line, for sound-off viewers on busy feeds. Inter 600, white on `rgba(0,0,0,0.55)` rounded pill, 6-frame fade.
 
-Update `remotion/scripts/render-walkthrough.mjs`:
-- Remove `muted: true` from each `renderMedia` call
-- Re-render `career-boost-walkthrough-16x9.mp4` (1920×1080)
-- Re-render `career-boost-walkthrough-9x16.mp4` (1080×1920)
-- Re-render `career-boost-walkthrough-4x5.mp4` (1080×1350)
-- All to `/mnt/documents/`
+## 5. Audio
 
-## 5. Homepage hero embed
+Verify ElevenLabs connector linked (`standard_connectors--list_connections`); link if missing.
 
-In `src/routes/index.tsx`, add the 16:9 video to the hero section:
-- Upload `career-boost-walkthrough-16x9.mp4` via `lovable-assets create` → write `.asset.json` pointer to `src/assets/`
-- Add `<video>` with `autoPlay`, `muted`, `loop`, `playsInline`, `poster` (still frame), and a "Watch with sound" unmute toggle button overlaid
-- Reduced-motion fallback: poster image only, no autoplay
-- Sits within the existing hero layout (does not replace headline/CTA — placed alongside or below per current design)
+- **Music** — one `/v1/music` track, ~30s, prompt: *"Modern tech SaaS pulse, driving synth arpeggio, sub bass, building tension into confident uplifting resolution at 25s, instrumental, no vocals, 30 seconds, 120 BPM"*. Saved to `remotion/public/audio/carousel-music.mp3`.
+- **SFX** via `/v1/sound-generation` (saved next to music):
+  - `swipe.mp3` (0.4s) — between every slide
+  - `stamp.mp3` (0.5s) — Slide 2 reject stamp
+  - `chip-pop.mp3` (0.3s) — Slide 3 keyword chips
+  - `success-chime.mp3` (1.0s) — Slide 5 brand reveal
+  - `cta-impact.mp3` (0.8s) — Slide 6 URL
+- Generator script `remotion/scripts/generate-carousel-audio.mjs` (batched, idempotent — skips if file exists).
+- Wired in `CarouselVideo.tsx` via top-level `<Audio>` for music (volume 0.6, ducks to 0.4 during Slide 5/6 via interpolated volume) and `<Sequence><Audio/></Sequence>` per SFX cue.
 
-## Out of scope
+## 6. Rendering
 
-- Voice-over narration (captions cover the messaging)
-- Separate WhatsApp Status export (9:16 file already serves both Reels and Status)
-- Subtitles file as a separate `.srt` download
+New `remotion/scripts/render-carousel.mjs`:
+- Bundles via `@remotion/bundler`.
+- Renders `carousel-9x16` → `/mnt/documents/career-boost-carousel-9x16.mp4`.
+- Renders `carousel-1x1` → `/mnt/documents/career-boost-carousel-1x1.mp4`.
+- Uses the proven sandbox config: `chromeMode: 'chrome-for-testing'`, `--no-sandbox --disable-gpu --disable-dev-shm-usage`, `concurrency: 1`, audio enabled (`muted: false`).
 
 ## Deliverables
 
-- 3 final MP4s in `/mnt/documents/` with music + SFX + burned captions
-- Homepage hero playing the 16:9 cut on `/`
-- Audio assets in `remotion/public/audio/` and the generator script committed for future re-renders
+- `career-boost-carousel-9x16.mp4` (1080×1920) and `career-boost-carousel-1x1.mp4` (1080×1080) in `/mnt/documents/`, ~30s each, with music + SFX.
+- Reusable Remotion source under `remotion/src/carousel/` + render and audio-gen scripts committed.
+
+## Out of scope
+
+- Voice-over narration.
+- Homepage embed of this carousel (existing walkthrough already plays in hero).
+- 16:9 or 4:5 exports (can be added later by registering more compositions).
