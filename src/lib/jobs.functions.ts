@@ -275,11 +275,11 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), status: z.enum(STATUSES) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {
+    const patch = {
       status: data.status,
       last_status_at: new Date().toISOString(),
+      ...(data.status === "applied" ? { applied_at: new Date().toISOString() } : {}),
     };
-    if (data.status === "applied") patch.applied_at = new Date().toISOString();
     const { error } = await context.supabase
       .from("job_applications")
       .update(patch)

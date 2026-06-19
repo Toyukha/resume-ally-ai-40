@@ -26,7 +26,7 @@ export function JobCard({ job, savedId, favorited }: Props) {
   const saveM = useMutation({
     mutationFn: async () =>
       savedId
-        ? unsaveFn({ data: { provider: job.provider, externalId: job.externalId ?? job.slug } as never })
+        ? unsaveFn({ data: { provider: job.provider, externalId: job.slug } })
         : saveFn({
             data: {
               provider: job.provider,

@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Briefcase, Bookmark, Kanban, Sparkles } from "lucide-react";
 
-const TABS = [
+type Tab = { to: "/jobs" | "/jobs/saved" | "/jobs/tracker" | "/jobs/recommendations"; label: string; icon: typeof Briefcase; exact?: boolean };
+const TABS: Tab[] = [
   { to: "/jobs", label: "Browse", icon: Briefcase, exact: true },
   { to: "/jobs/saved", label: "Saved", icon: Bookmark },
   { to: "/jobs/tracker", label: "Tracker", icon: Kanban },
   { to: "/jobs/recommendations", label: "For You", icon: Sparkles },
-] as const;
+];
 
 export function JobsTabs() {
   return (
