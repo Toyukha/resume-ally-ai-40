@@ -250,6 +250,112 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          applied_at: string | null
+          company: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          last_status_at: string
+          notes: string | null
+          provider: string
+          saved_job_id: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["application_status"]
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          company?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_status_at?: string
+          notes?: string | null
+          provider?: string
+          saved_job_id?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["application_status"]
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          company?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          last_status_at?: string
+          notes?: string | null
+          provider?: string
+          saved_job_id?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["application_status"]
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_saved_job_id_fkey"
+            columns: ["saved_job_id"]
+            isOneToOne: false
+            referencedRelation: "saved_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_matches: {
+        Row: {
+          analysis_id: string | null
+          company: string | null
+          created_at: string
+          external_id: string
+          id: string
+          match_score: number
+          provider: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          company?: string | null
+          created_at?: string
+          external_id: string
+          id?: string
+          match_score: number
+          provider?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          company?: string | null
+          created_at?: string
+          external_id?: string
+          id?: string
+          match_score?: number
+          provider?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_matches_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_activation_events: {
         Row: {
           created_at: string
@@ -376,6 +482,63 @@ export type Database = {
           pro_started_at?: string | null
           suspended?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      saved_jobs: {
+        Row: {
+          company: string | null
+          created_at: string
+          description: string | null
+          employment_type: string | null
+          external_id: string
+          favorited: boolean
+          id: string
+          location: string | null
+          posted_at: string | null
+          provider: string
+          remote: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          description?: string | null
+          employment_type?: string | null
+          external_id: string
+          favorited?: boolean
+          id?: string
+          location?: string | null
+          posted_at?: string | null
+          provider?: string
+          remote?: boolean
+          tags?: string[]
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          description?: string | null
+          employment_type?: string | null
+          external_id?: string
+          favorited?: boolean
+          id?: string
+          location?: string | null
+          posted_at?: string | null
+          provider?: string
+          remote?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -566,6 +729,13 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "support_admin" | "analytics_admin"
+      application_status:
+        | "saved"
+        | "applied"
+        | "interview"
+        | "assessment"
+        | "offer"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -694,6 +864,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "support_admin", "analytics_admin"],
+      application_status: [
+        "saved",
+        "applied",
+        "interview",
+        "assessment",
+        "offer",
+        "rejected",
+      ],
     },
   },
 } as const
