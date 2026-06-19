@@ -32,7 +32,12 @@ import { Route as AdminAnalysesRouteImport } from './routes/admin/analyses'
 import { Route as AdminAdminsRouteImport } from './routes/admin/admins'
 import { Route as AdminActivationsRouteImport } from './routes/admin/activations'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
+import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs.index'
+import { Route as AuthenticatedJobsTrackerRouteImport } from './routes/_authenticated/jobs.tracker'
+import { Route as AuthenticatedJobsSavedRouteImport } from './routes/_authenticated/jobs.saved'
+import { Route as AuthenticatedJobsRecommendationsRouteImport } from './routes/_authenticated/jobs.recommendations'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -155,11 +160,38 @@ const AuthenticatedPaymentCallbackRoute =
     path: '/payment-callback',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJobsIndexRoute = AuthenticatedJobsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedJobsRoute,
+} as any)
+const AuthenticatedJobsTrackerRoute =
+  AuthenticatedJobsTrackerRouteImport.update({
+    id: '/tracker',
+    path: '/tracker',
+    getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
+const AuthenticatedJobsSavedRoute = AuthenticatedJobsSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AuthenticatedJobsRoute,
+} as any)
+const AuthenticatedJobsRecommendationsRoute =
+  AuthenticatedJobsRecommendationsRouteImport.update({
+    id: '/recommendations',
+    path: '/recommendations',
+    getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -207,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
@@ -219,6 +252,10 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
+  '/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
+  '/jobs/saved': typeof AuthenticatedJobsSavedRoute
+  '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
+  '/jobs/': typeof AuthenticatedJobsIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -249,6 +286,10 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin': typeof AdminIndexRoute
+  '/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
+  '/jobs/saved': typeof AuthenticatedJobsSavedRoute
+  '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
+  '/jobs': typeof AuthenticatedJobsIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -270,6 +311,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
@@ -282,6 +324,10 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
+  '/_authenticated/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
+  '/_authenticated/jobs/saved': typeof AuthenticatedJobsSavedRoute
+  '/_authenticated/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
+  '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -303,6 +349,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/dashboard'
+    | '/jobs'
     | '/payment-callback'
     | '/admin/activations'
     | '/admin/admins'
@@ -315,6 +362,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin/'
+    | '/jobs/recommendations'
+    | '/jobs/saved'
+    | '/jobs/tracker'
+    | '/jobs/'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -345,6 +396,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin'
+    | '/jobs/recommendations'
+    | '/jobs/saved'
+    | '/jobs/tracker'
+    | '/jobs'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -365,6 +420,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/_authenticated/dashboard'
+    | '/_authenticated/jobs'
     | '/_authenticated/payment-callback'
     | '/admin/activations'
     | '/admin/admins'
@@ -377,6 +433,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin/'
+    | '/_authenticated/jobs/recommendations'
+    | '/_authenticated/jobs/saved'
+    | '/_authenticated/jobs/tracker'
+    | '/_authenticated/jobs/'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -569,12 +629,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPaymentCallbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/jobs': {
+      id: '/_authenticated/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthenticatedJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/jobs/': {
+      id: '/_authenticated/jobs/'
+      path: '/'
+      fullPath: '/jobs/'
+      preLoaderRoute: typeof AuthenticatedJobsIndexRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/jobs/tracker': {
+      id: '/_authenticated/jobs/tracker'
+      path: '/tracker'
+      fullPath: '/jobs/tracker'
+      preLoaderRoute: typeof AuthenticatedJobsTrackerRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/jobs/saved': {
+      id: '/_authenticated/jobs/saved'
+      path: '/saved'
+      fullPath: '/jobs/saved'
+      preLoaderRoute: typeof AuthenticatedJobsSavedRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/jobs/recommendations': {
+      id: '/_authenticated/jobs/recommendations'
+      path: '/recommendations'
+      fullPath: '/jobs/recommendations'
+      preLoaderRoute: typeof AuthenticatedJobsRecommendationsRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -621,13 +716,32 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedJobsRouteChildren {
+  AuthenticatedJobsRecommendationsRoute: typeof AuthenticatedJobsRecommendationsRoute
+  AuthenticatedJobsSavedRoute: typeof AuthenticatedJobsSavedRoute
+  AuthenticatedJobsTrackerRoute: typeof AuthenticatedJobsTrackerRoute
+  AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
+}
+
+const AuthenticatedJobsRouteChildren: AuthenticatedJobsRouteChildren = {
+  AuthenticatedJobsRecommendationsRoute: AuthenticatedJobsRecommendationsRoute,
+  AuthenticatedJobsSavedRoute: AuthenticatedJobsSavedRoute,
+  AuthenticatedJobsTrackerRoute: AuthenticatedJobsTrackerRoute,
+  AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
+}
+
+const AuthenticatedJobsRouteWithChildren =
+  AuthenticatedJobsRoute._addFileChildren(AuthenticatedJobsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedJobsRoute: typeof AuthenticatedJobsRouteWithChildren
   AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedJobsRoute: AuthenticatedJobsRouteWithChildren,
   AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
 }
 

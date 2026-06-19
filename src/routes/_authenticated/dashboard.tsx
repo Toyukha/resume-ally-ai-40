@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/navbar";
+import { JobsWidgets } from "@/components/jobs/jobs-widgets";
 import {
   analyzeResume,
   getUserPlan,
@@ -426,6 +427,8 @@ function Dashboard() {
 
 
         {result && <Results result={result} />}
+
+        <JobsWidgets />
 
       </main>
     </div>
