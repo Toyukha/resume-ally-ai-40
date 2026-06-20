@@ -1,7 +1,14 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { JobSearchInput } from "@/lib/jobs.functions";
+import { ADZUNA_COUNTRIES, type JobSearchInput } from "@/lib/jobs.functions";
+
+const COUNTRY_LABELS: Record<string, string> = {
+  gb: "United Kingdom", us: "United States", de: "Germany", fr: "France", nl: "Netherlands",
+  ca: "Canada", au: "Australia", in: "India", za: "South Africa", br: "Brazil",
+  pl: "Poland", it: "Italy", es: "Spain", sg: "Singapore", nz: "New Zealand",
+  mx: "Mexico", at: "Austria", ch: "Switzerland", be: "Belgium",
+};
 
 type Props = {
   value: JobSearchInput;
@@ -57,6 +64,17 @@ export function JobFilters({ value, onChange }: Props) {
           <SelectItem value="1">Past 24h</SelectItem>
           <SelectItem value="7">Past week</SelectItem>
           <SelectItem value="30">Past month</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={value.country ?? "gb"}
+        onValueChange={(v) => set("country", v as JobSearchInput["country"])}
+      >
+        <SelectTrigger className="md:col-span-12"><SelectValue placeholder="Country (Adzuna)" /></SelectTrigger>
+        <SelectContent className="max-h-72">
+          {ADZUNA_COUNTRIES.map((c) => (
+            <SelectItem key={c} value={c}>{COUNTRY_LABELS[c] ?? c.toUpperCase()}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

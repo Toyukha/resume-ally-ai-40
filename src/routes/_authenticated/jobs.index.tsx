@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/jobs/")({
 });
 
 function BrowseJobs() {
-  const [filters, setFilters] = useState<JobSearchInput>({ remote: "any" });
+  const [filters, setFilters] = useState<JobSearchInput>({ remote: "any", country: "gb" });
   const searchFn = useServerFn(searchJobs);
   const savedFn = useServerFn(listSavedJobs);
 

@@ -101,6 +101,9 @@ export function JobCard({ job, savedId, favorited }: Props) {
           {job.employmentType && (
             <Badge variant="outline" className="capitalize">{job.employmentType.replace(/-/g, " ")}</Badge>
           )}
+          <Badge variant="outline" className="text-[10px] uppercase tracking-wide opacity-70">
+            {job.provider}
+          </Badge>
           {job.tags.slice(0, 3).map((t) => (
             <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
           ))}
