@@ -1,38 +1,25 @@
-## Add Adzuna as a secondary global jobs provider
+## Make all four providers visible + add pagination
 
-Extend the Jobs Marketplace to fetch listings from Adzuna alongside Arbeitnow, giving users access to global, location-aware results.
+### Root cause
+`searchJobs` fetches Arbeitnow, Adzuna, Himalayas, RemoteJobs in parallel and merges them, but then slices to 50 results. Arbeitnow returns 50 jobs first in the merge order, so the slice cuts off everything else — the UI only ever sees Arbeitnow. There's also no pagination control on the jobs page, so users can't browse deeper.
 
-### Secrets
+### Backend — `src/lib/jobs.functions.ts`
 
-Store the Adzuna credentials securely (not in code). I'll request them via `add_secret`:
-- `ADZUNA_APP_ID`
-- `ADZUNA_API_KEY`
+1. **Interleave providers before slicing** so the first page shows a mix from all four sources. Round-robin: take 1 from Arbeitnow, 1 from Adzuna, 1 from Himalayas, 1 from RemoteJobs, repeat until 50. De-dupe by `${provider}:${id}` as today.
+2. **Return pagination metadata**: `{ jobs, total, page, hasMore }` where `hasMore` = `filtered.length > page * 50` OR any provider returned a full page (signal more available upstream).
+3. Keep the existing `page` input (already in `SearchSchema`, max 10). No other behaviour changes.
 
-(You've shared them in chat — I'll re-collect them through the secure secret prompt and you can paste them there. Please rotate the key in your Adzuna dashboard afterward since it was sent in plaintext.)
+### Frontend — `src/routes/_authenticated/jobs.index.tsx`
 
-### Backend (`src/lib/jobs.functions.ts`)
-
-1. Add `fetchAdzunaPage(country, page, filters)` — calls `https://api.adzuna.com/v1/api/jobs/{country}/search/{page}` with `app_id`, `app_key`, `what`, `where`, `results_per_page=50`, optional `full_time`/`part_time`/`contract`, and `max_days_old`. Normalize to the existing `NormalizedJob` shape with `provider: "adzuna"`.
-2. Extend `NormalizedJob["provider"]` union to `"arbeitnow" | "adzuna"`.
-3. Add `country` (ISO-2, default `gb`; user-selectable) to `SearchSchema`. Map a small allowlist (`gb, us, de, fr, nl, ca, au, in, za, br, pl, it, es, sg, nz, mx, at, ch, be`) — Adzuna's supported countries.
-4. In `searchJobs`, run Arbeitnow + Adzuna in parallel, merge, de-dup by `${provider}:${externalId}`, then `applyFilters` client-side as today. Same 10-min cache, keyed per provider/country/page/query.
-5. Update `getJob` to dispatch by provider prefix on the slug (Adzuna slugs prefixed `adzuna:<id>`).
-6. Update `recommendJobs` to also pull a couple Adzuna pages for the user's profile country.
-7. Graceful failure: if Adzuna throws (rate-limit, bad key), log server-side and return Arbeitnow-only results — never break search.
-
-### Frontend
-
-- `src/components/jobs/job-filters.tsx` — add a **Country** select (ISO-2 list above, defaults to user's profile country or `gb`). Wire into the existing filter state.
-- `src/components/jobs/job-card.tsx` — small provider badge (`Arbeitnow` / `Adzuna`) next to the company name.
-- No other UI changes; saved jobs, tracker, match analysis, recommendations, and dashboard widgets work unchanged because everything flows through `NormalizedJob`.
+1. Add local `page` state (default 1). Include `page` in the `JobSearchInput` passed to `searchJobs` and in the query key.
+2. Reset `page` to 1 whenever filter values change (other than `page` itself).
+3. Render Prev / Next buttons below the results grid:
+   - **Prev** disabled when `page === 1`
+   - **Next** disabled when `!hasMore` or `page >= 10` (Adzuna/server cap)
+   - Show "Page N" between them
+   - Scroll to top of list on page change
 
 ### Out of scope
-
-- Per-country salary normalization (Adzuna returns local currency — shown as-is for now).
-- Adzuna's `categories` endpoint for an Industry dropdown (current free-text industry filter still works).
-
-### Technical notes
-
-- Adzuna free tier: 250 calls/month/app — the 10-min in-memory cache + parallel page-1/page-2 fetch keeps us well under that for typical use.
-- Keys read inside `.handler()` (never at module scope) so secret injection works.
-- No DB migration needed — `saved_jobs.provider` is already free-form text.
+- Per-provider page cursors (each provider has its own pagination depth; we advance them in lockstep, which is the existing pattern).
+- Infinite scroll — explicit Prev/Next is simpler and matches the request ("progress to see other listed jobs").
+- Saved/Recommendations tabs — only Browse Jobs is affected.

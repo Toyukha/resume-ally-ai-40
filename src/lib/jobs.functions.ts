@@ -346,16 +346,32 @@ export const searchJobs = createServerFn({ method: "POST" })
       fetchHimalayasPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
       fetchRemoteJobsPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
     ]);
+    // Round-robin interleave so the 50-result slice keeps a mix from every provider
+    const buckets = [
+      [...an1, ...an2],
+      [...adz1, ...adz2],
+      [...him1],
+      [...rj1],
+    ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
-    for (const j of [...an1, ...adz1, ...him1, ...rj1, ...an2, ...adz2]) {
-      const k = `${j.provider}:${j.id}`;
-      if (seen.has(k)) continue;
-      seen.add(k);
-      merged.push(j);
+    const maxLen = Math.max(...buckets.map((b) => b.length));
+    for (let i = 0; i < maxLen; i++) {
+      for (const bucket of buckets) {
+        const j = bucket[i];
+        if (!j) continue;
+        const k = `${j.provider}:${j.id}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        merged.push(j);
+      }
     }
     const filtered = applyFilters(merged, data);
-    return { jobs: filtered.slice(0, 50), total: filtered.length, page };
+    const pageSize = 50;
+    const hasMore =
+      filtered.length > pageSize ||
+      an1.length >= 50 || adz1.length >= 50 || him1.length >= 50 || rj1.length >= 50;
+    return { jobs: filtered.slice(0, pageSize), total: filtered.length, page, hasMore };
   });
 
 export const getJob = createServerFn({ method: "POST" })
