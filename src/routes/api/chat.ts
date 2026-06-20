@@ -59,12 +59,11 @@ export const Route = createFileRoute("/api/chat")({
           });
 
           return result.toUIMessageStreamResponse({
-            originalMessages: messages as UIMessage[],
+            originalMessages: trimmed,
           });
         } catch (err) {
           console.error("[/api/chat] error", err);
-          const message = err instanceof Error ? err.message : "Chat error";
-          return new Response(message, { status: 500 });
+          return new Response("Chat error", { status: 500 });
         }
       },
     },
