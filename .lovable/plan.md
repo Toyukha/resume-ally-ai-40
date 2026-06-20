@@ -1,25 +1,42 @@
-## Make all four providers visible + add pagination
+# Social Media Flyer — Career Boost
 
-### Root cause
-`searchJobs` fetches Arbeitnow, Adzuna, Himalayas, RemoteJobs in parallel and merges them, but then slices to 50 results. Arbeitnow returns 50 jobs first in the merge order, so the slice cuts off everything else — the UI only ever sees Arbeitnow. There's also no pagination control on the jobs page, so users can't browse deeper.
+Generate a cohesive **3-flyer set** (one design adapted to each platform's required aspect ratio) promoting Career Boost sign-ups.
 
-### Backend — `src/lib/jobs.functions.ts`
+## Output
 
-1. **Interleave providers before slicing** so the first page shows a mix from all four sources. Round-robin: take 1 from Arbeitnow, 1 from Adzuna, 1 from Himalayas, 1 from RemoteJobs, repeat until 50. De-dupe by `${provider}:${id}` as today.
-2. **Return pagination metadata**: `{ jobs, total, page, hasMore }` where `hasMore` = `filtered.length > page * 50` OR any provider returned a full page (signal more available upstream).
-3. Keep the existing `page` input (already in `SearchSchema`, max 10). No other behaviour changes.
+Three premium PNG flyers saved to `/mnt/documents/`:
 
-### Frontend — `src/routes/_authenticated/jobs.index.tsx`
+1. `career-boost-flyer-1x1.png` — **1080×1080** (Instagram / Facebook feed)
+2. `career-boost-flyer-9x16.png` — **1080×1920** (Stories / Reels / TikTok)
+3. `career-boost-flyer-16x9.png` — **1920×1080** (LinkedIn / X / Twitter)
 
-1. Add local `page` state (default 1). Include `page` in the `JobSearchInput` passed to `searchJobs` and in the query key.
-2. Reset `page` to 1 whenever filter values change (other than `page` itself).
-3. Render Prev / Next buttons below the results grid:
-   - **Prev** disabled when `page === 1`
-   - **Next** disabled when `!hasMore` or `page >= 10` (Adzuna/server cap)
-   - Show "Page N" between them
-   - Scroll to top of list on page change
+Each rendered with the **premium** image-gen tier (needed for legible typography).
 
-### Out of scope
-- Per-provider page cursors (each provider has its own pagination depth; we advance them in lockstep, which is the existing pattern).
-- Infinite scroll — explicit Prev/Next is simpler and matches the request ("progress to see other listed jobs").
-- Saved/Recommendations tabs — only Browse Jobs is affected.
+## Visual direction — Dark & Bold
+
+- **Palette:** deep navy `#0A0F2C` → black `#0F172A` background, **electric blue `#3B82F6`** primary, **gold `#F5C26B`** accent, ivory `#F5F8FF` text.
+- **Mood:** premium executive, late-night ambition, subtle gold foil + glowing blue gradient orbs, faint grid texture — same energy as the existing landing hero.
+- **Motif:** a glowing résumé document tilted in 3D, with an ATS match-score ring (gold) hovering beside it; soft particle/spark accents.
+- **Typography:** bold sans-serif display headline, thin uppercase eyebrow, small CTA chip.
+
+## Copy on the flyer
+
+- Eyebrow chip: `✦ AI RESUME OPTIMIZER`
+- Headline: **"Land more interviews."**
+- Sub: *"Tailor your resume to any job in seconds — ATS-ready, recruiter-quality, in under a minute."*
+- Bullet pills (3): `ATS Match Score` · `AI Cover Letters` · `Jobs Marketplace`
+- CTA button: **`Sign up free →`**
+- URL footer: `thecareerboost.com`
+
+## Technical notes
+
+- Use `imagegen--generate_image` with `model: "premium"` for each format (text legibility).
+- Pass `transparent_background: false` (flyers need their dark backdrop).
+- After generation, view each file to QA: check no garbled text, headline readable, URL legible, layout not clipped. Regenerate any that fail QA.
+- Present each file to the user via `<presentation-artifact>` tags with `mime_type="image/png"`.
+
+## Out of scope
+
+- No code changes to the app.
+- No video / animated version.
+- No printed-flyer (A4/PDF) variant — purely social digital sizes.
