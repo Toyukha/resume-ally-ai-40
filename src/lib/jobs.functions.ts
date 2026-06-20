@@ -154,6 +154,132 @@ async function fetchAdzunaPage(
   return normalized;
 }
 
+// ───── Himalayas ─────
+type HimalayasJob = {
+  guid: string;
+  title: string;
+  excerpt?: string;
+  description?: string;
+  companyName?: string;
+  companySlug?: string;
+  employmentType?: string;
+  locationRestrictions?: string[];
+  categories?: string[];
+  parentCategories?: string[];
+  pubDate?: string;
+  applicationLink?: string;
+};
+
+async function fetchHimalayasPage(
+  page: number,
+  opts: { query?: string } = {},
+): Promise<NormalizedJob[]> {
+  const limit = 50;
+  const offset = (page - 1) * limit;
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (opts.query) params.set("q", opts.query);
+  const key = `him:${params.toString()}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+
+  const url = `https://himalayas.app/jobs/api?${params.toString()}`;
+  try {
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) {
+      console.error(`[himalayas] ${res.status}`);
+      return [];
+    }
+    const body = (await res.json()) as { jobs?: HimalayasJob[] };
+    const normalized: NormalizedJob[] = (body.jobs ?? []).map((j) => {
+      const slug = `himalayas:${j.guid}`;
+      const tags = [...(j.categories ?? []), ...(j.parentCategories ?? [])].slice(0, 10);
+      return {
+        id: slug,
+        slug,
+        title: j.title,
+        company: j.companyName ?? "",
+        location: (j.locationRestrictions ?? []).join(", ") || "Remote",
+        remote: true,
+        employmentType: (j.employmentType ?? "").toLowerCase().replace(" ", "-"),
+        postedAt: j.pubDate ?? new Date().toISOString(),
+        url: j.applicationLink ?? `https://himalayas.app/companies/${j.companySlug ?? ""}`,
+        description: j.description ?? j.excerpt ?? "",
+        tags,
+        provider: "himalayas" as const,
+      };
+    });
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[himalayas] fetch failed", err);
+    return [];
+  }
+}
+
+// ───── RemoteJobs.org ─────
+type RemoteJobsJob = {
+  id: string;
+  title: string;
+  url?: string;
+  apply_url?: string;
+  company?: { name?: string; logo_url?: string; website?: string };
+  category?: { name?: string; slug?: string };
+  location?: string;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  type?: string;
+  description?: string;
+  published_at?: string;
+  created_at?: string;
+};
+
+async function fetchRemoteJobsPage(
+  page: number,
+  opts: { query?: string } = {},
+): Promise<NormalizedJob[]> {
+  const limit = 50;
+  const params = new URLSearchParams({ limit: String(limit), page: String(page) });
+  if (opts.query) params.set("q", opts.query);
+  const key = `rj:${params.toString()}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+
+  const url = `https://remotejobs.org/api/v1/jobs?${params.toString()}`;
+  try {
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) {
+      console.error(`[remotejobs] ${res.status}`);
+      return [];
+    }
+    const body = (await res.json()) as { data?: RemoteJobsJob[] };
+    const normalized: NormalizedJob[] = (body.data ?? []).map((j) => {
+      const slug = `remotejobs:${j.id}`;
+      const tags = j.category?.name ? [j.category.name] : [];
+      return {
+        id: slug,
+        slug,
+        title: j.title,
+        company: j.company?.name ?? "",
+        location: j.location ?? "Remote",
+        remote: /remote/i.test(j.location ?? "Remote"),
+        employmentType: (j.type ?? "").toLowerCase().replace(" ", "-"),
+        postedAt: j.published_at ?? j.created_at ?? new Date().toISOString(),
+        url: j.apply_url ?? j.url ?? "",
+        description: j.description ?? "",
+        tags,
+        provider: "remotejobs" as const,
+      };
+    });
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[remotejobs] fetch failed", err);
+    return [];
+  }
+}
+
+
+
 const SearchSchema = z.object({
   query: z.string().max(200).optional(),
   location: z.string().max(200).optional(),
