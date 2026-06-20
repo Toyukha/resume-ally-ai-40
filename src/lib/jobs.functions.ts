@@ -605,6 +605,12 @@ export const recommendJobs = createServerFn({ method: "GET" })
       .limit(1)
       .maybeSingle();
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("country_code")
+      .eq("id", userId)
+      .maybeSingle();
+
     if (!latest?.resume_text) {
       return { jobs: [] as NormalizedJob[], keywords: [] as string[], hasResume: false };
     }
@@ -612,11 +618,16 @@ export const recommendJobs = createServerFn({ method: "GET" })
     const fromResume = topKeywords(latest.resume_text, 8);
     const fromMissing = (latest.missing_keywords as string[] | null) ?? [];
     const keywords = Array.from(new Set([...fromMissing.slice(0, 4), ...fromResume])).slice(0, 8);
+    const adzQuery = keywords.slice(0, 3).join(" ");
+    const countryGuess = (profile?.country_code ?? "").toLowerCase();
+    const country = (ADZUNA_COUNTRIES as readonly string[]).includes(countryGuess) ? countryGuess : "gb";
 
     // Pull a couple pages and score
     const all = [
       ...(await fetchArbeitnowPage(1).catch(() => [])),
       ...(await fetchArbeitnowPage(2).catch(() => [])),
+      ...(await fetchAdzunaPage(country, 1, { query: adzQuery }).catch(() => [])),
+      ...(await fetchAdzunaPage(country, 2, { query: adzQuery }).catch(() => [])),
     ];
     const scored = all.map((j) => {
       const hay = `${j.title} ${j.tags.join(" ")} ${j.description}`.toLowerCase();
