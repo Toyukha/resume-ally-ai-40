@@ -76,6 +76,84 @@ async function fetchArbeitnowPage(page: number): Promise<NormalizedJob[]> {
   return normalized;
 }
 
+// ───── Adzuna ─────
+type AdzunaJob = {
+  id: string | number;
+  title: string;
+  description: string;
+  redirect_url: string;
+  created: string;
+  company?: { display_name?: string };
+  location?: { display_name?: string; area?: string[] };
+  contract_time?: string; // "full_time" | "part_time"
+  contract_type?: string; // "permanent" | "contract"
+  category?: { label?: string; tag?: string };
+  salary_min?: number;
+  salary_max?: number;
+  salary_is_predicted?: string;
+};
+
+function adzunaSlug(country: string, id: string | number): string {
+  return `adzuna:${country}:${id}`;
+}
+
+async function fetchAdzunaPage(
+  country: string,
+  page: number,
+  opts: { query?: string; location?: string; maxDaysOld?: number; contract?: "full_time" | "part_time" | "contract" },
+): Promise<NormalizedJob[]> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_API_KEY;
+  if (!appId || !appKey) return [];
+  const params = new URLSearchParams({
+    app_id: appId,
+    app_key: appKey,
+    results_per_page: "50",
+    "content-type": "application/json",
+  });
+  if (opts.query) params.set("what", opts.query);
+  if (opts.location) params.set("where", opts.location);
+  if (opts.maxDaysOld) params.set("max_days_old", String(opts.maxDaysOld));
+  if (opts.contract === "full_time") params.set("full_time", "1");
+  if (opts.contract === "part_time") params.set("part_time", "1");
+  if (opts.contract === "contract") params.set("contract", "1");
+
+  const key = `adz:${country}:${page}:${params.toString().replace(`app_id=${appId}&app_key=${appKey}&`, "")}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+
+  const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/${page}?${params.toString()}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    console.error(`[adzuna] ${res.status} ${await res.text().catch(() => "")}`.slice(0, 500));
+    return [];
+  }
+  const body = (await res.json()) as { results?: AdzunaJob[] };
+  const normalized: NormalizedJob[] = (body.results ?? []).map((j) => {
+    const ct = (j.contract_time ?? "").replace("_", "-");
+    const employmentType = ct || (j.contract_type === "contract" ? "contract" : "");
+    const tags: string[] = [];
+    if (j.category?.label) tags.push(j.category.label);
+    if (j.location?.area?.length) tags.push(j.location.area[j.location.area.length - 1]);
+    return {
+      id: adzunaSlug(country, j.id),
+      slug: adzunaSlug(country, j.id),
+      title: j.title,
+      company: j.company?.display_name ?? "",
+      location: j.location?.display_name ?? "",
+      remote: /remote/i.test(`${j.title} ${j.description}`),
+      employmentType,
+      postedAt: j.created ?? new Date().toISOString(),
+      url: j.redirect_url,
+      description: j.description ?? "",
+      tags,
+      provider: "adzuna" as const,
+    };
+  });
+  cache.set(key, { at: Date.now(), data: normalized });
+  return normalized;
+}
+
 const SearchSchema = z.object({
   query: z.string().max(200).optional(),
   location: z.string().max(200).optional(),
@@ -84,6 +162,7 @@ const SearchSchema = z.object({
   industry: z.string().max(100).optional(),
   postedWithinDays: z.number().int().min(0).max(180).optional(),
   page: z.number().int().min(1).max(10).optional(),
+  country: z.enum(ADZUNA_COUNTRIES).optional(),
 });
 export type JobSearchInput = z.infer<typeof SearchSchema>;
 
