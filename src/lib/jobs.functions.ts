@@ -200,13 +200,33 @@ export const searchJobs = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SearchSchema.parse(input ?? {}))
   .handler(async ({ data }) => {
     const page = data.page ?? 1;
-    // Pull a couple pages for richer client-side filtering
-    const [a, b] = await Promise.all([
-      fetchArbeitnowPage(page),
+    const country = data.country ?? "gb";
+    const empt = data.employmentType?.toLowerCase();
+    const contract: "full_time" | "part_time" | "contract" | undefined =
+      empt === "full-time" ? "full_time"
+      : empt === "part-time" ? "part_time"
+      : empt === "contract" ? "contract"
+      : undefined;
+
+    const [an1, an2, adz1, adz2] = await Promise.all([
+      fetchArbeitnowPage(page).catch(() => [] as NormalizedJob[]),
       fetchArbeitnowPage(page + 1).catch(() => [] as NormalizedJob[]),
+      fetchAdzunaPage(country, page, {
+        query: data.query, location: data.location, maxDaysOld: data.postedWithinDays, contract,
+      }).catch(() => [] as NormalizedJob[]),
+      fetchAdzunaPage(country, page + 1, {
+        query: data.query, location: data.location, maxDaysOld: data.postedWithinDays, contract,
+      }).catch(() => [] as NormalizedJob[]),
     ]);
-    const all = [...a, ...b];
-    const filtered = applyFilters(all, data);
+    const seen = new Set<string>();
+    const merged: NormalizedJob[] = [];
+    for (const j of [...an1, ...adz1, ...an2, ...adz2]) {
+      const k = `${j.provider}:${j.id}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(j);
+    }
+    const filtered = applyFilters(merged, data);
     return { jobs: filtered.slice(0, 50), total: filtered.length, page };
   });
 
@@ -214,6 +234,15 @@ export const getJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(300) }).parse(input))
   .handler(async ({ data }) => {
+    if (data.slug.startsWith("adzuna:")) {
+      const [, country] = data.slug.split(":");
+      for (let p = 1; p <= 3; p++) {
+        const jobs = await fetchAdzunaPage(country, p, {}).catch(() => []);
+        const hit = jobs.find((j) => j.slug === data.slug);
+        if (hit) return hit;
+      }
+      throw new Error("Job not found");
+    }
     for (let p = 1; p <= 3; p++) {
       const jobs = await fetchArbeitnowPage(p);
       const hit = jobs.find((j) => j.slug === data.slug);
