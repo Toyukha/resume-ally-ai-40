@@ -772,6 +772,8 @@ export const recommendJobs = createServerFn({ method: "GET" })
       ...(await fetchArbeitnowPage(2).catch(() => [])),
       ...(await fetchAdzunaPage(country, 1, { query: adzQuery }).catch(() => [])),
       ...(await fetchAdzunaPage(country, 2, { query: adzQuery }).catch(() => [])),
+      ...(await fetchHimalayasPage(1, { query: adzQuery }).catch(() => [])),
+      ...(await fetchRemoteJobsPage(1, { query: adzQuery }).catch(() => [])),
     ];
     const scored = all.map((j) => {
       const hay = `${j.title} ${j.tags.join(" ")} ${j.description}`.toLowerCase();
