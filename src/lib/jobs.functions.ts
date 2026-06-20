@@ -20,8 +20,14 @@ export type NormalizedJob = {
   url: string;
   description: string;
   tags: string[];
-  provider: "arbeitnow";
+  provider: "arbeitnow" | "adzuna";
 };
+
+export const ADZUNA_COUNTRIES = [
+  "gb", "us", "de", "fr", "nl", "ca", "au", "in", "za", "br",
+  "pl", "it", "es", "sg", "nz", "mx", "at", "ch", "be",
+] as const;
+export type AdzunaCountry = (typeof ADZUNA_COUNTRIES)[number];
 
 // ────────────────────────────────────────────────────────────────────────────
 // Arbeitnow client (server-side, with simple in-memory cache)
