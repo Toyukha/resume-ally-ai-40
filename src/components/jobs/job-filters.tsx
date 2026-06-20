@@ -66,6 +66,17 @@ export function JobFilters({ value, onChange }: Props) {
           <SelectItem value="30">Past month</SelectItem>
         </SelectContent>
       </Select>
+      <Select
+        value={value.country ?? "gb"}
+        onValueChange={(v) => set("country", v as JobSearchInput["country"])}
+      >
+        <SelectTrigger className="md:col-span-12"><SelectValue placeholder="Country (Adzuna)" /></SelectTrigger>
+        <SelectContent className="max-h-72">
+          {ADZUNA_COUNTRIES.map((c) => (
+            <SelectItem key={c} value={c}>{COUNTRY_LABELS[c] ?? c.toUpperCase()}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
