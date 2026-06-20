@@ -44,6 +44,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/public/hooks/usage-alerts'
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
+import { Route as AuthenticatedJobsDetailSplatRouteImport } from './routes/_authenticated/jobs.detail.$'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -226,6 +227,12 @@ const ApiPublicHooksFlutterwaveRoute =
     path: '/api/public/hooks/flutterwave',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedJobsDetailSplatRoute =
+  AuthenticatedJobsDetailSplatRouteImport.update({
+    id: '/detail/$',
+    path: '/detail/$',
+    getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -290,6 +298,7 @@ export interface FileRoutesByTo {
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs': typeof AuthenticatedJobsIndexRoute
+  '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -328,6 +337,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/_authenticated/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/_authenticated/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs/'
+    | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -400,6 +411,7 @@ export interface FileRouteTypes {
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs'
+    | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -437,6 +449,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs/saved'
     | '/_authenticated/jobs/tracker'
     | '/_authenticated/jobs/'
+    | '/_authenticated/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -713,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFlutterwaveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/jobs/detail/$': {
+      id: '/_authenticated/jobs/detail/$'
+      path: '/detail/$'
+      fullPath: '/jobs/detail/$'
+      preLoaderRoute: typeof AuthenticatedJobsDetailSplatRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
   }
 }
 
@@ -721,6 +741,7 @@ interface AuthenticatedJobsRouteChildren {
   AuthenticatedJobsSavedRoute: typeof AuthenticatedJobsSavedRoute
   AuthenticatedJobsTrackerRoute: typeof AuthenticatedJobsTrackerRoute
   AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
+  AuthenticatedJobsDetailSplatRoute: typeof AuthenticatedJobsDetailSplatRoute
 }
 
 const AuthenticatedJobsRouteChildren: AuthenticatedJobsRouteChildren = {
@@ -728,6 +749,7 @@ const AuthenticatedJobsRouteChildren: AuthenticatedJobsRouteChildren = {
   AuthenticatedJobsSavedRoute: AuthenticatedJobsSavedRoute,
   AuthenticatedJobsTrackerRoute: AuthenticatedJobsTrackerRoute,
   AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
+  AuthenticatedJobsDetailSplatRoute: AuthenticatedJobsDetailSplatRoute,
 }
 
 const AuthenticatedJobsRouteWithChildren =

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, BookmarkCheck, ExternalLink, MapPin, Building2, Clock, Sparkles, Star } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bookmark, BookmarkCheck, ExternalLink, MapPin, Building2, Clock, Sparkles, Star, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
