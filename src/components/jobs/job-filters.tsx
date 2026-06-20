@@ -1,7 +1,14 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { JobSearchInput } from "@/lib/jobs.functions";
+import { ADZUNA_COUNTRIES, type JobSearchInput } from "@/lib/jobs.functions";
+
+const COUNTRY_LABELS: Record<string, string> = {
+  gb: "United Kingdom", us: "United States", de: "Germany", fr: "France", nl: "Netherlands",
+  ca: "Canada", au: "Australia", in: "India", za: "South Africa", br: "Brazil",
+  pl: "Poland", it: "Italy", es: "Spain", sg: "Singapore", nz: "New Zealand",
+  mx: "Mexico", at: "Austria", ch: "Switzerland", be: "Belgium",
+};
 
 type Props = {
   value: JobSearchInput;
