@@ -371,6 +371,22 @@ export const getJob = createServerFn({ method: "POST" })
       }
       throw new Error("Job not found");
     }
+    if (data.slug.startsWith("himalayas:")) {
+      for (let p = 1; p <= 4; p++) {
+        const jobs = await fetchHimalayasPage(p).catch(() => []);
+        const hit = jobs.find((j) => j.slug === data.slug);
+        if (hit) return hit;
+      }
+      throw new Error("Job not found");
+    }
+    if (data.slug.startsWith("remotejobs:")) {
+      for (let p = 1; p <= 4; p++) {
+        const jobs = await fetchRemoteJobsPage(p).catch(() => []);
+        const hit = jobs.find((j) => j.slug === data.slug);
+        if (hit) return hit;
+      }
+      throw new Error("Job not found");
+    }
     for (let p = 1; p <= 3; p++) {
       const jobs = await fetchArbeitnowPage(p);
       const hit = jobs.find((j) => j.slug === data.slug);
