@@ -334,7 +334,7 @@ export const searchJobs = createServerFn({ method: "POST" })
       : empt === "contract" ? "contract"
       : undefined;
 
-    const [an1, an2, adz1, adz2] = await Promise.all([
+    const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
       fetchArbeitnowPage(page).catch(() => [] as NormalizedJob[]),
       fetchArbeitnowPage(page + 1).catch(() => [] as NormalizedJob[]),
       fetchAdzunaPage(country, page, {
@@ -343,10 +343,12 @@ export const searchJobs = createServerFn({ method: "POST" })
       fetchAdzunaPage(country, page + 1, {
         query: data.query, location: data.location, maxDaysOld: data.postedWithinDays, contract,
       }).catch(() => [] as NormalizedJob[]),
+      fetchHimalayasPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
+      fetchRemoteJobsPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
     ]);
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
-    for (const j of [...an1, ...adz1, ...an2, ...adz2]) {
+    for (const j of [...an1, ...adz1, ...him1, ...rj1, ...an2, ...adz2]) {
       const k = `${j.provider}:${j.id}`;
       if (seen.has(k)) continue;
       seen.add(k);
