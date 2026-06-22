@@ -454,11 +454,50 @@ export const searchJobs = createServerFn({ method: "POST" })
       }
     }
     const filtered = applyFilters(merged, data);
+    const sorted = applySort(filtered, data.sort);
     const pageSize = 50;
     const hasMore =
-      filtered.length > pageSize ||
+      sorted.length > pageSize ||
       an1.length >= 50 || adz1.length >= 50 || him1.length >= 50 || rj1.length >= 50;
-    return { jobs: filtered.slice(0, pageSize), total: filtered.length, page, hasMore };
+    return { jobs: sorted.slice(0, pageSize), total: sorted.length, page, hasMore };
+  });
+
+// Live job-count strip — Adzuna's count endpoint, cached for 1h per filter.
+const statsCache = new Map<string, { at: number; n: number }>();
+const STATS_TTL = 60 * 60 * 1000;
+
+async function adzunaCount(country: string, params: Record<string, string>): Promise<number> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_API_KEY;
+  if (!appId || !appKey) return 0;
+  const key = `cnt:${country}:${new URLSearchParams(params).toString()}`;
+  const hit = statsCache.get(key);
+  if (hit && Date.now() - hit.at < STATS_TTL) return hit.n;
+  const search = new URLSearchParams({ app_id: appId, app_key: appKey, results_per_page: "0", ...params });
+  try {
+    const res = await fetch(`https://api.adzuna.com/v1/api/jobs/${country}/search/1?${search.toString()}`);
+    if (!res.ok) return 0;
+    const body = (await res.json()) as { count?: number };
+    const n = body.count ?? 0;
+    statsCache.set(key, { at: Date.now(), n });
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+export const getJobStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const [remote, uk, us, ca, de, cs] = await Promise.all([
+      adzunaCount("gb", { what: "remote" }),
+      adzunaCount("gb", {}),
+      adzunaCount("us", {}),
+      adzunaCount("ca", {}),
+      adzunaCount("de", {}),
+      adzunaCount("gb", { what: "customer success" }),
+    ]);
+    return { remote, uk, us, canada: ca, germany: de, customerSuccess: cs };
   });
 
 export const getJob = createServerFn({ method: "POST" })
