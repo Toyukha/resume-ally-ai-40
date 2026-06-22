@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/employer")({
 
 function EmployerLayout() {
   const listFn = useServerFn(listMyCompanies);
+  const navigate = useNavigate();
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ["my-companies"],
     queryFn: () => listFn(),
