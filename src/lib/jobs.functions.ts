@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { CATEGORY_BY_SLUG, EXPERIENCE_LEVELS } from "./job-categories";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
