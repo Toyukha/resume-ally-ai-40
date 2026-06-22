@@ -148,17 +148,33 @@ function JobDetail() {
         <h2 className="mb-3 font-display text-lg font-semibold">Job description</h2>
         <JobDescription html={job.description} />
         <div className="mt-6 border-t border-border pt-4">
-          <Button variant="hero" asChild>
-            <a href={job.url} target="_blank" rel="noopener noreferrer">
-              Apply on {job.provider === "adzuna" ? "Adzuna" : "Arbeitnow"} <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-            </a>
-          </Button>
+          {job.provider === "internal" && job.applyMode === "in_app" && job.internalJobId ? (
+            <Button variant="hero" asChild>
+              <Link to="/jobs/apply/$id" params={{ id: job.internalJobId }}>
+                Apply now
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="hero" asChild>
+              <a href={job.url} target="_blank" rel="noopener noreferrer">
+                Apply on {providerLabel(job.provider)} <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
         </div>
       </Card>
 
       <AnalyzeJobSheet open={analyzeOpen} onOpenChange={setAnalyzeOpen} job={job} />
     </div>
   );
+}
+
+function providerLabel(p: string) {
+  if (p === "adzuna") return "Adzuna";
+  if (p === "himalayas") return "Himalayas";
+  if (p === "remotejobs") return "RemoteJobs";
+  if (p === "internal") return "Career Boost";
+  return "Arbeitnow";
 }
 
 function JobDescription({ html }: { html: string }) {
