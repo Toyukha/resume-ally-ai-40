@@ -108,6 +108,10 @@ function Landing() {
       {/* Walkthrough video */}
       <WalkthroughSection />
 
+      {/* Discovery: Trending Countries + Popular Career Paths */}
+      <DiscoverySections />
+
+
       {/* Features */}
       <section id="features" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
