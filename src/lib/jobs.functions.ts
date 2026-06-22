@@ -289,6 +289,12 @@ const SearchSchema = z.object({
   postedWithinDays: z.number().int().min(0).max(180).optional(),
   page: z.number().int().min(1).max(10).optional(),
   country: z.enum(ADZUNA_COUNTRIES).optional(),
+  // New multi-value filters (all optional, backward compatible)
+  workTypes: z.array(z.enum(["remote", "hybrid", "onsite"])).max(3).optional(),
+  employmentTypes: z.array(z.string().max(50)).max(8).optional(),
+  categories: z.array(z.string().max(50)).max(20).optional(),
+  experienceLevels: z.array(z.string().max(20)).max(8).optional(),
+  sort: z.enum(["relevance", "newest", "match", "remote-first", "company-az"]).optional(),
 });
 export type JobSearchInput = z.infer<typeof SearchSchema>;
 
@@ -297,9 +303,30 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
   const loc = f.location?.toLowerCase().trim();
   const empType = f.employmentType?.toLowerCase().trim();
   const industry = f.industry?.toLowerCase().trim();
+  const empTypes = (f.employmentTypes ?? []).map((s) => s.toLowerCase());
+  const workTypes = f.workTypes ?? [];
   const since = f.postedWithinDays
     ? Date.now() - f.postedWithinDays * 24 * 60 * 60 * 1000
     : null;
+
+  // Pre-compile category + experience patterns to avoid per-job cost.
+  const catKeywords: string[][] = [];
+  if (f.categories?.length) {
+    // Lazy require to avoid circular imports at module init.
+    const { CATEGORY_BY_SLUG } = require("./job-categories") as typeof import("./job-categories");
+    for (const slug of f.categories) {
+      const c = CATEGORY_BY_SLUG[slug];
+      if (c) catKeywords.push(c.keywords.map((k) => k.toLowerCase()));
+    }
+  }
+  const expPatterns: RegExp[][] = [];
+  if (f.experienceLevels?.length) {
+    const { EXPERIENCE_LEVELS } = require("./job-categories") as typeof import("./job-categories");
+    for (const slug of f.experienceLevels) {
+      const e = EXPERIENCE_LEVELS.find((x) => x.slug === slug);
+      if (e) expPatterns.push(e.patterns);
+    }
+  }
 
   return jobs.filter((j) => {
     if (q) {
@@ -307,18 +334,80 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
       if (!hay.includes(q)) return false;
     }
     if (loc && !j.location.toLowerCase().includes(loc)) return false;
-    if (f.remote === "remote" && !j.remote) return false;
-    if (f.remote === "onsite" && j.remote) return false;
-    // "hybrid" is a heuristic — Arbeitnow tags often include 'hybrid'
-    if (f.remote === "hybrid") {
-      const tagBlob = j.tags.join(" ").toLowerCase() + " " + j.description.toLowerCase();
-      if (!tagBlob.includes("hybrid")) return false;
+
+    // workTypes (multi)
+    if (workTypes.length) {
+      const blob = `${j.tags.join(" ")} ${j.description}`.toLowerCase();
+      const isRemote = j.remote;
+      const isHybrid = blob.includes("hybrid");
+      const isOnsite = !isRemote && !isHybrid;
+      const ok = workTypes.some((w) =>
+        w === "remote" ? isRemote :
+        w === "hybrid" ? isHybrid :
+        isOnsite,
+      );
+      if (!ok) return false;
+    } else {
+      // Legacy single-value remote filter still honoured
+      if (f.remote === "remote" && !j.remote) return false;
+      if (f.remote === "onsite" && j.remote) return false;
+      if (f.remote === "hybrid") {
+        const tagBlob = j.tags.join(" ").toLowerCase() + " " + j.description.toLowerCase();
+        if (!tagBlob.includes("hybrid")) return false;
+      }
     }
-    if (empType && !j.employmentType.includes(empType) && !j.tags.some((t) => t.toLowerCase().includes(empType))) return false;
+
+    // employmentTypes (multi)
+    if (empTypes.length) {
+      const ok = empTypes.some((e) =>
+        j.employmentType.includes(e) || j.tags.some((t) => t.toLowerCase().includes(e)),
+      );
+      if (!ok) return false;
+    } else if (empType) {
+      if (!j.employmentType.includes(empType) && !j.tags.some((t) => t.toLowerCase().includes(empType))) return false;
+    }
+
     if (industry && !j.tags.some((t) => t.toLowerCase().includes(industry))) return false;
     if (since && new Date(j.postedAt).getTime() < since) return false;
+
+    // Categories (multi — OR)
+    if (catKeywords.length) {
+      const hay = `${j.title} ${j.tags.join(" ")}`.toLowerCase();
+      const ok = catKeywords.some((kws) => kws.some((k) => hay.includes(k)));
+      if (!ok) return false;
+    }
+
+    // Experience levels (multi — OR)
+    if (expPatterns.length) {
+      const ok = expPatterns.some((patterns) => patterns.some((p) => p.test(j.title)));
+      if (!ok) return false;
+    }
+
     return true;
   });
+}
+
+function applySort(jobs: NormalizedJob[], sort: JobSearchInput["sort"]): NormalizedJob[] {
+  if (!sort || sort === "relevance") return jobs;
+  const arr = [...jobs];
+  if (sort === "newest") {
+    arr.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+  } else if (sort === "match") {
+    // Without a CV in hand on the search server, "match" sort here ranks by
+    // recency + remote bias as a sensible proxy. The personalised matcher
+    // lives at /jobs/recommendations.
+    arr.sort((a, b) => {
+      const ra = a.remote ? 1 : 0;
+      const rb = b.remote ? 1 : 0;
+      if (ra !== rb) return rb - ra;
+      return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+    });
+  } else if (sort === "remote-first") {
+    arr.sort((a, b) => Number(b.remote) - Number(a.remote));
+  } else if (sort === "company-az") {
+    arr.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+  }
+  return arr;
 }
 
 export const searchJobs = createServerFn({ method: "POST" })
