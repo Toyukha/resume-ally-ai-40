@@ -115,11 +115,19 @@ function JobDetail() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="hero" asChild>
-              <a href={job.url} target="_blank" rel="noopener noreferrer">
-                Apply <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-              </a>
-            </Button>
+            {job.provider === "internal" && job.applyMode === "in_app" && job.internalJobId ? (
+              <Button variant="hero" asChild>
+                <Link to="/jobs/apply/$id" params={{ id: job.internalJobId }}>
+                  Apply now
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="hero" asChild>
+                <a href={job.url} target="_blank" rel="noopener noreferrer">
+                  Apply <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                </a>
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setAnalyzeOpen(true)}>
               <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Analyze Match
             </Button>
