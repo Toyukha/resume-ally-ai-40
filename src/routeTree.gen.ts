@@ -21,6 +21,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as EmployerSignupRouteImport } from './routes/employer.signup'
 import { Route as EmployerLoginRouteImport } from './routes/employer.login'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -122,6 +123,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const EmployerSignupRoute = EmployerSignupRouteImport.update({
+  id: '/employer/signup',
+  path: '/employer/signup',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmployerLoginRoute = EmployerLoginRouteImport.update({
   id: '/employer/login',
@@ -384,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/employer/login': typeof EmployerLoginRoute
+  '/employer/signup': typeof EmployerSignupRoute
   '/admin/': typeof AdminIndexRoute
   '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/employer/login': typeof EmployerLoginRoute
+  '/employer/signup': typeof EmployerSignupRoute
   '/admin': typeof AdminIndexRoute
   '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -494,6 +502,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/employer/login': typeof EmployerLoginRoute
+  '/employer/signup': typeof EmployerSignupRoute
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/_authenticated/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -551,6 +560,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/employer/login'
+    | '/employer/signup'
     | '/admin/'
     | '/employer/analytics'
     | '/employer/dashboard'
@@ -604,6 +614,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/employer/login'
+    | '/employer/signup'
     | '/admin'
     | '/employer/analytics'
     | '/employer/dashboard'
@@ -660,6 +671,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/employer/login'
+    | '/employer/signup'
     | '/admin/'
     | '/_authenticated/employer/analytics'
     | '/_authenticated/employer/dashboard'
@@ -704,6 +716,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   EmployerLoginRoute: typeof EmployerLoginRoute
+  EmployerSignupRoute: typeof EmployerSignupRoute
   ApiPublicHooksFlutterwaveRoute: typeof ApiPublicHooksFlutterwaveRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
@@ -797,6 +810,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/employer/signup': {
+      id: '/employer/signup'
+      path: '/employer/signup'
+      fullPath: '/employer/signup'
+      preLoaderRoute: typeof EmployerSignupRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/employer/login': {
       id: '/employer/login'
@@ -1223,6 +1243,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   EmployerLoginRoute: EmployerLoginRoute,
+  EmployerSignupRoute: EmployerSignupRoute,
   ApiPublicHooksFlutterwaveRoute: ApiPublicHooksFlutterwaveRoute,
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
