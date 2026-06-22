@@ -45,6 +45,7 @@ import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
 import { Route as AuthenticatedJobsDetailSplatRouteImport } from './routes/_authenticated/jobs.detail.$'
+import { Route as AuthenticatedJobsCountryCountryRouteImport } from './routes/_authenticated/jobs.country.$country'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -233,6 +234,12 @@ const AuthenticatedJobsDetailSplatRoute =
     path: '/detail/$',
     getParentRoute: () => AuthenticatedJobsRoute,
   } as any)
+const AuthenticatedJobsCountryCountryRoute =
+  AuthenticatedJobsCountryCountryRouteImport.update({
+    id: '/country/$country',
+    path: '/country/$country',
+    getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -298,6 +306,7 @@ export interface FileRoutesByTo {
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs': typeof AuthenticatedJobsIndexRoute
+  '/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -337,6 +346,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/_authenticated/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/_authenticated/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/_authenticated/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs/'
+    | '/jobs/country/$country'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs'
+    | '/jobs/country/$country'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -449,6 +461,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs/saved'
     | '/_authenticated/jobs/tracker'
     | '/_authenticated/jobs/'
+    | '/_authenticated/jobs/country/$country'
     | '/_authenticated/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -733,6 +746,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsDetailSplatRouteImport
       parentRoute: typeof AuthenticatedJobsRoute
     }
+    '/_authenticated/jobs/country/$country': {
+      id: '/_authenticated/jobs/country/$country'
+      path: '/country/$country'
+      fullPath: '/jobs/country/$country'
+      preLoaderRoute: typeof AuthenticatedJobsCountryCountryRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
   }
 }
 
@@ -741,6 +761,7 @@ interface AuthenticatedJobsRouteChildren {
   AuthenticatedJobsSavedRoute: typeof AuthenticatedJobsSavedRoute
   AuthenticatedJobsTrackerRoute: typeof AuthenticatedJobsTrackerRoute
   AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
+  AuthenticatedJobsCountryCountryRoute: typeof AuthenticatedJobsCountryCountryRoute
   AuthenticatedJobsDetailSplatRoute: typeof AuthenticatedJobsDetailSplatRoute
 }
 
@@ -749,6 +770,7 @@ const AuthenticatedJobsRouteChildren: AuthenticatedJobsRouteChildren = {
   AuthenticatedJobsSavedRoute: AuthenticatedJobsSavedRoute,
   AuthenticatedJobsTrackerRoute: AuthenticatedJobsTrackerRoute,
   AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
+  AuthenticatedJobsCountryCountryRoute: AuthenticatedJobsCountryCountryRoute,
   AuthenticatedJobsDetailSplatRoute: AuthenticatedJobsDetailSplatRoute,
 }
 

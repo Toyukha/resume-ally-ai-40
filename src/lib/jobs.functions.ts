@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { CATEGORY_BY_SLUG, EXPERIENCE_LEVELS } from "./job-categories";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
@@ -289,6 +290,12 @@ const SearchSchema = z.object({
   postedWithinDays: z.number().int().min(0).max(180).optional(),
   page: z.number().int().min(1).max(10).optional(),
   country: z.enum(ADZUNA_COUNTRIES).optional(),
+  // New multi-value filters (all optional, backward compatible)
+  workTypes: z.array(z.enum(["remote", "hybrid", "onsite"])).max(3).optional(),
+  employmentTypes: z.array(z.string().max(50)).max(8).optional(),
+  categories: z.array(z.string().max(50)).max(20).optional(),
+  experienceLevels: z.array(z.string().max(20)).max(8).optional(),
+  sort: z.enum(["relevance", "newest", "match", "remote-first", "company-az"]).optional(),
 });
 export type JobSearchInput = z.infer<typeof SearchSchema>;
 
@@ -297,9 +304,27 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
   const loc = f.location?.toLowerCase().trim();
   const empType = f.employmentType?.toLowerCase().trim();
   const industry = f.industry?.toLowerCase().trim();
+  const empTypes = (f.employmentTypes ?? []).map((s) => s.toLowerCase());
+  const workTypes = f.workTypes ?? [];
   const since = f.postedWithinDays
     ? Date.now() - f.postedWithinDays * 24 * 60 * 60 * 1000
     : null;
+
+  // Pre-compile category + experience patterns to avoid per-job cost.
+  const catKeywords: string[][] = [];
+  if (f.categories?.length) {
+    for (const slug of f.categories) {
+      const c = CATEGORY_BY_SLUG[slug];
+      if (c) catKeywords.push(c.keywords.map((k) => k.toLowerCase()));
+    }
+  }
+  const expPatterns: RegExp[][] = [];
+  if (f.experienceLevels?.length) {
+    for (const slug of f.experienceLevels) {
+      const e = EXPERIENCE_LEVELS.find((x) => x.slug === slug);
+      if (e) expPatterns.push(e.patterns);
+    }
+  }
 
   return jobs.filter((j) => {
     if (q) {
@@ -307,18 +332,80 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
       if (!hay.includes(q)) return false;
     }
     if (loc && !j.location.toLowerCase().includes(loc)) return false;
-    if (f.remote === "remote" && !j.remote) return false;
-    if (f.remote === "onsite" && j.remote) return false;
-    // "hybrid" is a heuristic — Arbeitnow tags often include 'hybrid'
-    if (f.remote === "hybrid") {
-      const tagBlob = j.tags.join(" ").toLowerCase() + " " + j.description.toLowerCase();
-      if (!tagBlob.includes("hybrid")) return false;
+
+    // workTypes (multi)
+    if (workTypes.length) {
+      const blob = `${j.tags.join(" ")} ${j.description}`.toLowerCase();
+      const isRemote = j.remote;
+      const isHybrid = blob.includes("hybrid");
+      const isOnsite = !isRemote && !isHybrid;
+      const ok = workTypes.some((w) =>
+        w === "remote" ? isRemote :
+        w === "hybrid" ? isHybrid :
+        isOnsite,
+      );
+      if (!ok) return false;
+    } else {
+      // Legacy single-value remote filter still honoured
+      if (f.remote === "remote" && !j.remote) return false;
+      if (f.remote === "onsite" && j.remote) return false;
+      if (f.remote === "hybrid") {
+        const tagBlob = j.tags.join(" ").toLowerCase() + " " + j.description.toLowerCase();
+        if (!tagBlob.includes("hybrid")) return false;
+      }
     }
-    if (empType && !j.employmentType.includes(empType) && !j.tags.some((t) => t.toLowerCase().includes(empType))) return false;
+
+    // employmentTypes (multi)
+    if (empTypes.length) {
+      const ok = empTypes.some((e) =>
+        j.employmentType.includes(e) || j.tags.some((t) => t.toLowerCase().includes(e)),
+      );
+      if (!ok) return false;
+    } else if (empType) {
+      if (!j.employmentType.includes(empType) && !j.tags.some((t) => t.toLowerCase().includes(empType))) return false;
+    }
+
     if (industry && !j.tags.some((t) => t.toLowerCase().includes(industry))) return false;
     if (since && new Date(j.postedAt).getTime() < since) return false;
+
+    // Categories (multi — OR)
+    if (catKeywords.length) {
+      const hay = `${j.title} ${j.tags.join(" ")}`.toLowerCase();
+      const ok = catKeywords.some((kws) => kws.some((k) => hay.includes(k)));
+      if (!ok) return false;
+    }
+
+    // Experience levels (multi — OR)
+    if (expPatterns.length) {
+      const ok = expPatterns.some((patterns) => patterns.some((p) => p.test(j.title)));
+      if (!ok) return false;
+    }
+
     return true;
   });
+}
+
+function applySort(jobs: NormalizedJob[], sort: JobSearchInput["sort"]): NormalizedJob[] {
+  if (!sort || sort === "relevance") return jobs;
+  const arr = [...jobs];
+  if (sort === "newest") {
+    arr.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+  } else if (sort === "match") {
+    // Without a CV in hand on the search server, "match" sort here ranks by
+    // recency + remote bias as a sensible proxy. The personalised matcher
+    // lives at /jobs/recommendations.
+    arr.sort((a, b) => {
+      const ra = a.remote ? 1 : 0;
+      const rb = b.remote ? 1 : 0;
+      if (ra !== rb) return rb - ra;
+      return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+    });
+  } else if (sort === "remote-first") {
+    arr.sort((a, b) => Number(b.remote) - Number(a.remote));
+  } else if (sort === "company-az") {
+    arr.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+  }
+  return arr;
 }
 
 export const searchJobs = createServerFn({ method: "POST" })
@@ -367,11 +454,50 @@ export const searchJobs = createServerFn({ method: "POST" })
       }
     }
     const filtered = applyFilters(merged, data);
+    const sorted = applySort(filtered, data.sort);
     const pageSize = 50;
     const hasMore =
-      filtered.length > pageSize ||
+      sorted.length > pageSize ||
       an1.length >= 50 || adz1.length >= 50 || him1.length >= 50 || rj1.length >= 50;
-    return { jobs: filtered.slice(0, pageSize), total: filtered.length, page, hasMore };
+    return { jobs: sorted.slice(0, pageSize), total: sorted.length, page, hasMore };
+  });
+
+// Live job-count strip — Adzuna's count endpoint, cached for 1h per filter.
+const statsCache = new Map<string, { at: number; n: number }>();
+const STATS_TTL = 60 * 60 * 1000;
+
+async function adzunaCount(country: string, params: Record<string, string>): Promise<number> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_API_KEY;
+  if (!appId || !appKey) return 0;
+  const key = `cnt:${country}:${new URLSearchParams(params).toString()}`;
+  const hit = statsCache.get(key);
+  if (hit && Date.now() - hit.at < STATS_TTL) return hit.n;
+  const search = new URLSearchParams({ app_id: appId, app_key: appKey, results_per_page: "0", ...params });
+  try {
+    const res = await fetch(`https://api.adzuna.com/v1/api/jobs/${country}/search/1?${search.toString()}`);
+    if (!res.ok) return 0;
+    const body = (await res.json()) as { count?: number };
+    const n = body.count ?? 0;
+    statsCache.set(key, { at: Date.now(), n });
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+export const getJobStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const [remote, uk, us, ca, de, cs] = await Promise.all([
+      adzunaCount("gb", { what: "remote" }),
+      adzunaCount("gb", {}),
+      adzunaCount("us", {}),
+      adzunaCount("ca", {}),
+      adzunaCount("de", {}),
+      adzunaCount("gb", { what: "customer success" }),
+    ]);
+    return { remote, uk, us, canada: ca, germany: de, customerSuccess: cs };
   });
 
 export const getJob = createServerFn({ method: "POST" })

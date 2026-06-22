@@ -108,6 +108,10 @@ function Landing() {
       {/* Walkthrough video */}
       <WalkthroughSection />
 
+      {/* Discovery: Trending Countries + Popular Career Paths */}
+      <DiscoverySections />
+
+
       {/* Features */}
       <section id="features" className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
@@ -379,4 +383,78 @@ function WalkthroughSection() {
     </section>
   );
 }
+
+const TRENDING_COUNTRIES = [
+  { slug: "canada",  label: "Canada Jobs",  flag: "🇨🇦" },
+  { slug: "uk",      label: "UK Jobs",      flag: "🇬🇧" },
+  { slug: "us",      label: "USA Jobs",     flag: "🇺🇸" },
+  { slug: "germany", label: "Germany Jobs", flag: "🇩🇪" },
+  { slug: "remote",  label: "Remote Jobs",  flag: "🌍" },
+] as const;
+
+const POPULAR_PATHS = [
+  { cat: "customer-success",      label: "Customer Success",     emoji: "💼" },
+  { cat: "data-analysis",         label: "Data Analytics",       emoji: "📊" },
+  { cat: "software-engineering",  label: "Software Engineering", emoji: "💻" },
+  { cat: "ui-ux",                 label: "UI/UX Design",         emoji: "🎨" },
+  { cat: "marketing",             label: "Digital Marketing",    emoji: "📈" },
+  { cat: "sales",                 label: "Sales",                emoji: "🎯" },
+] as const;
+
+function DiscoverySections() {
+  return (
+    <section className="container mx-auto px-4 py-16 md:py-20">
+      <div className="grid gap-10 md:grid-cols-2">
+        {/* Trending Countries */}
+        <div>
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-wider text-primary-glow">Trending Countries</p>
+            <h3 className="mt-1 font-display text-2xl font-bold md:text-3xl">Find jobs where you want to work</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {TRENDING_COUNTRIES.map((c) => (
+              <Link
+                key={c.slug}
+                to="/jobs/country/$country"
+                params={{ country: c.slug }}
+                className="group flex items-center gap-3 rounded-2xl border border-border bg-card/40 p-4 transition-all hover:-translate-y-0.5 hover:border-primary-glow/50 hover:bg-card/70 hover:shadow-glow"
+              >
+                <span className="text-3xl leading-none">{c.flag}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold">{c.label}</div>
+                  <div className="text-[11px] text-muted-foreground group-hover:text-primary-glow">Explore →</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Popular Career Paths */}
+        <div>
+          <div className="mb-5">
+            <p className="text-xs font-medium uppercase tracking-wider text-gold">Popular Career Paths</p>
+            <h3 className="mt-1 font-display text-2xl font-bold md:text-3xl">Built for in-demand roles</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {POPULAR_PATHS.map((p) => (
+              <Link
+                key={p.cat}
+                to="/jobs"
+                search={{ categories: [p.cat], page: 1 }}
+                className="group flex items-center gap-3 rounded-2xl border border-border bg-card/40 p-4 transition-all hover:-translate-y-0.5 hover:border-gold/50 hover:bg-card/70"
+              >
+                <span className="text-3xl leading-none">{p.emoji}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold">{p.label}</div>
+                  <div className="text-[11px] text-muted-foreground group-hover:text-gold">View jobs →</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 

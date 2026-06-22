@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { saveJob, unsaveJob, toggleFavorite, type NormalizedJob } from "@/lib/jobs.functions";
+import { flagForLocation } from "@/lib/job-countries";
 import { toast } from "sonner";
 import { AnalyzeJobSheet } from "./analyze-job-sheet";
 
@@ -69,7 +70,10 @@ export function JobCard({ job, savedId, favorited }: Props) {
                 <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{job.company}</span>
               )}
               {job.location && (
-                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{job.location}</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-sm leading-none">{flagForLocation(job.location)}</span>
+                  <MapPin className="h-3 w-3" />{job.location}
+                </span>
               )}
               {posted && (
                 <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{posted}</span>

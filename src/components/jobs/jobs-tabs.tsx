@@ -1,9 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { Briefcase, Bookmark, Kanban, Sparkles } from "lucide-react";
+import { Briefcase, Bookmark, Kanban, Sparkles, Globe2 } from "lucide-react";
 
-type Tab = { to: "/jobs" | "/jobs/saved" | "/jobs/tracker" | "/jobs/recommendations"; label: string; icon: typeof Briefcase; exact?: boolean };
+type Tab = {
+  to: "/jobs" | "/jobs/saved" | "/jobs/tracker" | "/jobs/recommendations" | "/jobs/country/$country";
+  label: string;
+  icon: typeof Briefcase;
+  exact?: boolean;
+  params?: Record<string, string>;
+};
 const TABS: Tab[] = [
   { to: "/jobs", label: "Browse", icon: Briefcase, exact: true },
+  { to: "/jobs/country/$country", label: "Countries", icon: Globe2, params: { country: "remote" } },
   { to: "/jobs/saved", label: "Saved", icon: Bookmark },
   { to: "/jobs/tracker", label: "Tracker", icon: Kanban },
   { to: "/jobs/recommendations", label: "For You", icon: Sparkles },
@@ -14,8 +21,9 @@ export function JobsTabs() {
     <div className="mb-6 flex flex-wrap gap-1 rounded-xl border border-border bg-card/40 p-1">
       {TABS.map((t) => (
         <Link
-          key={t.to}
+          key={t.label}
           to={t.to}
+          params={t.params as never}
           activeOptions={{ exact: t.exact ?? false }}
           activeProps={{ className: "bg-primary text-primary-foreground shadow-glow" }}
           inactiveProps={{ className: "text-muted-foreground hover:bg-accent hover:text-foreground" }}
