@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Building2, Sparkles } from "lucide-react";
@@ -18,14 +18,17 @@ export const Route = createFileRoute("/_authenticated/employer/onboarding")({
 
 function Onboarding() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const createFn = useServerFn(createCompany);
   const [form, setForm] = useState({ name: "", industry: "", website: "", size: "", hqLocation: "", contactEmail: "", description: "" });
 
   const m = useMutation({
     mutationFn: () => createFn({ data: form }),
-    onSuccess: (r) => {
+    onSuccess: async (r) => {
       toast.success("Company created");
       localStorage.setItem("activeCompanyId", r.id);
+      await queryClient.invalidateQueries({ queryKey: ["my-companies"] });
+      await queryClient.refetchQueries({ queryKey: ["my-companies"] });
       navigate({ to: "/employer/dashboard" });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),

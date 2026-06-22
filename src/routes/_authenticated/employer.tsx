@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useRouterState, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Briefcase, LayoutDashboard, Users, Calendar, BarChart3, Settings, Building2, Kanban, Sparkles, LogOut } from "lucide-react";
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/employer")({
 
 function EmployerLayout() {
   const listFn = useServerFn(listMyCompanies);
+  const navigate = useNavigate();
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ["my-companies"],
     queryFn: () => listFn(),
@@ -45,14 +46,28 @@ function EmployerLayout() {
     return <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">Loading employer portal…</div>;
   }
 
-  if (!companies || companies.length === 0) {
-    if (!pathname.startsWith("/employer/onboarding") && !pathname.startsWith("/employer/invite")) {
-      throw redirect({ to: "/employer/onboarding" });
+  const needsOnboardingRedirect =
+    !isLoading && (!companies || companies.length === 0) &&
+    !pathname.startsWith("/employer/onboarding") &&
+    !pathname.startsWith("/employer/invite");
+
+  useEffect(() => {
+    if (needsOnboardingRedirect) {
+      navigate({ to: "/employer/onboarding", replace: true });
     }
+  }, [needsOnboardingRedirect, navigate]);
+
+  if (!companies || companies.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <SimpleHeader />
-        <main className="container mx-auto max-w-3xl px-4 py-10"><Outlet /></main>
+        <main className="container mx-auto max-w-3xl px-4 py-10">
+          {needsOnboardingRedirect ? (
+            <div className="grid place-items-center py-20 text-sm text-muted-foreground">Redirecting…</div>
+          ) : (
+            <Outlet />
+          )}
+        </main>
       </div>
     );
   }
