@@ -20,7 +20,9 @@ export type NormalizedJob = {
   url: string;
   description: string;
   tags: string[];
-  provider: "arbeitnow" | "adzuna" | "himalayas" | "remotejobs";
+  provider: "arbeitnow" | "adzuna" | "himalayas" | "remotejobs" | "internal";
+  applyMode?: "in_app" | "external";
+  internalJobId?: string;
 };
 
 export const ADZUNA_COUNTRIES = [
