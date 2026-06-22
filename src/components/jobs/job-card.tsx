@@ -98,6 +98,9 @@ export function JobCard({ job, savedId, favorited }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-1.5">
+          {job.provider === "internal" && (
+            <Badge className="bg-primary-glow/20 text-primary-glow hover:bg-primary-glow/30">Employer</Badge>
+          )}
           {job.remote && <Badge variant="outline" className="border-primary-glow/40 text-primary-glow">Remote</Badge>}
           {job.employmentType && (
             <Badge variant="outline" className="capitalize">{job.employmentType.replace(/-/g, " ")}</Badge>
@@ -122,11 +125,19 @@ export function JobCard({ job, savedId, favorited }: Props) {
               <FileText className="mr-1.5 h-3.5 w-3.5" /> Details
             </Link>
           </Button>
-          <Button size="sm" variant="outline" asChild>
-            <a href={job.url} target="_blank" rel="noopener noreferrer">
-              Apply <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-            </a>
-          </Button>
+          {job.provider === "internal" && job.applyMode === "in_app" && job.internalJobId ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link to="/jobs/apply/$id" params={{ id: job.internalJobId }}>
+                Apply
+              </Link>
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" asChild>
+              <a href={job.url} target="_blank" rel="noopener noreferrer">
+                Apply <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
         </div>
       </Card>
       <AnalyzeJobSheet open={analyzeOpen} onOpenChange={setAnalyzeOpen} job={job} />
