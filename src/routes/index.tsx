@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
   CheckCircle2, ArrowRight, Star, Volume2, VolumeX,
-  ShieldCheck, Play,
+  ShieldCheck, Play, Globe, CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -139,7 +139,38 @@ function Landing() {
           <h2 className="mt-2 font-display text-4xl font-bold md:text-5xl">Simple, Transparent Pricing</h2>
           <p className="mt-4 text-muted-foreground">Choose the plan that best fits your job search journey.</p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-6xl items-stretch gap-6 md:grid-cols-3">
+
+        {/* International payment callout */}
+        <div className="relative mx-auto mt-12 max-w-3xl overflow-hidden rounded-2xl border border-gold/40 bg-hero p-[2px] shadow-elegant">
+          <div className="relative rounded-[14px] bg-card/95 px-6 py-6 backdrop-blur md:px-8 md:py-7">
+            <div className="absolute -top-3 left-6 z-10 inline-flex items-center gap-2 rounded-full bg-gold px-5 py-2 text-sm font-black uppercase tracking-wider text-gold-foreground shadow-lg ring-2 ring-gold-foreground/20">
+              <Globe className="h-5 w-5" /> Paying from outside Nigeria?
+            </div>
+            <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-elegant">
+                <CreditCard className="h-7 w-7" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-xl font-bold leading-tight md:text-2xl">
+                  Select <span className="text-gradient">“Card”</span> at checkout to subscribe with any international card.
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Pay in seconds with any <strong className="text-foreground">Visa, Mastercard, Discover, Diners Club, and Verve</strong> — issued anywhere in the world. Your Pro plan activates instantly.
+                </p>
+                <div className="mt-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-semibold text-foreground">
+                  <span className="font-bold text-gold">Note:</span> The Naira equivalent of your currency will be deducted — not your local currency.
+                  <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-bold">
+                    <span>₦5,000 ≈ $3.67</span>
+                    <span className="text-muted-foreground">|</span>
+                    <span>₦10,000 ≈ $7.35</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-12 grid max-w-6xl items-stretch gap-6 md:grid-cols-3">
           {PLAN_ORDER.map((tier) => {
             const p = PLANS[tier];
             const isFeatured = !!p.featured;
