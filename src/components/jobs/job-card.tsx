@@ -98,6 +98,9 @@ export function JobCard({ job, savedId, favorited }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-1.5">
+          {job.provider === "internal" && (
+            <Badge className="bg-primary-glow/20 text-primary-glow hover:bg-primary-glow/30">Employer</Badge>
+          )}
           {job.remote && <Badge variant="outline" className="border-primary-glow/40 text-primary-glow">Remote</Badge>}
           {job.employmentType && (
             <Badge variant="outline" className="capitalize">{job.employmentType.replace(/-/g, " ")}</Badge>
