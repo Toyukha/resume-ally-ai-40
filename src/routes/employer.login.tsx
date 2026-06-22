@@ -134,10 +134,9 @@ function EmployerLogin() {
           <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-3 text-center text-sm">
             <Building2 className="mr-1.5 inline h-4 w-4 text-primary-glow" />
             New here?{" "}
-            <Link to="/auth" className="font-semibold text-primary-glow hover:underline">
-              Create an account
+            <Link to="/employer/signup" className="font-semibold text-primary-glow hover:underline">
+              Create an employer account
             </Link>
-            , then come back to set up your company workspace.
           </div>
         </Card>
         <p className="mt-4 text-center text-xs text-muted-foreground">
