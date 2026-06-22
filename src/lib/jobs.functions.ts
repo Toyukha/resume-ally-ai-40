@@ -280,6 +280,52 @@ async function fetchRemoteJobsPage(
   }
 }
 
+// ───── Internal employer jobs ─────
+function mapInternalJob(row: any): NormalizedJob {
+  const company = row.companies?.name ?? row.company_name ?? "";
+  const tags: string[] = [];
+  if (Array.isArray(row.required_skills)) tags.push(...row.required_skills.slice(0, 6));
+  if (row.department) tags.push(row.department);
+  return {
+    id: `internal:${row.id}`,
+    slug: `internal:${row.id}`,
+    title: row.title,
+    company,
+    location: row.location ?? (row.work_mode === "remote" ? "Remote" : ""),
+    remote: row.work_mode === "remote",
+    employmentType: (row.employment_type ?? "").toLowerCase().replace("_", "-"),
+    postedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
+    url: row.apply_mode === "external" && row.external_url
+      ? row.external_url
+      : `/jobs/apply/${row.id}`,
+    description: row.description ?? "",
+    tags,
+    provider: "internal" as const,
+    applyMode: row.apply_mode ?? "in_app",
+    internalJobId: row.id,
+  };
+}
+
+async function fetchInternalJobs(supabase: any, opts: { query?: string; remote?: string; limit?: number } = {}): Promise<NormalizedJob[]> {
+  let q = supabase
+    .from("employer_jobs")
+    .select("id, title, description, location, work_mode, employment_type, department, required_skills, apply_mode, external_url, published_at, created_at, companies(name)")
+    .eq("status", "active")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(opts.limit ?? 30);
+  if (opts.query) q = q.ilike("title", `%${opts.query}%`);
+  if (opts.remote === "remote") q = q.eq("work_mode", "remote");
+  if (opts.remote === "onsite") q = q.eq("work_mode", "onsite");
+  if (opts.remote === "hybrid") q = q.eq("work_mode", "hybrid");
+  const { data, error } = await q;
+  if (error) {
+    console.error("[internal jobs]", error.message);
+    return [];
+  }
+  return (data ?? []).map(mapInternalJob);
+}
+
+
 
 
 const SearchSchema = z.object({
