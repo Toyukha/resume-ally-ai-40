@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const STAGES = ["applied", "screening", "interview", "offer", "hired", "rejected"] as const;
+type Stage = (typeof STAGES)[number];
+
 export const getDashboardSnapshot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ companyId: z.string().uuid() }).parse(i))
@@ -18,6 +21,8 @@ export const getDashboardSnapshot = createServerFn({ method: "POST" })
       { count: expiringSoon },
       { data: topMatches },
       { data: activity },
+      { data: recentJobsRaw },
+      { data: stageRows },
     ] = await Promise.all([
       supabase.from("employer_jobs").select("id", { count: "exact", head: true }).eq("company_id", data.companyId).eq("status", "active"),
       supabase.from("employer_applications").select("id, employer_jobs!inner(company_id)", { count: "exact", head: true }).eq("employer_jobs.company_id", data.companyId),
@@ -36,15 +41,30 @@ export const getDashboardSnapshot = createServerFn({ method: "POST" })
         .eq("company_id", data.companyId)
         .order("created_at", { ascending: false })
         .limit(10),
+      supabase
+        .from("employer_jobs")
+        .select("id, title, status, application_count, deadline, created_at")
+        .eq("company_id", data.companyId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("employer_applications")
+        .select("stage, employer_jobs!inner(company_id)")
+        .eq("employer_jobs.company_id", data.companyId),
     ]);
 
-    // Average ATS via a focused select to keep simple
+    // Average ATS via a focused select
     const { data: scoreRows } = await supabase
       .from("candidate_scores")
       .select("ats_score, application:employer_applications!inner(employer_jobs!inner(company_id))")
       .eq("application.employer_jobs.company_id", data.companyId);
     const scores = (scoreRows ?? []).map((r: any) => r.ats_score as number).filter((n) => typeof n === "number");
     const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+    const funnel: Record<Stage, number> = { applied: 0, screening: 0, interview: 0, offer: 0, hired: 0, rejected: 0 };
+    for (const r of (stageRows ?? []) as Array<{ stage: string }>) {
+      if ((STAGES as readonly string[]).includes(r.stage)) funnel[r.stage as Stage]++;
+    }
 
     return {
       kpis: {
@@ -63,5 +83,13 @@ export const getDashboardSnapshot = createServerFn({ method: "POST" })
         summary: r.summary,
       })),
       activity: activity ?? [],
+      recentJobs: (recentJobsRaw ?? []).map((j: any) => ({
+        id: j.id as string,
+        title: j.title as string,
+        status: j.status as string,
+        applicationCount: (j.application_count as number) ?? 0,
+        deadline: (j.deadline as string | null) ?? null,
+      })),
+      funnel,
     };
   });

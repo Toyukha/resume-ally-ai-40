@@ -14,10 +14,19 @@ export const Route = createFileRoute("/_authenticated/employer")({
 
 function EmployerLayout() {
   const listFn = useServerFn(listMyCompanies);
-  const { data: companies, isLoading } = useQuery({
+  const { data: companies, isLoading, error } = useQuery({
     queryKey: ["my-companies"],
     queryFn: () => listFn(),
+    retry: false,
   });
+
+  useEffect(() => {
+    if (!error) return;
+    const msg = (error as Error).message?.toLowerCase() ?? "";
+    if (msg.includes("unauthorized") || msg.includes("auth") || msg.includes("jwt")) {
+      window.location.href = "/employer/login";
+    }
+  }, [error]);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
 

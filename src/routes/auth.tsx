@@ -144,6 +144,12 @@ function AuthPage() {
                 </form>
               </TabsContent>
             </Tabs>
+            <div className="mt-5 border-t border-border/60 pt-4 text-center text-xs text-muted-foreground">
+              Hiring on Career Boost?{" "}
+              <Link to="/employer/login" className="font-semibold text-primary-glow hover:underline">Employer sign in</Link>
+              {" · "}
+              <Link to="/employer/signup" className="font-semibold text-primary-glow hover:underline">Create employer account</Link>
+            </div>
           </Card>
         </div>
       </div>
