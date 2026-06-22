@@ -313,8 +313,6 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
   // Pre-compile category + experience patterns to avoid per-job cost.
   const catKeywords: string[][] = [];
   if (f.categories?.length) {
-    // Lazy require to avoid circular imports at module init.
-    const { CATEGORY_BY_SLUG } = require("./job-categories") as typeof import("./job-categories");
     for (const slug of f.categories) {
       const c = CATEGORY_BY_SLUG[slug];
       if (c) catKeywords.push(c.keywords.map((k) => k.toLowerCase()));
@@ -322,7 +320,6 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
   }
   const expPatterns: RegExp[][] = [];
   if (f.experienceLevels?.length) {
-    const { EXPERIENCE_LEVELS } = require("./job-categories") as typeof import("./job-categories");
     for (const slug of f.experienceLevels) {
       const e = EXPERIENCE_LEVELS.find((x) => x.slug === slug);
       if (e) expPatterns.push(e.patterns);
