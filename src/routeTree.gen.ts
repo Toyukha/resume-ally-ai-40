@@ -33,11 +33,19 @@ import { Route as AdminAdminsRouteImport } from './routes/admin/admins'
 import { Route as AdminActivationsRouteImport } from './routes/admin/activations'
 import { Route as AuthenticatedPaymentCallbackRouteImport } from './routes/_authenticated/payment-callback'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
+import { Route as AuthenticatedEmployerRouteImport } from './routes/_authenticated/employer'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs.index'
 import { Route as AuthenticatedJobsTrackerRouteImport } from './routes/_authenticated/jobs.tracker'
 import { Route as AuthenticatedJobsSavedRouteImport } from './routes/_authenticated/jobs.saved'
 import { Route as AuthenticatedJobsRecommendationsRouteImport } from './routes/_authenticated/jobs.recommendations'
+import { Route as AuthenticatedEmployerTeamRouteImport } from './routes/_authenticated/employer.team'
+import { Route as AuthenticatedEmployerOnboardingRouteImport } from './routes/_authenticated/employer.onboarding'
+import { Route as AuthenticatedEmployerInterviewsRouteImport } from './routes/_authenticated/employer.interviews'
+import { Route as AuthenticatedEmployerDashboardRouteImport } from './routes/_authenticated/employer.dashboard'
+import { Route as AuthenticatedEmployerAnalyticsRouteImport } from './routes/_authenticated/employer.analytics'
+import { Route as AuthenticatedEmployerPipelineIndexRouteImport } from './routes/_authenticated/employer.pipeline.index'
+import { Route as AuthenticatedEmployerJobsIndexRouteImport } from './routes/_authenticated/employer.jobs.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -45,6 +53,14 @@ import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
 import { Route as AuthenticatedJobsDetailSplatRouteImport } from './routes/_authenticated/jobs.detail.$'
+import { Route as AuthenticatedEmployerSettingsPlanRouteImport } from './routes/_authenticated/employer.settings.plan'
+import { Route as AuthenticatedEmployerSettingsCompanyRouteImport } from './routes/_authenticated/employer.settings.company'
+import { Route as AuthenticatedEmployerPipelineJobIdRouteImport } from './routes/_authenticated/employer.pipeline.$jobId'
+import { Route as AuthenticatedEmployerJobsNewRouteImport } from './routes/_authenticated/employer.jobs.new'
+import { Route as AuthenticatedEmployerInviteTokenRouteImport } from './routes/_authenticated/employer.invite.$token'
+import { Route as AuthenticatedEmployerCandidatesIdRouteImport } from './routes/_authenticated/employer.candidates.$id'
+import { Route as AuthenticatedEmployerJobsIdIndexRouteImport } from './routes/_authenticated/employer.jobs.$id.index'
+import { Route as AuthenticatedEmployerJobsIdEditRouteImport } from './routes/_authenticated/employer.jobs.$id.edit'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -166,6 +182,11 @@ const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEmployerRoute = AuthenticatedEmployerRouteImport.update({
+  id: '/employer',
+  path: '/employer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -192,6 +213,48 @@ const AuthenticatedJobsRecommendationsRoute =
     id: '/recommendations',
     path: '/recommendations',
     getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
+const AuthenticatedEmployerTeamRoute =
+  AuthenticatedEmployerTeamRouteImport.update({
+    id: '/team',
+    path: '/team',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerOnboardingRoute =
+  AuthenticatedEmployerOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerInterviewsRoute =
+  AuthenticatedEmployerInterviewsRouteImport.update({
+    id: '/interviews',
+    path: '/interviews',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerDashboardRoute =
+  AuthenticatedEmployerDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerAnalyticsRoute =
+  AuthenticatedEmployerAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerPipelineIndexRoute =
+  AuthenticatedEmployerPipelineIndexRouteImport.update({
+    id: '/pipeline/',
+    path: '/pipeline/',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerJobsIndexRoute =
+  AuthenticatedEmployerJobsIndexRouteImport.update({
+    id: '/jobs/',
+    path: '/jobs/',
+    getParentRoute: () => AuthenticatedEmployerRoute,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -233,6 +296,54 @@ const AuthenticatedJobsDetailSplatRoute =
     path: '/detail/$',
     getParentRoute: () => AuthenticatedJobsRoute,
   } as any)
+const AuthenticatedEmployerSettingsPlanRoute =
+  AuthenticatedEmployerSettingsPlanRouteImport.update({
+    id: '/settings/plan',
+    path: '/settings/plan',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerSettingsCompanyRoute =
+  AuthenticatedEmployerSettingsCompanyRouteImport.update({
+    id: '/settings/company',
+    path: '/settings/company',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerPipelineJobIdRoute =
+  AuthenticatedEmployerPipelineJobIdRouteImport.update({
+    id: '/pipeline/$jobId',
+    path: '/pipeline/$jobId',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerJobsNewRoute =
+  AuthenticatedEmployerJobsNewRouteImport.update({
+    id: '/jobs/new',
+    path: '/jobs/new',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerInviteTokenRoute =
+  AuthenticatedEmployerInviteTokenRouteImport.update({
+    id: '/invite/$token',
+    path: '/invite/$token',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerCandidatesIdRoute =
+  AuthenticatedEmployerCandidatesIdRouteImport.update({
+    id: '/candidates/$id',
+    path: '/candidates/$id',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerJobsIdIndexRoute =
+  AuthenticatedEmployerJobsIdIndexRouteImport.update({
+    id: '/jobs/$id/',
+    path: '/jobs/$id/',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
+const AuthenticatedEmployerJobsIdEditRoute =
+  AuthenticatedEmployerJobsIdEditRouteImport.update({
+    id: '/jobs/$id/edit',
+    path: '/jobs/$id/edit',
+    getParentRoute: () => AuthenticatedEmployerRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -246,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/employer': typeof AuthenticatedEmployerRouteWithChildren
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/activations': typeof AdminActivationsRoute
@@ -259,10 +371,21 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
+  '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
+  '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
+  '/employer/interviews': typeof AuthenticatedEmployerInterviewsRoute
+  '/employer/onboarding': typeof AuthenticatedEmployerOnboardingRoute
+  '/employer/team': typeof AuthenticatedEmployerTeamRoute
   '/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/employer/candidates/$id': typeof AuthenticatedEmployerCandidatesIdRoute
+  '/employer/invite/$token': typeof AuthenticatedEmployerInviteTokenRoute
+  '/employer/jobs/new': typeof AuthenticatedEmployerJobsNewRoute
+  '/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
+  '/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
+  '/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -270,6 +393,10 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/employer/jobs/': typeof AuthenticatedEmployerJobsIndexRoute
+  '/employer/pipeline/': typeof AuthenticatedEmployerPipelineIndexRoute
+  '/employer/jobs/$id/edit': typeof AuthenticatedEmployerJobsIdEditRoute
+  '/employer/jobs/$id/': typeof AuthenticatedEmployerJobsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -282,6 +409,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/employer': typeof AuthenticatedEmployerRouteWithChildren
   '/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/activations': typeof AdminActivationsRoute
   '/admin/admins': typeof AdminAdminsRoute
@@ -294,10 +422,21 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin': typeof AdminIndexRoute
+  '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
+  '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
+  '/employer/interviews': typeof AuthenticatedEmployerInterviewsRoute
+  '/employer/onboarding': typeof AuthenticatedEmployerOnboardingRoute
+  '/employer/team': typeof AuthenticatedEmployerTeamRoute
   '/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
   '/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/jobs': typeof AuthenticatedJobsIndexRoute
+  '/employer/candidates/$id': typeof AuthenticatedEmployerCandidatesIdRoute
+  '/employer/invite/$token': typeof AuthenticatedEmployerInviteTokenRoute
+  '/employer/jobs/new': typeof AuthenticatedEmployerJobsNewRoute
+  '/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
+  '/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
+  '/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -305,6 +444,10 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/employer/jobs': typeof AuthenticatedEmployerJobsIndexRoute
+  '/employer/pipeline': typeof AuthenticatedEmployerPipelineIndexRoute
+  '/employer/jobs/$id/edit': typeof AuthenticatedEmployerJobsIdEditRoute
+  '/employer/jobs/$id': typeof AuthenticatedEmployerJobsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -320,6 +463,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/employer': typeof AuthenticatedEmployerRouteWithChildren
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/payment-callback': typeof AuthenticatedPaymentCallbackRoute
   '/admin/activations': typeof AdminActivationsRoute
@@ -333,10 +477,21 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
   '/admin/': typeof AdminIndexRoute
+  '/_authenticated/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
+  '/_authenticated/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
+  '/_authenticated/employer/interviews': typeof AuthenticatedEmployerInterviewsRoute
+  '/_authenticated/employer/onboarding': typeof AuthenticatedEmployerOnboardingRoute
+  '/_authenticated/employer/team': typeof AuthenticatedEmployerTeamRoute
   '/_authenticated/jobs/recommendations': typeof AuthenticatedJobsRecommendationsRoute
   '/_authenticated/jobs/saved': typeof AuthenticatedJobsSavedRoute
   '/_authenticated/jobs/tracker': typeof AuthenticatedJobsTrackerRoute
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/_authenticated/employer/candidates/$id': typeof AuthenticatedEmployerCandidatesIdRoute
+  '/_authenticated/employer/invite/$token': typeof AuthenticatedEmployerInviteTokenRoute
+  '/_authenticated/employer/jobs/new': typeof AuthenticatedEmployerJobsNewRoute
+  '/_authenticated/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
+  '/_authenticated/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
+  '/_authenticated/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
   '/_authenticated/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -344,6 +499,10 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/_authenticated/employer/jobs/': typeof AuthenticatedEmployerJobsIndexRoute
+  '/_authenticated/employer/pipeline/': typeof AuthenticatedEmployerPipelineIndexRoute
+  '/_authenticated/employer/jobs/$id/edit': typeof AuthenticatedEmployerJobsIdEditRoute
+  '/_authenticated/employer/jobs/$id/': typeof AuthenticatedEmployerJobsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -359,6 +518,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/dashboard'
+    | '/employer'
     | '/jobs'
     | '/payment-callback'
     | '/admin/activations'
@@ -372,10 +532,21 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin/'
+    | '/employer/analytics'
+    | '/employer/dashboard'
+    | '/employer/interviews'
+    | '/employer/onboarding'
+    | '/employer/team'
     | '/jobs/recommendations'
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs/'
+    | '/employer/candidates/$id'
+    | '/employer/invite/$token'
+    | '/employer/jobs/new'
+    | '/employer/pipeline/$jobId'
+    | '/employer/settings/company'
+    | '/employer/settings/plan'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -383,6 +554,10 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/employer/jobs/'
+    | '/employer/pipeline/'
+    | '/employer/jobs/$id/edit'
+    | '/employer/jobs/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -395,6 +570,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/dashboard'
+    | '/employer'
     | '/payment-callback'
     | '/admin/activations'
     | '/admin/admins'
@@ -407,10 +583,21 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin'
+    | '/employer/analytics'
+    | '/employer/dashboard'
+    | '/employer/interviews'
+    | '/employer/onboarding'
+    | '/employer/team'
     | '/jobs/recommendations'
     | '/jobs/saved'
     | '/jobs/tracker'
     | '/jobs'
+    | '/employer/candidates/$id'
+    | '/employer/invite/$token'
+    | '/employer/jobs/new'
+    | '/employer/pipeline/$jobId'
+    | '/employer/settings/company'
+    | '/employer/settings/plan'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -418,6 +605,10 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/employer/jobs'
+    | '/employer/pipeline'
+    | '/employer/jobs/$id/edit'
+    | '/employer/jobs/$id'
   id:
     | '__root__'
     | '/'
@@ -432,6 +623,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/_authenticated/dashboard'
+    | '/_authenticated/employer'
     | '/_authenticated/jobs'
     | '/_authenticated/payment-callback'
     | '/admin/activations'
@@ -445,10 +637,21 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/chat'
     | '/admin/'
+    | '/_authenticated/employer/analytics'
+    | '/_authenticated/employer/dashboard'
+    | '/_authenticated/employer/interviews'
+    | '/_authenticated/employer/onboarding'
+    | '/_authenticated/employer/team'
     | '/_authenticated/jobs/recommendations'
     | '/_authenticated/jobs/saved'
     | '/_authenticated/jobs/tracker'
     | '/_authenticated/jobs/'
+    | '/_authenticated/employer/candidates/$id'
+    | '/_authenticated/employer/invite/$token'
+    | '/_authenticated/employer/jobs/new'
+    | '/_authenticated/employer/pipeline/$jobId'
+    | '/_authenticated/employer/settings/company'
+    | '/_authenticated/employer/settings/plan'
     | '/_authenticated/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -456,6 +659,10 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/_authenticated/employer/jobs/'
+    | '/_authenticated/employer/pipeline/'
+    | '/_authenticated/employer/jobs/$id/edit'
+    | '/_authenticated/employer/jobs/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -649,6 +856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/employer': {
+      id: '/_authenticated/employer'
+      path: '/employer'
+      fullPath: '/employer'
+      preLoaderRoute: typeof AuthenticatedEmployerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -683,6 +897,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/jobs/recommendations'
       preLoaderRoute: typeof AuthenticatedJobsRecommendationsRouteImport
       parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/employer/team': {
+      id: '/_authenticated/employer/team'
+      path: '/team'
+      fullPath: '/employer/team'
+      preLoaderRoute: typeof AuthenticatedEmployerTeamRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/onboarding': {
+      id: '/_authenticated/employer/onboarding'
+      path: '/onboarding'
+      fullPath: '/employer/onboarding'
+      preLoaderRoute: typeof AuthenticatedEmployerOnboardingRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/interviews': {
+      id: '/_authenticated/employer/interviews'
+      path: '/interviews'
+      fullPath: '/employer/interviews'
+      preLoaderRoute: typeof AuthenticatedEmployerInterviewsRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/dashboard': {
+      id: '/_authenticated/employer/dashboard'
+      path: '/dashboard'
+      fullPath: '/employer/dashboard'
+      preLoaderRoute: typeof AuthenticatedEmployerDashboardRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/analytics': {
+      id: '/_authenticated/employer/analytics'
+      path: '/analytics'
+      fullPath: '/employer/analytics'
+      preLoaderRoute: typeof AuthenticatedEmployerAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/pipeline/': {
+      id: '/_authenticated/employer/pipeline/'
+      path: '/pipeline'
+      fullPath: '/employer/pipeline/'
+      preLoaderRoute: typeof AuthenticatedEmployerPipelineIndexRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/jobs/': {
+      id: '/_authenticated/employer/jobs/'
+      path: '/jobs'
+      fullPath: '/employer/jobs/'
+      preLoaderRoute: typeof AuthenticatedEmployerJobsIndexRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -733,8 +996,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsDetailSplatRouteImport
       parentRoute: typeof AuthenticatedJobsRoute
     }
+    '/_authenticated/employer/settings/plan': {
+      id: '/_authenticated/employer/settings/plan'
+      path: '/settings/plan'
+      fullPath: '/employer/settings/plan'
+      preLoaderRoute: typeof AuthenticatedEmployerSettingsPlanRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/settings/company': {
+      id: '/_authenticated/employer/settings/company'
+      path: '/settings/company'
+      fullPath: '/employer/settings/company'
+      preLoaderRoute: typeof AuthenticatedEmployerSettingsCompanyRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/pipeline/$jobId': {
+      id: '/_authenticated/employer/pipeline/$jobId'
+      path: '/pipeline/$jobId'
+      fullPath: '/employer/pipeline/$jobId'
+      preLoaderRoute: typeof AuthenticatedEmployerPipelineJobIdRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/jobs/new': {
+      id: '/_authenticated/employer/jobs/new'
+      path: '/jobs/new'
+      fullPath: '/employer/jobs/new'
+      preLoaderRoute: typeof AuthenticatedEmployerJobsNewRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/invite/$token': {
+      id: '/_authenticated/employer/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/employer/invite/$token'
+      preLoaderRoute: typeof AuthenticatedEmployerInviteTokenRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/candidates/$id': {
+      id: '/_authenticated/employer/candidates/$id'
+      path: '/candidates/$id'
+      fullPath: '/employer/candidates/$id'
+      preLoaderRoute: typeof AuthenticatedEmployerCandidatesIdRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/jobs/$id/': {
+      id: '/_authenticated/employer/jobs/$id/'
+      path: '/jobs/$id'
+      fullPath: '/employer/jobs/$id/'
+      preLoaderRoute: typeof AuthenticatedEmployerJobsIdIndexRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
+    '/_authenticated/employer/jobs/$id/edit': {
+      id: '/_authenticated/employer/jobs/$id/edit'
+      path: '/jobs/$id/edit'
+      fullPath: '/employer/jobs/$id/edit'
+      preLoaderRoute: typeof AuthenticatedEmployerJobsIdEditRouteImport
+      parentRoute: typeof AuthenticatedEmployerRoute
+    }
   }
 }
+
+interface AuthenticatedEmployerRouteChildren {
+  AuthenticatedEmployerAnalyticsRoute: typeof AuthenticatedEmployerAnalyticsRoute
+  AuthenticatedEmployerDashboardRoute: typeof AuthenticatedEmployerDashboardRoute
+  AuthenticatedEmployerInterviewsRoute: typeof AuthenticatedEmployerInterviewsRoute
+  AuthenticatedEmployerOnboardingRoute: typeof AuthenticatedEmployerOnboardingRoute
+  AuthenticatedEmployerTeamRoute: typeof AuthenticatedEmployerTeamRoute
+  AuthenticatedEmployerCandidatesIdRoute: typeof AuthenticatedEmployerCandidatesIdRoute
+  AuthenticatedEmployerInviteTokenRoute: typeof AuthenticatedEmployerInviteTokenRoute
+  AuthenticatedEmployerJobsNewRoute: typeof AuthenticatedEmployerJobsNewRoute
+  AuthenticatedEmployerPipelineJobIdRoute: typeof AuthenticatedEmployerPipelineJobIdRoute
+  AuthenticatedEmployerSettingsCompanyRoute: typeof AuthenticatedEmployerSettingsCompanyRoute
+  AuthenticatedEmployerSettingsPlanRoute: typeof AuthenticatedEmployerSettingsPlanRoute
+  AuthenticatedEmployerJobsIndexRoute: typeof AuthenticatedEmployerJobsIndexRoute
+  AuthenticatedEmployerPipelineIndexRoute: typeof AuthenticatedEmployerPipelineIndexRoute
+  AuthenticatedEmployerJobsIdEditRoute: typeof AuthenticatedEmployerJobsIdEditRoute
+  AuthenticatedEmployerJobsIdIndexRoute: typeof AuthenticatedEmployerJobsIdIndexRoute
+}
+
+const AuthenticatedEmployerRouteChildren: AuthenticatedEmployerRouteChildren = {
+  AuthenticatedEmployerAnalyticsRoute: AuthenticatedEmployerAnalyticsRoute,
+  AuthenticatedEmployerDashboardRoute: AuthenticatedEmployerDashboardRoute,
+  AuthenticatedEmployerInterviewsRoute: AuthenticatedEmployerInterviewsRoute,
+  AuthenticatedEmployerOnboardingRoute: AuthenticatedEmployerOnboardingRoute,
+  AuthenticatedEmployerTeamRoute: AuthenticatedEmployerTeamRoute,
+  AuthenticatedEmployerCandidatesIdRoute:
+    AuthenticatedEmployerCandidatesIdRoute,
+  AuthenticatedEmployerInviteTokenRoute: AuthenticatedEmployerInviteTokenRoute,
+  AuthenticatedEmployerJobsNewRoute: AuthenticatedEmployerJobsNewRoute,
+  AuthenticatedEmployerPipelineJobIdRoute:
+    AuthenticatedEmployerPipelineJobIdRoute,
+  AuthenticatedEmployerSettingsCompanyRoute:
+    AuthenticatedEmployerSettingsCompanyRoute,
+  AuthenticatedEmployerSettingsPlanRoute:
+    AuthenticatedEmployerSettingsPlanRoute,
+  AuthenticatedEmployerJobsIndexRoute: AuthenticatedEmployerJobsIndexRoute,
+  AuthenticatedEmployerPipelineIndexRoute:
+    AuthenticatedEmployerPipelineIndexRoute,
+  AuthenticatedEmployerJobsIdEditRoute: AuthenticatedEmployerJobsIdEditRoute,
+  AuthenticatedEmployerJobsIdIndexRoute: AuthenticatedEmployerJobsIdIndexRoute,
+}
+
+const AuthenticatedEmployerRouteWithChildren =
+  AuthenticatedEmployerRoute._addFileChildren(
+    AuthenticatedEmployerRouteChildren,
+  )
 
 interface AuthenticatedJobsRouteChildren {
   AuthenticatedJobsRecommendationsRoute: typeof AuthenticatedJobsRecommendationsRoute
@@ -757,12 +1122,14 @@ const AuthenticatedJobsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEmployerRoute: typeof AuthenticatedEmployerRouteWithChildren
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRouteWithChildren
   AuthenticatedPaymentCallbackRoute: typeof AuthenticatedPaymentCallbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEmployerRoute: AuthenticatedEmployerRouteWithChildren,
   AuthenticatedJobsRoute: AuthenticatedJobsRouteWithChildren,
   AuthenticatedPaymentCallbackRoute: AuthenticatedPaymentCallbackRoute,
 }
@@ -824,13 +1191,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

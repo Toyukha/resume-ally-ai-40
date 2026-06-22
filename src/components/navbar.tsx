@@ -47,6 +47,9 @@ export function Navbar() {
               <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
                 Jobs
               </Link>
+              <Link to="/employer/dashboard" className="rounded-full border border-primary-glow/40 px-3 py-1 text-xs font-semibold text-primary-glow hover:bg-primary-glow/10">
+                Employer Portal
+              </Link>
             </>
           )}
         </nav>
