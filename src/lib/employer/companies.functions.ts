@@ -66,15 +66,16 @@ export const updateCompany = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const patch: Record<string, unknown> = {};
-    if (data.name !== undefined) patch.name = data.name;
-    if (data.industry !== undefined) patch.industry = data.industry;
-    if (data.website !== undefined) patch.website = data.website;
-    if (data.size !== undefined) patch.size = data.size;
-    if (data.hqLocation !== undefined) patch.hq_location = data.hqLocation;
-    if (data.contactEmail !== undefined) patch.contact_email = data.contactEmail;
-    if (data.description !== undefined) patch.description = data.description;
-    if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
+    const patch = {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.industry !== undefined ? { industry: data.industry ?? null } : {}),
+      ...(data.website !== undefined ? { website: data.website ?? null } : {}),
+      ...(data.size !== undefined ? { size: data.size ?? null } : {}),
+      ...(data.hqLocation !== undefined ? { hq_location: data.hqLocation ?? null } : {}),
+      ...(data.contactEmail !== undefined ? { contact_email: data.contactEmail ?? null } : {}),
+      ...(data.description !== undefined ? { description: data.description ?? null } : {}),
+      ...(data.logoUrl !== undefined ? { logo_url: data.logoUrl ?? null } : {}),
+    };
     const { error } = await supabase.from("companies").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

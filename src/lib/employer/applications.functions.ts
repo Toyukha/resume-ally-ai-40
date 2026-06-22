@@ -107,8 +107,10 @@ export const updateApplicationStage = createServerFn({ method: "POST" })
   }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Record<string, unknown> = { stage: data.stage };
-    if (data.stage === "rejected" && data.rejectedReason) patch.rejected_reason = data.rejectedReason;
+    const patch = {
+      stage: data.stage,
+      ...(data.stage === "rejected" && data.rejectedReason ? { rejected_reason: data.rejectedReason } : {}),
+    };
     const { data: row, error } = await supabase
       .from("employer_applications")
       .update(patch)

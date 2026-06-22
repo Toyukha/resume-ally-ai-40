@@ -16,7 +16,6 @@ export const getDashboardSnapshot = createServerFn({ method: "POST" })
       { count: interviewsScheduled },
       { count: hired },
       { count: expiringSoon },
-      { data: avgScoreRow },
       { data: topMatches },
       { data: activity },
     ] = await Promise.all([
@@ -25,7 +24,6 @@ export const getDashboardSnapshot = createServerFn({ method: "POST" })
       supabase.from("interviews").select("id, employer_applications!inner(employer_jobs!inner(company_id))", { count: "exact", head: true }).eq("status", "scheduled").eq("employer_applications.employer_jobs.company_id", data.companyId),
       supabase.from("employer_applications").select("id, employer_jobs!inner(company_id)", { count: "exact", head: true }).eq("stage", "hired").eq("employer_jobs.company_id", data.companyId),
       supabase.from("employer_jobs").select("id", { count: "exact", head: true }).eq("company_id", data.companyId).eq("status", "active").not("deadline", "is", null).lte("deadline", in7),
-      supabase.rpc("noop_avg" as any, {}).then(() => ({ data: null })).catch(() => ({ data: null })),
       supabase
         .from("candidate_scores")
         .select("ats_score, summary, application:employer_applications!inner(id, candidate_name, employer_jobs!inner(title, company_id))")

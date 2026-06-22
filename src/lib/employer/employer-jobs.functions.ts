@@ -144,8 +144,12 @@ export const setJobStatus = createServerFn({ method: "POST" })
     if (data.status === "active" && job.status !== "active") {
       await enforceActiveJobCap(supabase, job.company_id);
     }
-    const patch: Record<string, unknown> = { status: data.status };
-    if (data.status === "active" && job.status !== "active") patch.published_at = new Date().toISOString();
+    const patch = {
+      status: data.status,
+      ...(data.status === "active" && job.status !== "active"
+        ? { published_at: new Date().toISOString() }
+        : {}),
+    };
     const { error } = await supabase.from("employer_jobs").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     await supabase.from("recruiter_activity").insert({
