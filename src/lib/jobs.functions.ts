@@ -372,7 +372,7 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
 export const searchJobs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SearchSchema.parse(input ?? {}))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const page = data.page ?? 1;
     const country = data.country ?? "gb";
     const empt = data.employmentType?.toLowerCase();
@@ -382,7 +382,10 @@ export const searchJobs = createServerFn({ method: "POST" })
       : empt === "contract" ? "contract"
       : undefined;
 
-    const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
+    const [internal, an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
+      page === 1
+        ? fetchInternalJobs(context.supabase, { query: data.query, remote: data.remote, limit: 30 }).catch(() => [] as NormalizedJob[])
+        : Promise.resolve([] as NormalizedJob[]),
       fetchArbeitnowPage(page).catch(() => [] as NormalizedJob[]),
       fetchArbeitnowPage(page + 1).catch(() => [] as NormalizedJob[]),
       fetchAdzunaPage(country, page, {
@@ -394,8 +397,10 @@ export const searchJobs = createServerFn({ method: "POST" })
       fetchHimalayasPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
       fetchRemoteJobsPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
     ]);
-    // Round-robin interleave so the 50-result slice keeps a mix from every provider
+    // Round-robin interleave so the 50-result slice keeps a mix from every provider.
+    // Internal employer jobs come first so they're prominent on page 1.
     const buckets = [
+      [...internal],
       [...an1, ...an2],
       [...adz1, ...adz2],
       [...him1],
@@ -403,9 +408,17 @@ export const searchJobs = createServerFn({ method: "POST" })
     ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
-    const maxLen = Math.max(...buckets.map((b) => b.length));
+    // Surface all internal jobs up front, then interleave external providers.
+    for (const j of internal) {
+      const k = `${j.provider}:${j.id}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(j);
+    }
+    const extBuckets = buckets.slice(1);
+    const maxLen = Math.max(0, ...extBuckets.map((b) => b.length));
     for (let i = 0; i < maxLen; i++) {
-      for (const bucket of buckets) {
+      for (const bucket of extBuckets) {
         const j = bucket[i];
         if (!j) continue;
         const k = `${j.provider}:${j.id}`;
@@ -425,7 +438,18 @@ export const searchJobs = createServerFn({ method: "POST" })
 export const getJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(300) }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    if (data.slug.startsWith("internal:")) {
+      const id = data.slug.slice("internal:".length);
+      const { data: row, error } = await context.supabase
+        .from("employer_jobs")
+        .select("id, title, description, location, work_mode, employment_type, department, required_skills, apply_mode, external_url, published_at, created_at, status, companies(name)")
+        .eq("id", id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (error || !row) throw new Error("Job not found");
+      return mapInternalJob(row);
+    }
     if (data.slug.startsWith("adzuna:")) {
       const [, country] = data.slug.split(":");
       for (let p = 1; p <= 3; p++) {
