@@ -21,6 +21,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as EmployerLoginRouteImport } from './routes/employer.login'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin/subscriptions'
@@ -121,6 +122,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const EmployerLoginRoute = EmployerLoginRouteImport.update({
+  id: '/employer/login',
+  path: '/employer/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
+  '/employer/login': typeof EmployerLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
+  '/employer/login': typeof EmployerLoginRoute
   '/admin': typeof AdminIndexRoute
   '/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/chat': typeof ApiChatRoute
+  '/employer/login': typeof EmployerLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/employer/analytics': typeof AuthenticatedEmployerAnalyticsRoute
   '/_authenticated/employer/dashboard': typeof AuthenticatedEmployerDashboardRoute
@@ -541,6 +550,7 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/api/chat'
+    | '/employer/login'
     | '/admin/'
     | '/employer/analytics'
     | '/employer/dashboard'
@@ -593,6 +603,7 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/api/chat'
+    | '/employer/login'
     | '/admin'
     | '/employer/analytics'
     | '/employer/dashboard'
@@ -648,6 +659,7 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/users'
     | '/api/chat'
+    | '/employer/login'
     | '/admin/'
     | '/_authenticated/employer/analytics'
     | '/_authenticated/employer/dashboard'
@@ -691,6 +703,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  EmployerLoginRoute: typeof EmployerLoginRoute
   ApiPublicHooksFlutterwaveRoute: typeof ApiPublicHooksFlutterwaveRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
@@ -784,6 +797,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/employer/login': {
+      id: '/employer/login'
+      path: '/employer/login'
+      fullPath: '/employer/login'
+      preLoaderRoute: typeof EmployerLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
       id: '/api/chat'
@@ -1202,6 +1222,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  EmployerLoginRoute: EmployerLoginRoute,
   ApiPublicHooksFlutterwaveRoute: ApiPublicHooksFlutterwaveRoute,
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
