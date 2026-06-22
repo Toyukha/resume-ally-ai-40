@@ -1,46 +1,42 @@
-## Problem
+# Social Media Flyer — Career Boost
 
-After creating a company in `/employer/onboarding`, the user lands on `/employer/dashboard` and sees:
+Generate a cohesive **3-flyer set** (one design adapted to each platform's required aspect ratio) promoting Career Boost sign-ups.
 
-> Something went wrong — useEmployerCtx must be used inside the employer layout
+## Output
 
-### Root cause
+Three premium PNG flyers saved to `/mnt/documents/`:
 
-In `src/routes/_authenticated/employer.tsx`, the layout reads companies via `useQuery({ queryKey: ["my-companies"] })`. When the user first visits onboarding, that query is fetched and cached as `[]` (no companies yet).
+1. `career-boost-flyer-1x1.png` — **1080×1080** (Instagram / Facebook feed)
+2. `career-boost-flyer-9x16.png` — **1080×1920** (Stories / Reels / TikTok)
+3. `career-boost-flyer-16x9.png` — **1920×1080** (LinkedIn / X / Twitter)
 
-After `createCompany` succeeds, `employer.onboarding.tsx` calls `navigate({ to: "/employer/dashboard" })` but **never invalidates** the `["my-companies"]` cache. So the dashboard mounts with the stale empty array. The layout then runs:
+Each rendered with the **premium** image-gen tier (needed for legible typography).
 
-```ts
-if (!companies || companies.length === 0) {
-  if (!pathname.startsWith("/employer/onboarding") ...) {
-    throw redirect({ to: "/employer/onboarding" }); // thrown in render → caught by error boundary
-  }
-  return <Outlet />; // no Provider wrapping
-}
-```
+## Visual direction — Dark & Bold
 
-`throw redirect()` only works in `beforeLoad`/`loader`. Thrown from a component body it bubbles to the error boundary, and depending on render order the dashboard child can mount (without the Provider), producing the `useEmployerCtx` error.
+- **Palette:** deep navy `#0A0F2C` → black `#0F172A` background, **electric blue `#3B82F6`** primary, **gold `#F5C26B`** accent, ivory `#F5F8FF` text.
+- **Mood:** premium executive, late-night ambition, subtle gold foil + glowing blue gradient orbs, faint grid texture — same energy as the existing landing hero.
+- **Motif:** a glowing résumé document tilted in 3D, with an ATS match-score ring (gold) hovering beside it; soft particle/spark accents.
+- **Typography:** bold sans-serif display headline, thin uppercase eyebrow, small CTA chip.
 
-## Fix
+## Copy on the flyer
 
-Two narrow changes in frontend layout/onboarding code — no DB, no schema, no business logic changes.
+- Eyebrow chip: `✦ AI RESUME OPTIMIZER`
+- Headline: **"Land more interviews."**
+- Sub: *"Tailor your resume to any job in seconds — ATS-ready, recruiter-quality, in under a minute."*
+- Bullet pills (3): `ATS Match Score` · `AI Cover Letters` · `Jobs Marketplace`
+- CTA button: **`Sign up free →`**
+- URL footer: `thecareerboost.com`
 
-### 1. `src/routes/_authenticated/employer.onboarding.tsx`
-- Grab `queryClient` via `useQueryClient()`.
-- In `onSuccess` of the create mutation: `await queryClient.invalidateQueries({ queryKey: ["my-companies"] })` **before** calling `navigate({ to: "/employer/dashboard" })`. This guarantees the layout sees the new company.
+## Technical notes
 
-### 2. `src/routes/_authenticated/employer.tsx`
-Make the layout robust even if cache is briefly stale:
-- Replace the in-render `throw redirect(...)` with a `useEffect` that calls `navigate({ to: "/employer/onboarding", replace: true })` when companies are empty and the path isn't already onboarding/invite. While redirecting, render a small "Redirecting…" placeholder instead of an unwrapped `<Outlet />`.
-- Keep the existing branch that renders the onboarding/invite outlet without the Provider (those routes don't use `useEmployerCtx`).
-- Ensure the `EmployerContext.Provider` wraps `<Outlet />` in **every** path where a child route that uses `useEmployerCtx` could mount.
+- Use `imagegen--generate_image` with `model: "premium"` for each format (text legibility).
+- Pass `transparent_background: false` (flyers need their dark backdrop).
+- After generation, view each file to QA: check no garbled text, headline readable, URL legible, layout not clipped. Regenerate any that fail QA.
+- Present each file to the user via `<presentation-artifact>` tags with `mime_type="image/png"`.
 
-### 3. Defensive: invalidate on sign-out / company switch (small)
-- Already handled implicitly. No extra work needed beyond #1 and #2.
+## Out of scope
 
-## Files touched
-
-- `src/routes/_authenticated/employer.onboarding.tsx` — add `useQueryClient` + invalidate before navigate.
-- `src/routes/_authenticated/employer.tsx` — replace render-time `throw redirect` with `useEffect` navigate; render placeholder instead of bare `<Outlet />` during the redirect.
-
-No new files, no migrations, no package changes.
+- No code changes to the app.
+- No video / animated version.
+- No printed-flyer (A4/PDF) variant — purely social digital sizes.

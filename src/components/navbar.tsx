@@ -39,11 +39,6 @@ export function Navbar() {
           <a href="/#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
           <Link to="/support" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>Support</Link>
           <a href="/#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
-          {!user && (
-            <Link to="/employer/login" className="rounded-full border border-primary-glow/40 px-3 py-1 text-xs font-semibold text-primary-glow hover:bg-primary-glow/10">
-              For Employers
-            </Link>
-          )}
           {user && (
             <>
               <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
@@ -51,9 +46,6 @@ export function Navbar() {
               </Link>
               <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
                 Jobs
-              </Link>
-              <Link to="/employer/dashboard" className="rounded-full border border-primary-glow/40 px-3 py-1 text-xs font-semibold text-primary-glow hover:bg-primary-glow/10">
-                Employer Portal
               </Link>
             </>
           )}

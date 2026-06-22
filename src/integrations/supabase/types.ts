@@ -163,204 +163,6 @@ export type Database = {
           },
         ]
       }
-      candidate_scores: {
-        Row: {
-          application_id: string
-          ats_score: number
-          created_at: string
-          education_match_pct: number
-          experience_match_pct: number
-          gaps: Json
-          id: string
-          keyword_match_pct: number
-          missing_keywords: string[]
-          model: string | null
-          scored_at: string
-          skills_match_pct: number
-          strengths: Json
-          summary: string | null
-        }
-        Insert: {
-          application_id: string
-          ats_score?: number
-          created_at?: string
-          education_match_pct?: number
-          experience_match_pct?: number
-          gaps?: Json
-          id?: string
-          keyword_match_pct?: number
-          missing_keywords?: string[]
-          model?: string | null
-          scored_at?: string
-          skills_match_pct?: number
-          strengths?: Json
-          summary?: string | null
-        }
-        Update: {
-          application_id?: string
-          ats_score?: number
-          created_at?: string
-          education_match_pct?: number
-          experience_match_pct?: number
-          gaps?: Json
-          id?: string
-          keyword_match_pct?: number
-          missing_keywords?: string[]
-          model?: string | null
-          scored_at?: string
-          skills_match_pct?: number
-          strengths?: Json
-          summary?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "candidate_scores_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: true
-            referencedRelation: "employer_applications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      companies: {
-        Row: {
-          contact_email: string | null
-          created_at: string
-          created_by: string
-          description: string | null
-          hq_location: string | null
-          id: string
-          industry: string | null
-          logo_url: string | null
-          name: string
-          plan: Database["public"]["Enums"]["employer_plan"]
-          size: string | null
-          slug: string
-          updated_at: string
-          website: string | null
-        }
-        Insert: {
-          contact_email?: string | null
-          created_at?: string
-          created_by: string
-          description?: string | null
-          hq_location?: string | null
-          id?: string
-          industry?: string | null
-          logo_url?: string | null
-          name: string
-          plan?: Database["public"]["Enums"]["employer_plan"]
-          size?: string | null
-          slug: string
-          updated_at?: string
-          website?: string | null
-        }
-        Update: {
-          contact_email?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          hq_location?: string | null
-          id?: string
-          industry?: string | null
-          logo_url?: string | null
-          name?: string
-          plan?: Database["public"]["Enums"]["employer_plan"]
-          size?: string | null
-          slug?: string
-          updated_at?: string
-          website?: string | null
-        }
-        Relationships: []
-      }
-      company_invites: {
-        Row: {
-          accepted_at: string | null
-          company_id: string
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string
-          role: Database["public"]["Enums"]["company_role"]
-          token: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          company_id: string
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by: string
-          role?: Database["public"]["Enums"]["company_role"]
-          token?: string
-        }
-        Update: {
-          accepted_at?: string | null
-          company_id?: string
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string
-          role?: Database["public"]["Enums"]["company_role"]
-          token?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_invites_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      company_members: {
-        Row: {
-          company_id: string
-          created_at: string
-          id: string
-          invited_by: string | null
-          joined_at: string
-          role: Database["public"]["Enums"]["company_role"]
-          status: Database["public"]["Enums"]["company_member_status"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          role?: Database["public"]["Enums"]["company_role"]
-          status?: Database["public"]["Enums"]["company_member_status"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          role?: Database["public"]["Enums"]["company_role"]
-          status?: Database["public"]["Enums"]["company_member_status"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_members_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_send_log: {
         Row: {
           created_at: string
@@ -447,251 +249,6 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
-      }
-      employer_applications: {
-        Row: {
-          applied_at: string
-          candidate_email: string | null
-          candidate_name: string | null
-          candidate_user_id: string
-          cover_letter: string | null
-          created_at: string
-          hired_at: string | null
-          id: string
-          job_id: string
-          last_stage_change_at: string
-          rejected_reason: string | null
-          resume_file_path: string | null
-          resume_text: string | null
-          source: string | null
-          stage: Database["public"]["Enums"]["application_stage"]
-          updated_at: string
-        }
-        Insert: {
-          applied_at?: string
-          candidate_email?: string | null
-          candidate_name?: string | null
-          candidate_user_id: string
-          cover_letter?: string | null
-          created_at?: string
-          hired_at?: string | null
-          id?: string
-          job_id: string
-          last_stage_change_at?: string
-          rejected_reason?: string | null
-          resume_file_path?: string | null
-          resume_text?: string | null
-          source?: string | null
-          stage?: Database["public"]["Enums"]["application_stage"]
-          updated_at?: string
-        }
-        Update: {
-          applied_at?: string
-          candidate_email?: string | null
-          candidate_name?: string | null
-          candidate_user_id?: string
-          cover_letter?: string | null
-          created_at?: string
-          hired_at?: string | null
-          id?: string
-          job_id?: string
-          last_stage_change_at?: string
-          rejected_reason?: string | null
-          resume_file_path?: string | null
-          resume_text?: string | null
-          source?: string | null
-          stage?: Database["public"]["Enums"]["application_stage"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employer_applications_job_id_fkey"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "employer_jobs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      employer_jobs: {
-        Row: {
-          application_count: number
-          apply_mode: Database["public"]["Enums"]["apply_mode"]
-          company_id: string
-          created_at: string
-          currency: string
-          deadline: string | null
-          department: string | null
-          description: string
-          education: string | null
-          employment_type: Database["public"]["Enums"]["employer_job_type"]
-          experience_level: string | null
-          external_url: string | null
-          id: string
-          location: string | null
-          posted_by: string
-          preferred_skills: string[]
-          published_at: string | null
-          required_skills: string[]
-          responsibilities: string | null
-          salary_max: number | null
-          salary_min: number | null
-          status: Database["public"]["Enums"]["employer_job_status"]
-          title: string
-          updated_at: string
-          vacancies: number
-          view_count: number
-          work_mode: Database["public"]["Enums"]["work_mode"]
-        }
-        Insert: {
-          application_count?: number
-          apply_mode?: Database["public"]["Enums"]["apply_mode"]
-          company_id: string
-          created_at?: string
-          currency?: string
-          deadline?: string | null
-          department?: string | null
-          description: string
-          education?: string | null
-          employment_type?: Database["public"]["Enums"]["employer_job_type"]
-          experience_level?: string | null
-          external_url?: string | null
-          id?: string
-          location?: string | null
-          posted_by: string
-          preferred_skills?: string[]
-          published_at?: string | null
-          required_skills?: string[]
-          responsibilities?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
-          status?: Database["public"]["Enums"]["employer_job_status"]
-          title: string
-          updated_at?: string
-          vacancies?: number
-          view_count?: number
-          work_mode?: Database["public"]["Enums"]["work_mode"]
-        }
-        Update: {
-          application_count?: number
-          apply_mode?: Database["public"]["Enums"]["apply_mode"]
-          company_id?: string
-          created_at?: string
-          currency?: string
-          deadline?: string | null
-          department?: string | null
-          description?: string
-          education?: string | null
-          employment_type?: Database["public"]["Enums"]["employer_job_type"]
-          experience_level?: string | null
-          external_url?: string | null
-          id?: string
-          location?: string | null
-          posted_by?: string
-          preferred_skills?: string[]
-          published_at?: string | null
-          required_skills?: string[]
-          responsibilities?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
-          status?: Database["public"]["Enums"]["employer_job_status"]
-          title?: string
-          updated_at?: string
-          vacancies?: number
-          view_count?: number
-          work_mode?: Database["public"]["Enums"]["work_mode"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employer_jobs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      interview_notes: {
-        Row: {
-          author_id: string
-          body: string
-          created_at: string
-          id: string
-          interview_id: string
-          rating: number | null
-        }
-        Insert: {
-          author_id: string
-          body: string
-          created_at?: string
-          id?: string
-          interview_id: string
-          rating?: number | null
-        }
-        Update: {
-          author_id?: string
-          body?: string
-          created_at?: string
-          id?: string
-          interview_id?: string
-          rating?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interview_notes_interview_id_fkey"
-            columns: ["interview_id"]
-            isOneToOne: false
-            referencedRelation: "interviews"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      interviews: {
-        Row: {
-          application_id: string
-          created_at: string
-          created_by: string
-          duration_minutes: number
-          id: string
-          location_or_link: string | null
-          mode: Database["public"]["Enums"]["interview_mode"]
-          scheduled_for: string
-          status: Database["public"]["Enums"]["interview_status"]
-          updated_at: string
-        }
-        Insert: {
-          application_id: string
-          created_at?: string
-          created_by: string
-          duration_minutes?: number
-          id?: string
-          location_or_link?: string | null
-          mode?: Database["public"]["Enums"]["interview_mode"]
-          scheduled_for: string
-          status?: Database["public"]["Enums"]["interview_status"]
-          updated_at?: string
-        }
-        Update: {
-          application_id?: string
-          created_at?: string
-          created_by?: string
-          duration_minutes?: number
-          id?: string
-          location_or_link?: string | null
-          mode?: Database["public"]["Enums"]["interview_mode"]
-          scheduled_for?: string
-          status?: Database["public"]["Enums"]["interview_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interviews_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "employer_applications"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       job_applications: {
         Row: {
@@ -928,47 +485,6 @@ export type Database = {
         }
         Relationships: []
       }
-      recruiter_activity: {
-        Row: {
-          actor_id: string | null
-          company_id: string
-          created_at: string
-          entity_id: string | null
-          entity_type: string | null
-          id: string
-          kind: string
-          payload: Json
-        }
-        Insert: {
-          actor_id?: string | null
-          company_id: string
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          kind: string
-          payload?: Json
-        }
-        Update: {
-          actor_id?: string | null
-          company_id?: string
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          kind?: string
-          payload?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recruiter_activity_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       saved_jobs: {
         Row: {
           company: string | null
@@ -1174,10 +690,6 @@ export type Database = {
         Args: { _expires_at: string; _plan_tier: string; _user_id: string }
         Returns: undefined
       }
-      can_manage_jobs: {
-        Args: { _company: string; _user: string }
-        Returns: boolean
-      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1187,14 +699,6 @@ export type Database = {
         Returns: number
       }
       get_capacity_snapshot: { Args: never; Returns: Json }
-      has_company_role: {
-        Args: {
-          _company: string
-          _roles: Database["public"]["Enums"]["company_role"][]
-          _user: string
-        }
-        Returns: boolean
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1203,14 +707,6 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      is_company_admin: {
-        Args: { _company: string; _user: string }
-        Returns: boolean
-      }
-      is_company_member: {
-        Args: { _company: string; _user: string }
-        Returns: boolean
-      }
       is_pro_active: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
@@ -1233,16 +729,6 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "support_admin" | "analytics_admin"
-      application_stage:
-        | "applied"
-        | "under_review"
-        | "shortlisted"
-        | "interview_scheduled"
-        | "assessment"
-        | "final_review"
-        | "offer_sent"
-        | "hired"
-        | "rejected"
       application_status:
         | "saved"
         | "applied"
@@ -1250,25 +736,6 @@ export type Database = {
         | "assessment"
         | "offer"
         | "rejected"
-      apply_mode: "in_app" | "external"
-      company_member_status: "active" | "invited" | "suspended"
-      company_role: "admin" | "recruiter" | "hiring_manager"
-      employer_job_status: "draft" | "active" | "closed" | "archived"
-      employer_job_type:
-        | "full_time"
-        | "part_time"
-        | "contract"
-        | "internship"
-        | "temporary"
-      employer_plan: "starter" | "growth" | "enterprise"
-      interview_mode: "video" | "phone" | "onsite"
-      interview_status:
-        | "scheduled"
-        | "completed"
-        | "passed"
-        | "failed"
-        | "cancelled"
-      work_mode: "remote" | "hybrid" | "onsite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1397,17 +864,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "support_admin", "analytics_admin"],
-      application_stage: [
-        "applied",
-        "under_review",
-        "shortlisted",
-        "interview_scheduled",
-        "assessment",
-        "final_review",
-        "offer_sent",
-        "hired",
-        "rejected",
-      ],
       application_status: [
         "saved",
         "applied",
@@ -1416,27 +872,6 @@ export const Constants = {
         "offer",
         "rejected",
       ],
-      apply_mode: ["in_app", "external"],
-      company_member_status: ["active", "invited", "suspended"],
-      company_role: ["admin", "recruiter", "hiring_manager"],
-      employer_job_status: ["draft", "active", "closed", "archived"],
-      employer_job_type: [
-        "full_time",
-        "part_time",
-        "contract",
-        "internship",
-        "temporary",
-      ],
-      employer_plan: ["starter", "growth", "enterprise"],
-      interview_mode: ["video", "phone", "onsite"],
-      interview_status: [
-        "scheduled",
-        "completed",
-        "passed",
-        "failed",
-        "cancelled",
-      ],
-      work_mode: ["remote", "hybrid", "onsite"],
     },
   },
 } as const

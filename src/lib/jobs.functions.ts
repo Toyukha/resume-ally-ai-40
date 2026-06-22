@@ -20,9 +20,7 @@ export type NormalizedJob = {
   url: string;
   description: string;
   tags: string[];
-  provider: "arbeitnow" | "adzuna" | "himalayas" | "remotejobs" | "internal";
-  applyMode?: "in_app" | "external";
-  internalJobId?: string;
+  provider: "arbeitnow" | "adzuna" | "himalayas" | "remotejobs";
 };
 
 export const ADZUNA_COUNTRIES = [
@@ -280,52 +278,6 @@ async function fetchRemoteJobsPage(
   }
 }
 
-// ───── Internal employer jobs ─────
-function mapInternalJob(row: any): NormalizedJob {
-  const company = row.companies?.name ?? row.company_name ?? "";
-  const tags: string[] = [];
-  if (Array.isArray(row.required_skills)) tags.push(...row.required_skills.slice(0, 6));
-  if (row.department) tags.push(row.department);
-  return {
-    id: `internal:${row.id}`,
-    slug: `internal:${row.id}`,
-    title: row.title,
-    company,
-    location: row.location ?? (row.work_mode === "remote" ? "Remote" : ""),
-    remote: row.work_mode === "remote",
-    employmentType: (row.employment_type ?? "").toLowerCase().replace("_", "-"),
-    postedAt: row.published_at ?? row.created_at ?? new Date().toISOString(),
-    url: row.apply_mode === "external" && row.external_url
-      ? row.external_url
-      : `/jobs/apply/${row.id}`,
-    description: row.description ?? "",
-    tags,
-    provider: "internal" as const,
-    applyMode: row.apply_mode ?? "in_app",
-    internalJobId: row.id,
-  };
-}
-
-async function fetchInternalJobs(supabase: any, opts: { query?: string; remote?: string; limit?: number } = {}): Promise<NormalizedJob[]> {
-  let q = supabase
-    .from("employer_jobs")
-    .select("id, title, description, location, work_mode, employment_type, department, required_skills, apply_mode, external_url, published_at, created_at, companies(name)")
-    .eq("status", "active")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(opts.limit ?? 30);
-  if (opts.query) q = q.ilike("title", `%${opts.query}%`);
-  if (opts.remote === "remote") q = q.eq("work_mode", "remote");
-  if (opts.remote === "onsite") q = q.eq("work_mode", "onsite");
-  if (opts.remote === "hybrid") q = q.eq("work_mode", "hybrid");
-  const { data, error } = await q;
-  if (error) {
-    console.error("[internal jobs]", error.message);
-    return [];
-  }
-  return (data ?? []).map(mapInternalJob);
-}
-
-
 
 
 const SearchSchema = z.object({
@@ -372,7 +324,7 @@ function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[]
 export const searchJobs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SearchSchema.parse(input ?? {}))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
     const page = data.page ?? 1;
     const country = data.country ?? "gb";
     const empt = data.employmentType?.toLowerCase();
@@ -382,10 +334,7 @@ export const searchJobs = createServerFn({ method: "POST" })
       : empt === "contract" ? "contract"
       : undefined;
 
-    const [internal, an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
-      page === 1
-        ? fetchInternalJobs(context.supabase, { query: data.query, remote: data.remote, limit: 30 }).catch(() => [] as NormalizedJob[])
-        : Promise.resolve([] as NormalizedJob[]),
+    const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
       fetchArbeitnowPage(page).catch(() => [] as NormalizedJob[]),
       fetchArbeitnowPage(page + 1).catch(() => [] as NormalizedJob[]),
       fetchAdzunaPage(country, page, {
@@ -397,10 +346,8 @@ export const searchJobs = createServerFn({ method: "POST" })
       fetchHimalayasPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
       fetchRemoteJobsPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
     ]);
-    // Round-robin interleave so the 50-result slice keeps a mix from every provider.
-    // Internal employer jobs come first so they're prominent on page 1.
+    // Round-robin interleave so the 50-result slice keeps a mix from every provider
     const buckets = [
-      [...internal],
       [...an1, ...an2],
       [...adz1, ...adz2],
       [...him1],
@@ -408,17 +355,9 @@ export const searchJobs = createServerFn({ method: "POST" })
     ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
-    // Surface all internal jobs up front, then interleave external providers.
-    for (const j of internal) {
-      const k = `${j.provider}:${j.id}`;
-      if (seen.has(k)) continue;
-      seen.add(k);
-      merged.push(j);
-    }
-    const extBuckets = buckets.slice(1);
-    const maxLen = Math.max(0, ...extBuckets.map((b) => b.length));
+    const maxLen = Math.max(...buckets.map((b) => b.length));
     for (let i = 0; i < maxLen; i++) {
-      for (const bucket of extBuckets) {
+      for (const bucket of buckets) {
         const j = bucket[i];
         if (!j) continue;
         const k = `${j.provider}:${j.id}`;
@@ -438,18 +377,7 @@ export const searchJobs = createServerFn({ method: "POST" })
 export const getJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(300) }).parse(input))
-  .handler(async ({ data, context }) => {
-    if (data.slug.startsWith("internal:")) {
-      const id = data.slug.slice("internal:".length);
-      const { data: row, error } = await context.supabase
-        .from("employer_jobs")
-        .select("id, title, description, location, work_mode, employment_type, department, required_skills, apply_mode, external_url, published_at, created_at, status, companies(name)")
-        .eq("id", id)
-        .eq("status", "active")
-        .maybeSingle();
-      if (error || !row) throw new Error("Job not found");
-      return mapInternalJob(row);
-    }
+  .handler(async ({ data }) => {
     if (data.slug.startsWith("adzuna:")) {
       const [, country] = data.slug.split(":");
       for (let p = 1; p <= 3; p++) {
