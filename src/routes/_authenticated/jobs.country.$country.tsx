@@ -106,7 +106,7 @@ function CountryHub() {
   useEffect(() => { topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, [page]);
 
   const goToPage = (next: number) =>
-    navigate({ search: (prev) => ({ ...prev, page: next }), replace: true });
+    navigate({ search: (prev: typeof search) => ({ ...prev, page: next }), replace: true });
 
   const savedMap = new Map<string, { id: string; favorited: boolean }>();
   for (const s of savedQ.data ?? []) savedMap.set(`${s.provider}:${s.external_id}`, { id: s.id, favorited: s.favorited });
