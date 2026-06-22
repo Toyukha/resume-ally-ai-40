@@ -53,6 +53,7 @@ import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
 import { Route as AuthenticatedJobsDetailSplatRouteImport } from './routes/_authenticated/jobs.detail.$'
+import { Route as AuthenticatedJobsApplyIdRouteImport } from './routes/_authenticated/jobs.apply.$id'
 import { Route as AuthenticatedEmployerSettingsPlanRouteImport } from './routes/_authenticated/employer.settings.plan'
 import { Route as AuthenticatedEmployerSettingsCompanyRouteImport } from './routes/_authenticated/employer.settings.company'
 import { Route as AuthenticatedEmployerPipelineJobIdRouteImport } from './routes/_authenticated/employer.pipeline.$jobId'
@@ -296,6 +297,12 @@ const AuthenticatedJobsDetailSplatRoute =
     path: '/detail/$',
     getParentRoute: () => AuthenticatedJobsRoute,
   } as any)
+const AuthenticatedJobsApplyIdRoute =
+  AuthenticatedJobsApplyIdRouteImport.update({
+    id: '/apply/$id',
+    path: '/apply/$id',
+    getParentRoute: () => AuthenticatedJobsRoute,
+  } as any)
 const AuthenticatedEmployerSettingsPlanRoute =
   AuthenticatedEmployerSettingsPlanRouteImport.update({
     id: '/settings/plan',
@@ -386,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
   '/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
   '/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
+  '/jobs/apply/$id': typeof AuthenticatedJobsApplyIdRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -437,6 +445,7 @@ export interface FileRoutesByTo {
   '/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
   '/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
   '/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
+  '/jobs/apply/$id': typeof AuthenticatedJobsApplyIdRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -492,6 +501,7 @@ export interface FileRoutesById {
   '/_authenticated/employer/pipeline/$jobId': typeof AuthenticatedEmployerPipelineJobIdRoute
   '/_authenticated/employer/settings/company': typeof AuthenticatedEmployerSettingsCompanyRoute
   '/_authenticated/employer/settings/plan': typeof AuthenticatedEmployerSettingsPlanRoute
+  '/_authenticated/jobs/apply/$id': typeof AuthenticatedJobsApplyIdRoute
   '/_authenticated/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/employer/pipeline/$jobId'
     | '/employer/settings/company'
     | '/employer/settings/plan'
+    | '/jobs/apply/$id'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/employer/pipeline/$jobId'
     | '/employer/settings/company'
     | '/employer/settings/plan'
+    | '/jobs/apply/$id'
     | '/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -652,6 +664,7 @@ export interface FileRouteTypes {
     | '/_authenticated/employer/pipeline/$jobId'
     | '/_authenticated/employer/settings/company'
     | '/_authenticated/employer/settings/plan'
+    | '/_authenticated/jobs/apply/$id'
     | '/_authenticated/jobs/detail/$'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
@@ -996,6 +1009,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsDetailSplatRouteImport
       parentRoute: typeof AuthenticatedJobsRoute
     }
+    '/_authenticated/jobs/apply/$id': {
+      id: '/_authenticated/jobs/apply/$id'
+      path: '/apply/$id'
+      fullPath: '/jobs/apply/$id'
+      preLoaderRoute: typeof AuthenticatedJobsApplyIdRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
     '/_authenticated/employer/settings/plan': {
       id: '/_authenticated/employer/settings/plan'
       path: '/settings/plan'
@@ -1106,6 +1126,7 @@ interface AuthenticatedJobsRouteChildren {
   AuthenticatedJobsSavedRoute: typeof AuthenticatedJobsSavedRoute
   AuthenticatedJobsTrackerRoute: typeof AuthenticatedJobsTrackerRoute
   AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
+  AuthenticatedJobsApplyIdRoute: typeof AuthenticatedJobsApplyIdRoute
   AuthenticatedJobsDetailSplatRoute: typeof AuthenticatedJobsDetailSplatRoute
 }
 
@@ -1114,6 +1135,7 @@ const AuthenticatedJobsRouteChildren: AuthenticatedJobsRouteChildren = {
   AuthenticatedJobsSavedRoute: AuthenticatedJobsSavedRoute,
   AuthenticatedJobsTrackerRoute: AuthenticatedJobsTrackerRoute,
   AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
+  AuthenticatedJobsApplyIdRoute: AuthenticatedJobsApplyIdRoute,
   AuthenticatedJobsDetailSplatRoute: AuthenticatedJobsDetailSplatRoute,
 }
 
