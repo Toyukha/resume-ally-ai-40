@@ -1,37 +1,54 @@
-# Fix: Admin dashboard doesn't fully load on first visit
+## What's actually happening
 
-## What's happening
+The Jobs Marketplace blends results from **four** providers:
 
-The `/admin` overview calls one server function (`getPlatformStats`) that fans out **12 parallel queries** against `profiles`, `analyses`, and `payments` — including two unbounded 30-day row scans for the trend chart. In production this regularly:
+| Provider | Country aware? |
+|---|---|
+| Adzuna | Yes — accepts a country code (`ca`, `gb`, `de`…) |
+| Arbeitnow | No — mostly Germany jobs, no country param |
+| Himalayas | No — global remote feed |
+| RemoteJobs.org | No — global remote feed |
 
-- exceeds the worker's request budget on the first hit (cold start + parallel scans), so the promise rejects or returns a partial payload
-- is not retried — `useQuery` here uses defaults but the first failure leaves the page stuck on "Loading platform statistics…" until the admin hits refresh, which usually warms the cache and succeeds
+In `src/lib/jobs.functions.ts → searchJobs`, all four are merged via round-robin into the same result set, and `applyFilters` only enforces a location match when `filters.location` is a non-empty string.
 
-Two smaller contributors:
-- `AdminLayout` runs its own `getAdminMe` query with `staleTime: 0, gcTime: 0` in addition to the route gate, so the overview kicks off three round-trips before any data renders.
-- The trend queries pull every row in the window and count client-side instead of using `count: "exact", head: true` per bucket — fine for small tenants, brittle as the table grows.
+That produces the two bugs you're seeing:
+
+### 1. `/jobs/country/canada` shows Germany roles
+`COUNTRIES` (`src/lib/job-countries.ts:27`) gives Canada `adzuna: "ca"` but **no `locationKeyword`**. So:
+- Adzuna correctly returns Canadian jobs.
+- Arbeitnow/Himalayas/RemoteJobs return their normal global mix (Arbeitnow is ~90% German), and nothing filters them out.
+- Round-robin interleave puts ~3 non-Canadian jobs for every 1 Canadian job at the top of the page.
+
+The same bug silently affects every Adzuna-covered country (US, UK, Germany happens to look "correct", Netherlands, France, Australia, South Africa).
+
+### 2. `/jobs/country/nigeria` is empty
+Nigeria has `adzuna: "gb"` + `locationKeyword: "nigeria"` (Adzuna has no Nigeria endpoint). So:
+- Adzuna returns UK jobs.
+- `applyFilters` then drops every job whose `location` doesn't contain "nigeria" — which is essentially all of them.
+- Result: 0 jobs. Same for Ghana and Kenya.
+
+I verified upstream feeds are healthy (Arbeitnow 200/100 jobs, Himalayas 200/89,150 total, RemoteJobs 200, Adzuna creds set) — this is purely a filtering / provider-selection bug on our side.
 
 ## Fix
 
-### 1. Make `getPlatformStats` cheaper and more resilient (`src/lib/admin.functions.ts`)
-- Replace the two `select("created_at")` 30-day scans with a single `rpc`-free aggregation: keep one query per table but only select `created_at`, and cap with `.limit(50000)` defensively. (Real aggregation via SQL view is a follow-up; this just stops the scans from ballooning.)
-- Wrap the `Promise.all` in `Promise.allSettled` and fall back to `0` / `[]` for any rejected leg so the dashboard always returns a complete shape instead of throwing the whole request away when one count times out.
-- Log which leg failed (server-only) so we can tighten the slow ones later.
+Make provider selection country-aware inside `searchJobs`:
 
-### 2. Make the client recover automatically (`src/routes/admin/index.tsx`)
-- On the `useQuery` for `admin-stats`: add `retry: 2`, `retryDelay: attempt => Math.min(1000 * 2 ** attempt, 4000)`, and `refetchOnWindowFocus: false`.
-- Replace the single "Loading…" gate with a skeleton grid so partial slowness is visible but the layout doesn't collapse, and the query continues in the background.
-- Add a small "Retry" button shown only when `isError` so an admin can recover without a full page refresh.
+1. **Country profile helper** — derive per-country fetch strategy from `COUNTRIES`:
+   - Adzuna-covered country (US, UK, Canada, Germany, Netherlands, France, Australia, South Africa): query **Adzuna only** for that country code. Skip Arbeitnow (it's a Germany-skewed feed and pollutes other countries); keep Himalayas + RemoteJobs only when the user explicitly asks for remote (workTypes includes "remote") so remote-friendly Canadian/US/etc. roles still surface.
+   - Germany page: keep Arbeitnow (it's actually relevant there).
+   - Non-Adzuna country (Nigeria, Ghana, Kenya): query Himalayas and RemoteJobs with the country name as the search query (e.g. `q="nigeria"`) plus Adzuna `gb` with `where="nigeria"`; then post-filter by `locationKeyword` as today. This actually surfaces the small but real pool of Nigeria-based remote roles those feeds carry.
+   - Remote (Global): keep all global feeds (current behaviour), unchanged.
 
-### 3. Stop the duplicate admin-me round-trip (`src/components/admin-layout.tsx`)
-- Reuse the same `["admin-me"]` query the route gate already populated: drop `staleTime: 0, gcTime: 0` here (the gate in `src/routes/admin/route.tsx` already enforces freshness on entry) so the layout uses the cached value instead of re-fetching on every child route.
+2. **Tighten `applyFilters` for country pages** — when a country is selected and it's Adzuna-covered, also drop any non-Adzuna result whose `location` clearly belongs to a different country (e.g. contains "germany"/"berlin"/"münchen" on the Canada page). Cheap allow-list per country derived from `COUNTRIES` labels + a small alias map (e.g. `canada → ["canada", "toronto", "vancouver", "montreal", "ontario", "quebec", "alberta", "bc "]`).
 
-## Out of scope
-- No schema changes, no new tables, no migration.
-- No change to `getAdminMe` / auth gate behaviour.
-- Per-sub-page widgets (`/admin/revenue`, `/admin/analyses`, etc.) are unchanged.
+3. **Empty-state copy for Nigeria/Ghana/Kenya** — if after step 2 the result set is still empty, show a friendlier message in `src/routes/_authenticated/jobs.country.$country.tsx` ("Limited live coverage for {country}. Try Remote Worldwide for {country}-friendly roles.") with a button linking to `/jobs/country/remote`.
 
-## Files touched
-- `src/lib/admin.functions.ts` — `getPlatformStats` only
-- `src/routes/admin/index.tsx` — query options + skeleton + retry button
-- `src/components/admin-layout.tsx` — drop forced refetch on `admin-me`
+4. **Sanity check** — after the change, hit `/jobs/country/canada` (expect Canadian cities in `location`), `/jobs/country/germany` (expect German cities, Arbeitnow back in the mix), and `/jobs/country/nigeria` (expect either Nigeria-tagged remote roles or the new empty state, not a blank list).
+
+## Files I'll touch
+
+- `src/lib/jobs.functions.ts` — add country profile + per-provider gating inside `searchJobs`; extend `applyFilters` with the country allow-list.
+- `src/lib/job-countries.ts` — add a small `cityAliases?: string[]` field per entry to power the allow-list.
+- `src/routes/_authenticated/jobs.country.$country.tsx` — refine the empty state for non-Adzuna countries.
+
+No schema or auth changes; no new dependencies.
