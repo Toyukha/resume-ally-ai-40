@@ -1,61 +1,31 @@
-## Advanced Job Search & Smart Filtering
+## Mobile UX fixes
 
-A big upgrade to the Jobs Marketplace plus homepage discovery sections. I'll break it into focused, shippable phases so we can review each before moving on.
+### 1. Fix `/jobs` horizontal overflow (the real bug)
+In `src/routes/_authenticated/jobs.index.tsx`, add `min-w-0` to the results column so its grid cell can shrink and the existing `overflow-x-auto` strips actually scroll instead of stretching the page to 1274px on mobile.
 
-### Phase 1 — Smart Filter Sidebar + Search + Sort (core UX)
-Rebuild `/jobs` (Browse) with a left filter sidebar (sticky on desktop, drawer on mobile) and a results panel.
+```diff
+- <div className="space-y-4">
++ <div className="min-w-0 space-y-4">
+```
 
-Filters:
-- **Country** (US, UK, Canada, Germany, Netherlands, France, Australia, Nigeria, Ghana, Kenya, South Africa, Other)
-- **Work type** (Remote, Hybrid, Onsite) — multi-select
-- **Job category** (19 categories listed) — multi-select, mapped to keyword groups
-- **Experience level** (Entry, Junior, Mid, Senior, Lead, Executive) — keyword-derived
-- **Employment type** (Full-time, Part-time, Contract, Internship, Freelance) — multi-select
-- **Intelligent search bar** — searches title/company/skill/keyword (already wired via Adzuna `what`)
-- **Sort**: Most Relevant (default), Newest, Highest Match, Recently Posted, Remote First, Company A-Z
-- **Active filter chips** above results with one-click clear; "Clear all"
+### 2. Enlarge sub-36px tap targets
+Audit flagged ~8 icon buttons per page (navbar, job card actions, dialog/close, dismiss chips) measuring under 36×36 — below the WCAG 2.5.5 / Apple HIG comfort target.
 
-All state lives in URL search params (TanStack `validateSearch`) so filters are shareable/bookmarkable.
+- Navbar icon buttons (mobile menu, theme toggle, profile) → bump from `h-8 w-8` / `size="sm"` to `h-10 w-10`.
+- Job card action icons (save, share, dismiss) → ensure min `h-10 w-10` hit area, keeping the icon glyph the same visual size.
+- `ActiveFilterChips` close (×) buttons → wrap in `h-9 w-9` tap area on mobile while keeping the visual chip compact.
+- Dialog/Sheet close buttons → bump from `h-6 w-6` to `h-9 w-9`.
 
-### Phase 2 — Quick Filter Cards
-Horizontal scrollable row of one-click preset cards above results: 🌍 Remote, 🇬🇧 UK, 🇺🇸 US, 🇨🇦 Canada, 🇳🇬 Nigeria, 💼 Customer Success, 📊 Data Analyst, 🎨 UI/UX, 💻 Software Engineering, 📈 Marketing, 🎯 Sales. Each card applies the appropriate filter set.
+Scope: only the components flagged on /, /auth, /dashboard, /jobs, /support. No visual redesign — just bigger invisible hit areas.
 
-### Phase 3 — Country Job Hub pages
-New routes under `_authenticated/jobs/`:
-- `/jobs/country/$country` — dynamic page handling `uk`, `us`, `canada`, `nigeria`, `germany`, `remote`, etc.
-- Each renders the same results UI pre-filtered, with a localized hero ("Jobs in the United Kingdom") and per-country SEO `head()` metadata.
-- New "Countries" tab in `JobsTabs`.
+### 3. Suppress NotFoundComponent SSR hydration mismatch
+The root not-found shell wraps its body in `<Suspense>` which mismatches between server and client render. Remove the unused Suspense wrapper (or gate it `<ClientOnly>`) so React stops logging the hydration warning. Cosmetic only.
 
-### Phase 4 — Result Card upgrades + Match Score badge
-Job cards already show title/company/location/type/badges/posted. I'll add:
-- Country flag/code badge
-- Inline **Match Score** badge (computed on-the-fly from CV keywords vs job tags/title; no quota cost — purely client-side keyword overlap, distinct from the quota-consuming "Analyze Match" deep AI run)
-- Cleaner layout, same Analyze/Save/Apply actions
+### Verification
+Re-run the mobile Playwright audit (390×844, iPhone UA) and confirm:
+- `/jobs` scrollWidth === clientWidth (no horizontal scroll)
+- tap-target counts drop to ~0 small targets on audited pages
+- no pageerror entries for hydration mismatch
 
-### Phase 5 — Live Job Statistics strip
-A small stats bar at the top of `/jobs`: "10,500+ Remote · 3,200 UK · 5,400 US · 2,100 Customer Success". Numbers pulled from cached Adzuna `count` endpoint per filter (5-min cache) — real, not hardcoded.
-
-### Phase 6 — Homepage discovery sections
-On `/` (between hero and existing sections):
-- **Trending Countries**: 🇨🇦 Canada · 🇬🇧 UK · 🇺🇸 USA · 🇩🇪 Germany · 🌍 Remote — clickable cards linking to country hub pages
-- **Popular Career Paths**: 💼 Customer Success · 📊 Data Analytics · 💻 Software Engineering · 🎨 UI/UX · 📈 Digital Marketing · 🎯 Sales — clickable cards linking to `/jobs?category=...`
-
-### Phase 7 — Save Filters / Saved Searches *(deferred — confirm before building)*
-Requires a new DB table (`saved_searches`) and an email notification job. I'll skip this in the first pass and add it as a follow-up once the rest is approved, to keep this PR reviewable.
-
-### Personalized Recommendations
-The existing `/jobs/recommendations` tab already does this (uses CV keywords). I'll polish it to show match % chips and link the "Recommended For You" section more prominently from the dashboard.
-
-### Technical notes
-- All filter state via URL params + `zodValidator` (shareable, SSR-safe)
-- Category → keyword mapping lives in a new `src/lib/job-categories.ts`
-- Country → Adzuna country code + display label in `src/lib/job-countries.ts`
-- Experience-level filtering done client-side via title regex (Adzuna doesn't expose it directly)
-- Mobile: sidebar collapses into a Sheet drawer triggered by a "Filters" button
-- No backend schema changes in phases 1-6
-
-### Out of scope this pass
-- Saved searches table + email alerts (Phase 7, separate approval)
-- Match-score badge that consumes user quota (kept as separate "Analyze Match" CTA — unchanged)
-
-Want me to ship phases 1-6 in one go, or stage them? And should I include Phase 7 (saved searches with notifications) now or later?
+### Out of scope
+No design system changes, no copy edits, no new components. Filter/sort logic and server functions untouched.
