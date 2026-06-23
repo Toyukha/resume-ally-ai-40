@@ -93,7 +93,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
         <div className="absolute inset-x-0 bottom-0 border-t p-3">
           <div className="mb-2 truncate text-xs text-muted-foreground">
-            {meQuery.data.email}
+            {me.email}
             <div className="mt-0.5 flex flex-wrap gap-1">
               {roles.map((r) => (
                 <span key={r} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">{r}</span>
