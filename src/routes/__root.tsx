@@ -139,7 +139,12 @@ function RootComponent() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      if (event === "SIGNED_OUT") {
+        // Drop every cached query so the next user can never see the previous user's data.
+        queryClient.clear();
+      } else {
+        queryClient.invalidateQueries();
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
