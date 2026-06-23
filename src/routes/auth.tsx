@@ -119,7 +119,7 @@ function AuthPage() {
                         if (error) toast.error(error.message);
                         else toast.success("Check your email for a reset link.");
                       }}
-                      className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                      className="min-h-9 py-2 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                     >
                       Forgot password?
                     </button>
