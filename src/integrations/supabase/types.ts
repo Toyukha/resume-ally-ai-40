@@ -226,7 +226,7 @@ export type Database = {
         Row: {
           contact_email: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           hq_location: string | null
           id: string
@@ -242,7 +242,7 @@ export type Database = {
         Insert: {
           contact_email?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           hq_location?: string | null
           id?: string
@@ -258,7 +258,7 @@ export type Database = {
         Update: {
           contact_email?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           hq_location?: string | null
           id?: string
@@ -529,7 +529,7 @@ export type Database = {
           external_url: string | null
           id: string
           location: string | null
-          posted_by: string
+          posted_by: string | null
           preferred_skills: string[]
           published_at: string | null
           required_skills: string[]
@@ -558,7 +558,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           location?: string | null
-          posted_by: string
+          posted_by?: string | null
           preferred_skills?: string[]
           published_at?: string | null
           required_skills?: string[]
@@ -587,7 +587,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           location?: string | null
-          posted_by?: string
+          posted_by?: string | null
           preferred_skills?: string[]
           published_at?: string | null
           required_skills?: string[]
