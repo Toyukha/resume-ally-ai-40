@@ -94,9 +94,9 @@ function AuthPage() {
             </div>
 
             <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
+              <TabsList className="grid h-11 w-full grid-cols-2">
+                <TabsTrigger value="signin" className="h-9">Sign in</TabsTrigger>
+                <TabsTrigger value="signup" className="h-9">Sign up</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
@@ -119,7 +119,7 @@ function AuthPage() {
                         if (error) toast.error(error.message);
                         else toast.success("Check your email for a reset link.");
                       }}
-                      className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                      className="min-h-9 py-2 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                     >
                       Forgot password?
                     </button>
@@ -171,7 +171,7 @@ function Field({ id, label, type, icon: Icon, value, onChange, minLength, isPass
             type="button"
             onClick={() => setShow((s) => !s)}
             aria-label={show ? "Hide password" : "Show password"}
-            className="absolute right-2 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="absolute right-1 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
