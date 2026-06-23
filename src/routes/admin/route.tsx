@@ -22,9 +22,16 @@ function AdminRoute() {
   if (path === "/admin/login") return <Outlet />;
 
   const fn = useServerFn(getAdminMe);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-me"], queryFn: () => fn() });
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ["admin-me"],
+    queryFn: () => fn(),
+    staleTime: 0,
+    gcTime: 0,
+  });
 
-  if (isLoading) {
+  // Block children until we have a FRESH role check — never serve stale super-admin
+  // data from a previous user's session.
+  if (isLoading || isFetching || !data) {
     return (
       <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
         Verifying admin access…
