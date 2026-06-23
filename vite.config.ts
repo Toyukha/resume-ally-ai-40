@@ -13,6 +13,14 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 const serverEnv = loadEnv(process.env.NODE_ENV || "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
 
+// htmlparser2@8 imports `entities/lib/*` (entities@4 layout), but parse5/jsdom
+// hoist entities@8 to the top level (which uses `dist/` and has no `lib/`).
+// Redirect the legacy deep paths to htmlparser2's nested entities@4 copy.
+const nestedEntities = path.resolve(
+  process.cwd(),
+  "node_modules/htmlparser2/node_modules/entities",
+);
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -22,9 +30,8 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        "entities/lib/decode.js": path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
-        "entities/lib/encode.js": path.resolve(process.cwd(), "node_modules/entities/lib/encode.js"),
-        "entities": path.resolve(process.cwd(), "node_modules/entities"),
+        "entities/lib/decode.js": path.join(nestedEntities, "lib/decode.js"),
+        "entities/lib/encode.js": path.join(nestedEntities, "lib/encode.js"),
       },
     },
   },
