@@ -47,10 +47,11 @@ function OverviewSkeleton() {
 }
 
 function AdminOverview() {
-  const fn = useServerFn(getPlatformStats);
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["admin-stats"],
+  const fn = useServerFn(getAdminBootstrap);
+  const { data: bootstrap, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["admin-bootstrap"],
     queryFn: () => fn(),
+    staleTime: 30_000,
     retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
     refetchOnWindowFocus: false,
@@ -58,13 +59,15 @@ function AdminOverview() {
 
   if (isLoading) return <OverviewSkeleton />;
 
+  const data = bootstrap?.stats;
   if (isError || !data) {
+    const msg = bootstrap?.statsError ?? (error instanceof Error ? error.message : null);
     return (
       <div className="space-y-4">
         <h1 className="font-display text-2xl font-bold">Platform Overview</h1>
         <Card className="p-6">
           <p className="text-sm text-destructive">Couldn't load platform statistics.</p>
-          {error instanceof Error && <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>}
+          {msg && <p className="mt-1 text-xs text-muted-foreground">{msg}</p>}
           <Button onClick={() => refetch()} disabled={isFetching} size="sm" className="mt-4">
             {isFetching ? "Retrying…" : "Retry"}
           </Button>
