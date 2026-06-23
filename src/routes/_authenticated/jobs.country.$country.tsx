@@ -158,11 +158,26 @@ function CountryHub() {
           {jobsQ.isLoading ? (
             <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (jobsQ.data?.jobs.length ?? 0) === 0 ? (
-            <Card className="grid place-items-center gap-2 p-12 text-center">
-              <Briefcase className="h-8 w-8 text-muted-foreground" />
-              <div className="font-semibold">No jobs match right now</div>
-              <p className="text-sm text-muted-foreground">Try broadening filters or check back tomorrow.</p>
-            </Card>
+            country.adzuna && !country.remoteOnly && country.locationKeyword ? (
+              <Card className="grid place-items-center gap-3 p-12 text-center">
+                <Briefcase className="h-8 w-8 text-muted-foreground" />
+                <div className="font-semibold">Limited live coverage for {country.label}</div>
+                <p className="max-w-md text-sm text-muted-foreground">
+                  Our partner job feeds don't index {country.label} directly yet. Browse Remote Worldwide
+                  for {country.label}-friendly roles you can do from anywhere.
+                </p>
+                <Button variant="hero" asChild>
+                  <Link to="/jobs/country/$country" params={{ country: "remote" }}>Browse Remote Worldwide</Link>
+                </Button>
+              </Card>
+            ) : (
+              <Card className="grid place-items-center gap-2 p-12 text-center">
+                <Briefcase className="h-8 w-8 text-muted-foreground" />
+                <div className="font-semibold">No jobs match right now</div>
+                <p className="text-sm text-muted-foreground">Try broadening filters or check back tomorrow.</p>
+              </Card>
+            )
+
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2">
