@@ -5,7 +5,7 @@ import { Users, FileBarChart2, TrendingUp, CreditCard, UserPlus, Activity, Dolla
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPlatformStats } from "@/lib/admin.functions";
+import { getAdminBootstrap } from "@/lib/admin.functions";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Bar, BarChart } from "recharts";
 
 export const Route = createFileRoute("/admin/")({
