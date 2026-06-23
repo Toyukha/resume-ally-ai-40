@@ -411,6 +411,13 @@ function applySort(jobs: NormalizedJob[], sort: JobSearchInput["sort"]): Normali
   return arr;
 }
 
+// Resolve a country profile from the slug (lazy import to avoid a circular module).
+async function resolveCountryProfile(slug: string | undefined) {
+  if (!slug) return null;
+  const { COUNTRY_BY_SLUG } = await import("./job-countries");
+  return COUNTRY_BY_SLUG[slug as keyof typeof COUNTRY_BY_SLUG] ?? null;
+}
+
 export const searchJobs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SearchSchema.parse(input ?? {}))
@@ -424,28 +431,64 @@ export const searchJobs = createServerFn({ method: "POST" })
       : empt === "contract" ? "contract"
       : undefined;
 
+    const profile = await resolveCountryProfile(data.countrySlug);
+    const wantsRemote = (data.workTypes ?? []).includes("remote") || profile?.remoteOnly === true;
+
+    // Provider gating:
+    //  - Remote (Global): all four providers (legacy behaviour).
+    //  - Adzuna-covered country: Adzuna for that country. Add Himalayas/RemoteJobs ONLY if user
+    //    wants remote (they're global remote feeds; post-filter trims them to country).
+    //    Keep Arbeitnow only on the Germany page (it's a DE-skewed feed otherwise).
+    //  - Non-Adzuna country (Nigeria/Ghana/Kenya): query global remote feeds with the country
+    //    name as `q` plus Adzuna `gb` with `where=<country>`.
+    //  - No country (default search): all four providers (legacy behaviour).
+    const useArbeitnow = !profile || profile.slug === "germany" || profile.slug === "remote";
+    const useAdzuna = true;
+    const useHimalayas = !profile || profile.remoteOnly || !profile.adzunaCovered || wantsRemote;
+    const useRemoteJobs = useHimalayas;
+
+    const globalFeedQuery = profile && !profile.adzunaCovered
+      ? (data.query ? `${data.query} ${profile.locationKeyword ?? profile.label}` : (profile.locationKeyword ?? profile.label))
+      : data.query;
+    const adzunaWhere = profile && !profile.adzunaCovered
+      ? (profile.locationKeyword ?? data.location)
+      : data.location;
+
+    const empty: NormalizedJob[] = [];
     const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
-      fetchArbeitnowPage(page).catch(() => [] as NormalizedJob[]),
-      fetchArbeitnowPage(page + 1).catch(() => [] as NormalizedJob[]),
-      fetchAdzunaPage(country, page, {
-        query: data.query, location: data.location, maxDaysOld: data.postedWithinDays, contract,
-      }).catch(() => [] as NormalizedJob[]),
-      fetchAdzunaPage(country, page + 1, {
-        query: data.query, location: data.location, maxDaysOld: data.postedWithinDays, contract,
-      }).catch(() => [] as NormalizedJob[]),
-      fetchHimalayasPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
-      fetchRemoteJobsPage(page, { query: data.query }).catch(() => [] as NormalizedJob[]),
+      useArbeitnow ? fetchArbeitnowPage(page).catch(() => empty) : Promise.resolve(empty),
+      useArbeitnow ? fetchArbeitnowPage(page + 1).catch(() => empty) : Promise.resolve(empty),
+      useAdzuna ? fetchAdzunaPage(country, page, {
+        query: data.query, location: adzunaWhere, maxDaysOld: data.postedWithinDays, contract,
+      }).catch(() => empty) : Promise.resolve(empty),
+      useAdzuna ? fetchAdzunaPage(country, page + 1, {
+        query: data.query, location: adzunaWhere, maxDaysOld: data.postedWithinDays, contract,
+      }).catch(() => empty) : Promise.resolve(empty),
+      useHimalayas ? fetchHimalayasPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteJobs ? fetchRemoteJobsPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
     ]);
+
+    // Country allow-list: drop non-Adzuna jobs whose location/description doesn't match this country.
+    const aliases = (profile?.cityAliases ?? []).map((s) => s.toLowerCase());
+    const inCountry = (j: NormalizedJob): boolean => {
+      if (!profile || profile.remoteOnly) return true;
+      // Adzuna results are already country-scoped; trust them.
+      if (j.provider === "adzuna") return true;
+      if (!aliases.length) return true;
+      const hay = `${j.location} ${j.description.slice(0, 400)} ${j.tags.join(" ")}`.toLowerCase();
+      return aliases.some((a) => hay.includes(a));
+    };
+
     // Round-robin interleave so the 50-result slice keeps a mix from every provider
     const buckets = [
-      [...an1, ...an2],
-      [...adz1, ...adz2],
-      [...him1],
-      [...rj1],
+      [...an1, ...an2].filter(inCountry),
+      [...adz1, ...adz2].filter(inCountry),
+      [...him1].filter(inCountry),
+      [...rj1].filter(inCountry),
     ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
-    const maxLen = Math.max(...buckets.map((b) => b.length));
+    const maxLen = Math.max(0, ...buckets.map((b) => b.length));
     for (let i = 0; i < maxLen; i++) {
       for (const bucket of buckets) {
         const j = bucket[i];
@@ -464,6 +507,8 @@ export const searchJobs = createServerFn({ method: "POST" })
       an1.length >= 50 || adz1.length >= 50 || him1.length >= 50 || rj1.length >= 50;
     return { jobs: sorted.slice(0, pageSize), total: sorted.length, page, hasMore };
   });
+
+
 
 // Live job-count strip — Adzuna's count endpoint, cached for 1h per filter.
 const statsCache = new Map<string, { at: number; n: number }>();
