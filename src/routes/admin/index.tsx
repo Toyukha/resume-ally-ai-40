@@ -98,7 +98,7 @@ function AdminOverview() {
         <Stat icon={DollarSign} label="Monthly Revenue" value={naira(data.monthlyRevenue)} />
         <Stat icon={DollarSign} label="Total Revenue" value={naira(data.totalRevenue)} hint="All successful payments" />
         <Stat icon={CreditCard} label="Active Subscribers" value={fmt(data.activeSubscribers)} />
-        <Stat icon={BarChart3} label="Avg/Day (30d)" value={fmt(Math.round(data.trend.reduce((s, d) => s + d.analyses, 0) / 30))} />
+        <Stat icon={BarChart3} label="Avg/Day (30d)" value={fmt(Math.round(data.trend.reduce((s: number, d: { analyses: number }) => s + d.analyses, 0) / 30))} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
