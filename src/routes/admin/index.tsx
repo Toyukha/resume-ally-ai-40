@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Users, FileBarChart2, TrendingUp, CreditCard, UserPlus, Activity, DollarSign, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getPlatformStats } from "@/lib/admin.functions";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Bar, BarChart } from "recharts";
 
@@ -24,12 +26,51 @@ function Stat({ icon: Icon, label, value, hint }: { icon: typeof Users; label: s
   );
 }
 
+function OverviewSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold">Platform Overview</h1>
+        <p className="text-sm text-muted-foreground">Loading realtime snapshot…</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Card key={i} className="p-5"><Skeleton className="h-4 w-24" /><Skeleton className="mt-3 h-7 w-20" /></Card>
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5"><Skeleton className="h-5 w-40" /><Skeleton className="mt-4 h-[240px] w-full" /></Card>
+        <Card className="p-5"><Skeleton className="h-5 w-40" /><Skeleton className="mt-4 h-[240px] w-full" /></Card>
+      </div>
+    </div>
+  );
+}
+
 function AdminOverview() {
   const fn = useServerFn(getPlatformStats);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-stats"], queryFn: () => fn() });
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: () => fn(),
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    refetchOnWindowFocus: false,
+  });
 
-  if (isLoading || !data) {
-    return <div className="text-sm text-muted-foreground">Loading platform statistics…</div>;
+  if (isLoading) return <OverviewSkeleton />;
+
+  if (isError || !data) {
+    return (
+      <div className="space-y-4">
+        <h1 className="font-display text-2xl font-bold">Platform Overview</h1>
+        <Card className="p-6">
+          <p className="text-sm text-destructive">Couldn't load platform statistics.</p>
+          {error instanceof Error && <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>}
+          <Button onClick={() => refetch()} disabled={isFetching} size="sm" className="mt-4">
+            {isFetching ? "Retrying…" : "Retry"}
+          </Button>
+        </Card>
+      </div>
+    );
   }
 
   const fmt = (n: number) => new Intl.NumberFormat().format(n);
