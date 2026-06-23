@@ -94,9 +94,9 @@ function AuthPage() {
             </div>
 
             <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
+              <TabsList className="grid h-11 w-full grid-cols-2">
+                <TabsTrigger value="signin" className="h-9">Sign in</TabsTrigger>
+                <TabsTrigger value="signup" className="h-9">Sign up</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
