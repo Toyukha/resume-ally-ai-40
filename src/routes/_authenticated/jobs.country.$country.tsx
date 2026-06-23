@@ -69,6 +69,7 @@ function CountryHub() {
     query: search.query,
     location: country.locationKeyword,
     country: country.adzuna,
+    countrySlug: country.slug,
     workTypes: country.remoteOnly ? ["remote"] : search.workTypes,
     employmentTypes: search.employmentTypes,
     categories: search.categories,
@@ -76,6 +77,7 @@ function CountryHub() {
     postedWithinDays: search.postedWithinDays,
     sort: search.sort,
   };
+
 
   const updateFilters = (next: JobSearchInput) => {
     navigate({
