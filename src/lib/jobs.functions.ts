@@ -290,6 +290,8 @@ const SearchSchema = z.object({
   postedWithinDays: z.number().int().min(0).max(180).optional(),
   page: z.number().int().min(1).max(10).optional(),
   country: z.enum(ADZUNA_COUNTRIES).optional(),
+  /** Optional country slug used to scope multi-provider blending to one country page. */
+  countrySlug: z.string().max(40).optional(),
   // New multi-value filters (all optional, backward compatible)
   workTypes: z.array(z.enum(["remote", "hybrid", "onsite"])).max(3).optional(),
   employmentTypes: z.array(z.string().max(50)).max(8).optional(),
@@ -297,6 +299,7 @@ const SearchSchema = z.object({
   experienceLevels: z.array(z.string().max(20)).max(8).optional(),
   sort: z.enum(["relevance", "newest", "match", "remote-first", "company-az"]).optional(),
 });
+
 export type JobSearchInput = z.infer<typeof SearchSchema>;
 
 function applyFilters(jobs: NormalizedJob[], f: JobSearchInput): NormalizedJob[] {
