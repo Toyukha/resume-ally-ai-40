@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getAdminMe } from "@/lib/admin.functions";
+import { getAdminBootstrap } from "@/lib/admin.functions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -28,28 +28,33 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
-  const meFn = useServerFn(getAdminMe);
-  const meQuery = useQuery({ queryKey: ["admin-me"], queryFn: () => meFn() });
+  const fn = useServerFn(getAdminBootstrap);
+  const meQuery = useQuery({
+    queryKey: ["admin-bootstrap"],
+    queryFn: () => fn(),
+    staleTime: 30_000,
+  });
+  const me = meQuery.data?.me;
 
   useEffect(() => {
-    if (meQuery.isSuccess && !meQuery.data.isAdmin) {
+    if (meQuery.isSuccess && !me?.isAdmin) {
       navigate({ to: "/dashboard", replace: true });
     }
-  }, [meQuery.isSuccess, meQuery.data?.isAdmin, navigate]);
+  }, [meQuery.isSuccess, me?.isAdmin, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/admin/login", replace: true });
   };
 
-  if (meQuery.isLoading) {
+  if (meQuery.isLoading || !me) {
     return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading admin…</div>;
   }
-  if (!meQuery.data?.isAdmin) {
+  if (!me.isAdmin) {
     return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Redirecting…</div>;
   }
 
-  const roles = meQuery.data.roles;
+  const roles = me.roles;
 
   return (
     <div className="flex min-h-screen bg-muted/30">
