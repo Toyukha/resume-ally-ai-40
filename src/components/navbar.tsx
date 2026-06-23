@@ -54,15 +54,15 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           
           {user ? (
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" onClick={signOut} className="h-10 min-h-10">
               <LogOut className="mr-2 h-4 w-4" /> Sign out
             </Button>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" asChild className="h-10 min-h-10">
                 <Link to="/auth">Sign in</Link>
               </Button>
-              <Button size="sm" variant="hero" asChild>
+              <Button variant="hero" asChild className="h-10 min-h-10">
                 <Link to="/auth">Get started</Link>
               </Button>
             </>
