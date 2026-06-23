@@ -73,20 +73,7 @@ export const getPlatformStats = createServerFn({ method: "GET" })
     const startOfDay = new Date(now); startOfDay.setUTCHours(0, 0, 0, 0);
     const startOfMonth = new Date(now); startOfMonth.setUTCDate(1); startOfMonth.setUTCHours(0, 0, 0, 0);
 
-    const [
-      { count: totalUsers },
-      { count: newUsersToday },
-      { count: newUsersThisMonth },
-      { count: totalAnalyses },
-      { count: analysesToday },
-      { count: analysesThisMonth },
-      { count: proUsers },
-      { data: revenueRows },
-      { data: monthlyPayments },
-      { data: totalPayments },
-      { data: dailyAnalyses },
-      { data: dailyUsers },
-    ] = await Promise.all([
+    const queries = [
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", startOfDay.toISOString()),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
@@ -97,9 +84,32 @@ export const getPlatformStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("profiles").select("pro_started_at").eq("plan", "pro").gt("pro_expires_at", now.toISOString()),
       supabaseAdmin.from("payments").select("amount").eq("status", "successful").gte("verified_at", startOfMonth.toISOString()),
       supabaseAdmin.from("payments").select("amount").eq("status", "successful"),
-      supabaseAdmin.from("analyses").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
-      supabaseAdmin.from("profiles").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()),
-    ]);
+      supabaseAdmin.from("analyses").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()).limit(50000),
+      supabaseAdmin.from("profiles").select("created_at").gte("created_at", new Date(now.getTime() - 30 * 86400000).toISOString()).limit(50000),
+    ];
+    const labels = [
+      "totalUsers","newUsersToday","newUsersThisMonth","totalAnalyses","analysesToday","analysesThisMonth",
+      "proUsers","revenueRows","monthlyPayments","totalPayments","dailyAnalyses","dailyUsers",
+    ];
+    const settled = await Promise.allSettled(queries);
+    const pick = <T,>(i: number, fallback: T): T => {
+      const r = settled[i];
+      if (r.status === "fulfilled") return r.value as unknown as T;
+      console.error(`[getPlatformStats] ${labels[i]} failed:`, r.reason);
+      return fallback;
+    };
+    const { count: totalUsers } = pick(0, { count: 0 as number | null });
+    const { count: newUsersToday } = pick(1, { count: 0 as number | null });
+    const { count: newUsersThisMonth } = pick(2, { count: 0 as number | null });
+    const { count: totalAnalyses } = pick(3, { count: 0 as number | null });
+    const { count: analysesToday } = pick(4, { count: 0 as number | null });
+    const { count: analysesThisMonth } = pick(5, { count: 0 as number | null });
+    pick(6, { count: 0 as number | null });
+    const { data: revenueRows } = pick(7, { data: [] as Array<{ pro_started_at: string | null }> });
+    const { data: monthlyPayments } = pick(8, { data: [] as Array<{ amount: number | string }> });
+    const { data: totalPayments } = pick(9, { data: [] as Array<{ amount: number | string }> });
+    const { data: dailyAnalyses } = pick(10, { data: [] as Array<{ created_at: string }> });
+    const { data: dailyUsers } = pick(11, { data: [] as Array<{ created_at: string }> });
 
     const activeSubs = revenueRows?.length ?? 0;
     const monthlyRevenue = (monthlyPayments ?? []).reduce((s: number, r: { amount: number | string }) => s + Number(r.amount || 0), 0);
