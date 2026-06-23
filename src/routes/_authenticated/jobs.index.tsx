@@ -109,7 +109,7 @@ function BrowseJobs() {
       </aside>
 
       {/* Results */}
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <JobStatsStrip />
         <QuickFilterCards current={filters} onApply={applyPreset} />
 
