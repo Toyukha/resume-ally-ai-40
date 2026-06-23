@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin-layout";
 import { AccessDenied } from "@/components/access-denied";
 import { isSuperAdmin } from "@/lib/admin-access";
-import { getAdminMe } from "@/lib/admin.functions";
+import { getAdminBootstrap } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -21,16 +21,16 @@ function AdminRoute() {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
   if (path === "/admin/login") return <Outlet />;
 
-  const fn = useServerFn(getAdminMe);
+  const fn = useServerFn(getAdminBootstrap);
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-me"],
+    queryKey: ["admin-bootstrap"],
     queryFn: () => fn(),
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 30_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    refetchOnWindowFocus: false,
   });
 
-  // Block children until we have a FRESH role check — never serve stale super-admin
-  // data from a previous user's session.
   if (isLoading || isFetching || !data) {
     return (
       <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
@@ -39,7 +39,7 @@ function AdminRoute() {
     );
   }
 
-  if (!isSuperAdmin(data?.roles)) return <AccessDenied />;
+  if (!isSuperAdmin(data.me.roles)) return <AccessDenied />;
 
   return (
     <AdminLayout>
