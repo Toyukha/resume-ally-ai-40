@@ -26,7 +26,8 @@ function requireSuper(roles: AppRole[]) {
 // Generic server-side error helper: log details, surface safe message.
 function failSafely(scope: string, error: unknown): never {
   console.error(`[admin:${scope}]`, error);
-  throw new Error("Operation failed. Please try again or contact support.");
+  const msg = error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String((error as { message: unknown }).message) : "Unknown error";
+  throw new Error(`${scope}: ${msg}`);
 }
 
 
