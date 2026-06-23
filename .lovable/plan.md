@@ -1,31 +1,37 @@
-## Mobile UX fixes
+# Fix: Admin dashboard doesn't fully load on first visit
 
-### 1. Fix `/jobs` horizontal overflow (the real bug)
-In `src/routes/_authenticated/jobs.index.tsx`, add `min-w-0` to the results column so its grid cell can shrink and the existing `overflow-x-auto` strips actually scroll instead of stretching the page to 1274px on mobile.
+## What's happening
 
-```diff
-- <div className="space-y-4">
-+ <div className="min-w-0 space-y-4">
-```
+The `/admin` overview calls one server function (`getPlatformStats`) that fans out **12 parallel queries** against `profiles`, `analyses`, and `payments` — including two unbounded 30-day row scans for the trend chart. In production this regularly:
 
-### 2. Enlarge sub-36px tap targets
-Audit flagged ~8 icon buttons per page (navbar, job card actions, dialog/close, dismiss chips) measuring under 36×36 — below the WCAG 2.5.5 / Apple HIG comfort target.
+- exceeds the worker's request budget on the first hit (cold start + parallel scans), so the promise rejects or returns a partial payload
+- is not retried — `useQuery` here uses defaults but the first failure leaves the page stuck on "Loading platform statistics…" until the admin hits refresh, which usually warms the cache and succeeds
 
-- Navbar icon buttons (mobile menu, theme toggle, profile) → bump from `h-8 w-8` / `size="sm"` to `h-10 w-10`.
-- Job card action icons (save, share, dismiss) → ensure min `h-10 w-10` hit area, keeping the icon glyph the same visual size.
-- `ActiveFilterChips` close (×) buttons → wrap in `h-9 w-9` tap area on mobile while keeping the visual chip compact.
-- Dialog/Sheet close buttons → bump from `h-6 w-6` to `h-9 w-9`.
+Two smaller contributors:
+- `AdminLayout` runs its own `getAdminMe` query with `staleTime: 0, gcTime: 0` in addition to the route gate, so the overview kicks off three round-trips before any data renders.
+- The trend queries pull every row in the window and count client-side instead of using `count: "exact", head: true` per bucket — fine for small tenants, brittle as the table grows.
 
-Scope: only the components flagged on /, /auth, /dashboard, /jobs, /support. No visual redesign — just bigger invisible hit areas.
+## Fix
 
-### 3. Suppress NotFoundComponent SSR hydration mismatch
-The root not-found shell wraps its body in `<Suspense>` which mismatches between server and client render. Remove the unused Suspense wrapper (or gate it `<ClientOnly>`) so React stops logging the hydration warning. Cosmetic only.
+### 1. Make `getPlatformStats` cheaper and more resilient (`src/lib/admin.functions.ts`)
+- Replace the two `select("created_at")` 30-day scans with a single `rpc`-free aggregation: keep one query per table but only select `created_at`, and cap with `.limit(50000)` defensively. (Real aggregation via SQL view is a follow-up; this just stops the scans from ballooning.)
+- Wrap the `Promise.all` in `Promise.allSettled` and fall back to `0` / `[]` for any rejected leg so the dashboard always returns a complete shape instead of throwing the whole request away when one count times out.
+- Log which leg failed (server-only) so we can tighten the slow ones later.
 
-### Verification
-Re-run the mobile Playwright audit (390×844, iPhone UA) and confirm:
-- `/jobs` scrollWidth === clientWidth (no horizontal scroll)
-- tap-target counts drop to ~0 small targets on audited pages
-- no pageerror entries for hydration mismatch
+### 2. Make the client recover automatically (`src/routes/admin/index.tsx`)
+- On the `useQuery` for `admin-stats`: add `retry: 2`, `retryDelay: attempt => Math.min(1000 * 2 ** attempt, 4000)`, and `refetchOnWindowFocus: false`.
+- Replace the single "Loading…" gate with a skeleton grid so partial slowness is visible but the layout doesn't collapse, and the query continues in the background.
+- Add a small "Retry" button shown only when `isError` so an admin can recover without a full page refresh.
 
-### Out of scope
-No design system changes, no copy edits, no new components. Filter/sort logic and server functions untouched.
+### 3. Stop the duplicate admin-me round-trip (`src/components/admin-layout.tsx`)
+- Reuse the same `["admin-me"]` query the route gate already populated: drop `staleTime: 0, gcTime: 0` here (the gate in `src/routes/admin/route.tsx` already enforces freshness on entry) so the layout uses the cached value instead of re-fetching on every child route.
+
+## Out of scope
+- No schema changes, no new tables, no migration.
+- No change to `getAdminMe` / auth gate behaviour.
+- Per-sub-page widgets (`/admin/revenue`, `/admin/analyses`, etc.) are unchanged.
+
+## Files touched
+- `src/lib/admin.functions.ts` — `getPlatformStats` only
+- `src/routes/admin/index.tsx` — query options + skeleton + retry button
+- `src/components/admin-layout.tsx` — drop forced refetch on `admin-me`
