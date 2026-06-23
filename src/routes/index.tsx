@@ -3,8 +3,9 @@ import { useRef, useState } from "react";
 import {
   Sparkles, FileText, Target, Wand2, Shield, Zap,
   CheckCircle2, ArrowRight, Star, Volume2, VolumeX,
-  ShieldCheck, Play,
+  ShieldCheck, Play, Globe, CreditCard,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
