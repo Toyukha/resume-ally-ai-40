@@ -153,15 +153,23 @@ function JobDetail() {
   );
 }
 
+import DOMPurify from "dompurify";
+
 function JobDescription({ html }: { html: string }) {
   const trimmed = html?.trim() ?? "";
   if (!trimmed) return <p className="text-sm text-muted-foreground">No description provided.</p>;
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(trimmed);
   if (looksLikeHtml) {
+    const safe = typeof window === "undefined"
+      ? trimmed.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/ on\w+="[^"]*"/gi, "")
+      : DOMPurify.sanitize(trimmed, {
+          FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form"],
+          FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "style"],
+        });
     return (
       <div
         className="prose prose-invert max-w-none text-sm leading-relaxed prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-li:text-foreground/90 prose-a:text-primary-glow"
-        dangerouslySetInnerHTML={{ __html: trimmed }}
+        dangerouslySetInnerHTML={{ __html: safe }}
       />
     );
   }
