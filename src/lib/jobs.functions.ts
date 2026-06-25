@@ -814,6 +814,12 @@ export const searchJobs = createServerFn({ method: "POST" })
     const useAdzuna = true;
     const useHimalayas = !profile || profile.remoteOnly || !profile.adzunaCovered || wantsRemote;
     const useRemoteJobs = useHimalayas;
+    // The free remote bundle (Remotive/RemoteOK/Jobicy/WWR) is global-remote
+    // by nature — enable wherever Himalayas/RemoteJobs are enabled.
+    const useRemoteBundle = useHimalayas;
+    // Company boards are always worth fetching: they're cached 30 min and
+    // post-filtered by countrySlug so non-matching boards return nothing.
+    const useCompanyBoards = true;
 
     const globalFeedQuery = profile && !profile.adzunaCovered
       ? (data.query ? `${data.query} ${profile.locationKeyword ?? profile.label}` : (profile.locationKeyword ?? profile.label))
@@ -823,7 +829,7 @@ export const searchJobs = createServerFn({ method: "POST" })
       : data.location;
 
     const empty: NormalizedJob[] = [];
-    const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
+    const [an1, an2, adz1, adz2, him1, rj1, rmtv, rok, jcy, wwr, cb] = await Promise.all([
       useArbeitnow ? fetchArbeitnowPage(page).catch(() => empty) : Promise.resolve(empty),
       useArbeitnow ? fetchArbeitnowPage(page + 1).catch(() => empty) : Promise.resolve(empty),
       useAdzuna ? fetchAdzunaPage(country, page, {
@@ -834,6 +840,11 @@ export const searchJobs = createServerFn({ method: "POST" })
       }).catch(() => empty) : Promise.resolve(empty),
       useHimalayas ? fetchHimalayasPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
       useRemoteJobs ? fetchRemoteJobsPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchRemotivePage({ query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchRemoteOK().catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchJobicy({ query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchWWR().catch(() => empty) : Promise.resolve(empty),
+      useCompanyBoards ? fetchCompanyBoards(data.countrySlug).catch(() => empty) : Promise.resolve(empty),
     ]);
 
     // Country allow-list: drop non-Adzuna jobs whose location/description doesn't match this country.
@@ -842,6 +853,9 @@ export const searchJobs = createServerFn({ method: "POST" })
       if (!profile || profile.remoteOnly) return true;
       // Adzuna results are already country-scoped; trust them.
       if (j.provider === "adzuna") return true;
+      // Company boards already scoped to country via boardsForCountry(); the
+      // "global" remote-first set is always allowed through.
+      if (j.provider === "company") return true;
       if (!aliases.length) return true;
       const hay = `${j.location} ${j.description.slice(0, 400)} ${j.tags.join(" ")}`.toLowerCase();
       return aliases.some((a) => hay.includes(a));
@@ -853,6 +867,11 @@ export const searchJobs = createServerFn({ method: "POST" })
       [...adz1, ...adz2].filter(inCountry),
       [...him1].filter(inCountry),
       [...rj1].filter(inCountry),
+      rmtv.filter(inCountry),
+      rok.filter(inCountry),
+      jcy.filter(inCountry),
+      wwr.filter(inCountry),
+      cb.filter(inCountry),
     ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
