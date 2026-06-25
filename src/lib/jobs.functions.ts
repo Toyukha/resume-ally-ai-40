@@ -21,7 +21,16 @@ export type NormalizedJob = {
   url: string;
   description: string;
   tags: string[];
-  provider: "arbeitnow" | "adzuna" | "himalayas" | "remotejobs";
+  provider:
+    | "arbeitnow"
+    | "adzuna"
+    | "himalayas"
+    | "remotejobs"
+    | "remotive"
+    | "remoteok"
+    | "jobicy"
+    | "wwr"
+    | "company";
 };
 
 export const ADZUNA_COUNTRIES = [
@@ -281,6 +290,368 @@ async function fetchRemoteJobsPage(
 
 
 
+// ───── Remotive ─────
+type RemotiveJob = {
+  id: number;
+  url: string;
+  title: string;
+  company_name: string;
+  category: string;
+  tags?: string[];
+  job_type?: string;
+  publication_date?: string;
+  candidate_required_location?: string;
+  salary?: string;
+  description?: string;
+};
+
+async function fetchRemotivePage(opts: { query?: string } = {}): Promise<NormalizedJob[]> {
+  const params = new URLSearchParams();
+  if (opts.query) params.set("search", opts.query);
+  const key = `rmtv:${params.toString()}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+  try {
+    const url = `https://remotive.com/api/remote-jobs${params.toString() ? `?${params}` : ""}`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { jobs?: RemotiveJob[] };
+    const normalized: NormalizedJob[] = (body.jobs ?? []).slice(0, 100).map((j) => {
+      const slug = `remotive:${j.id}`;
+      return {
+        id: slug,
+        slug,
+        title: j.title,
+        company: j.company_name ?? "",
+        location: j.candidate_required_location || "Remote",
+        remote: true,
+        employmentType: (j.job_type ?? "").toLowerCase().replace(/_/g, "-"),
+        postedAt: j.publication_date ?? new Date().toISOString(),
+        url: j.url,
+        description: j.description ?? "",
+        tags: [j.category, ...(j.tags ?? [])].filter(Boolean).slice(0, 10) as string[],
+        provider: "remotive" as const,
+      };
+    });
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[remotive] fetch failed", err);
+    return [];
+  }
+}
+
+// ───── RemoteOK ─────
+type RemoteOKJob = {
+  id?: string;
+  slug?: string;
+  position?: string;
+  company?: string;
+  location?: string;
+  tags?: string[];
+  description?: string;
+  date?: string;
+  url?: string;
+  apply_url?: string;
+};
+
+async function fetchRemoteOK(): Promise<NormalizedJob[]> {
+  const key = `rok:all`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+  try {
+    const res = await fetch("https://remoteok.com/api", {
+      headers: { Accept: "application/json", "User-Agent": "TheCareerBoost/1.0" },
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as RemoteOKJob[];
+    // First element is metadata (legal/info) — skip it.
+    const items = Array.isArray(body) ? body.slice(1, 101) : [];
+    const normalized: NormalizedJob[] = items.map((j) => {
+      const id = j.id ?? j.slug ?? "";
+      const slug = `remoteok:${id}`;
+      return {
+        id: slug,
+        slug,
+        title: j.position ?? "",
+        company: j.company ?? "",
+        location: j.location || "Remote",
+        remote: true,
+        employmentType: "",
+        postedAt: j.date ?? new Date().toISOString(),
+        url: j.apply_url ?? j.url ?? `https://remoteok.com/remote-jobs/${id}`,
+        description: j.description ?? "",
+        tags: (j.tags ?? []).slice(0, 10),
+        provider: "remoteok" as const,
+      };
+    });
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[remoteok] fetch failed", err);
+    return [];
+  }
+}
+
+// ───── Jobicy ─────
+type JobicyJob = {
+  id: number | string;
+  url?: string;
+  jobTitle?: string;
+  companyName?: string;
+  jobGeo?: string;
+  jobLevel?: string;
+  jobType?: string[];
+  jobIndustry?: string[];
+  jobDescription?: string;
+  pubDate?: string;
+};
+
+async function fetchJobicy(opts: { query?: string } = {}): Promise<NormalizedJob[]> {
+  const params = new URLSearchParams({ count: "50" });
+  if (opts.query) params.set("tag", opts.query);
+  const key = `jcy:${params.toString()}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+  try {
+    const res = await fetch(`https://jobicy.com/api/v2/remote-jobs?${params}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { jobs?: JobicyJob[] };
+    const normalized: NormalizedJob[] = (body.jobs ?? []).map((j) => {
+      const slug = `jobicy:${j.id}`;
+      return {
+        id: slug,
+        slug,
+        title: j.jobTitle ?? "",
+        company: j.companyName ?? "",
+        location: j.jobGeo || "Remote",
+        remote: true,
+        employmentType: (j.jobType?.[0] ?? "").toLowerCase().replace(/\s+/g, "-"),
+        postedAt: j.pubDate ?? new Date().toISOString(),
+        url: j.url ?? "",
+        description: j.jobDescription ?? "",
+        tags: [...(j.jobIndustry ?? []), j.jobLevel ?? ""].filter(Boolean).slice(0, 10) as string[],
+        provider: "jobicy" as const,
+      };
+    });
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[jobicy] fetch failed", err);
+    return [];
+  }
+}
+
+// ───── WeWorkRemotely (RSS) ─────
+const WWR_CATEGORIES = [
+  "remote-programming-jobs",
+  "remote-design-jobs",
+  "remote-customer-support-jobs",
+  "remote-sales-and-marketing-jobs",
+  "remote-product-jobs",
+];
+
+function pickXmlTag(xml: string, tag: string): string {
+  const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+  if (!m) return "";
+  const raw = m[1].trim();
+  const cdata = raw.match(/^<!\[CDATA\[([\s\S]*?)\]\]>$/);
+  return (cdata ? cdata[1] : raw).trim();
+}
+
+async function fetchWWR(): Promise<NormalizedJob[]> {
+  const key = "wwr:all";
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) return hit.data;
+  try {
+    const all = await Promise.all(
+      WWR_CATEGORIES.map(async (cat) => {
+        const res = await fetch(`https://weworkremotely.com/categories/${cat}.rss`, {
+          headers: { Accept: "application/rss+xml,application/xml,text/xml" },
+        });
+        if (!res.ok) return [] as NormalizedJob[];
+        const xml = await res.text();
+        const items = xml.split(/<item>/).slice(1).map((chunk) => "<item>" + chunk.split("</item>")[0] + "</item>");
+        return items.map((item, idx): NormalizedJob => {
+          const title = pickXmlTag(item, "title");
+          const link = pickXmlTag(item, "link");
+          const guid = pickXmlTag(item, "guid") || `${cat}:${idx}:${link}`;
+          const pubDate = pickXmlTag(item, "pubDate");
+          const description = pickXmlTag(item, "description");
+          // WWR RSS title format: "Company: Job Title"
+          const [companyPart, ...rest] = title.split(":");
+          const jobTitle = rest.length ? rest.join(":").trim() : title;
+          const slug = `wwr:${guid}`;
+          return {
+            id: slug,
+            slug,
+            title: jobTitle,
+            company: rest.length ? companyPart.trim() : "",
+            location: "Remote",
+            remote: true,
+            employmentType: "",
+            postedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+            url: link,
+            description,
+            tags: [cat.replace(/^remote-|-jobs$/g, "").replace(/-/g, " ")],
+            provider: "wwr" as const,
+          };
+        });
+      }),
+    );
+    const normalized = all.flat().slice(0, 200);
+    cache.set(key, { at: Date.now(), data: normalized });
+    return normalized;
+  } catch (err) {
+    console.error("[wwr] fetch failed", err);
+    return [];
+  }
+}
+
+// ───── Company boards (Greenhouse / Lever / Ashby) ─────
+type GreenhouseJob = {
+  id: number;
+  title: string;
+  absolute_url: string;
+  updated_at?: string;
+  location?: { name?: string };
+  content?: string;
+  departments?: { name?: string }[];
+};
+type LeverJob = {
+  id: string;
+  text: string;
+  hostedUrl: string;
+  createdAt?: number;
+  categories?: { location?: string; team?: string; commitment?: string };
+  description?: string;
+  descriptionPlain?: string;
+};
+type AshbyJob = {
+  id: string;
+  title: string;
+  jobUrl?: string;
+  applyUrl?: string;
+  publishedAt?: string;
+  location?: string;
+  employmentType?: string;
+  department?: string;
+  descriptionHtml?: string;
+  descriptionPlain?: string;
+};
+
+function decodeBasicEntities(s: string): string {
+  return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+}
+
+async function fetchGreenhouseBoard(token: string, name: string): Promise<NormalizedJob[]> {
+  const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${token}/jobs?content=true`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return [];
+  const body = (await res.json()) as { jobs?: GreenhouseJob[] };
+  return (body.jobs ?? []).map((j) => {
+    const slug = `company:gh:${token}:${j.id}`;
+    const loc = j.location?.name ?? "";
+    return {
+      id: slug,
+      slug,
+      title: j.title,
+      company: name,
+      location: loc,
+      remote: /remote/i.test(loc),
+      employmentType: "",
+      postedAt: j.updated_at ?? new Date().toISOString(),
+      url: j.absolute_url,
+      description: j.content ? decodeBasicEntities(j.content) : "",
+      tags: (j.departments ?? []).map((d) => d.name ?? "").filter(Boolean).slice(0, 5),
+      provider: "company" as const,
+    };
+  });
+}
+
+async function fetchLeverBoard(token: string, name: string): Promise<NormalizedJob[]> {
+  const res = await fetch(`https://api.lever.co/v0/postings/${token}?mode=json`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return [];
+  const body = (await res.json()) as LeverJob[];
+  return (Array.isArray(body) ? body : []).map((j) => {
+    const slug = `company:lv:${token}:${j.id}`;
+    const loc = j.categories?.location ?? "";
+    return {
+      id: slug,
+      slug,
+      title: j.text,
+      company: name,
+      location: loc,
+      remote: /remote/i.test(loc),
+      employmentType: (j.categories?.commitment ?? "").toLowerCase().replace(/\s+/g, "-"),
+      postedAt: j.createdAt ? new Date(j.createdAt).toISOString() : new Date().toISOString(),
+      url: j.hostedUrl,
+      description: j.description ?? j.descriptionPlain ?? "",
+      tags: [j.categories?.team ?? ""].filter(Boolean) as string[],
+      provider: "company" as const,
+    };
+  });
+}
+
+async function fetchAshbyBoard(token: string, name: string): Promise<NormalizedJob[]> {
+  // Public posting-api (no auth, separate from the Ashby connector gateway).
+  const res = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${token}?includeCompensation=false`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return [];
+  const body = (await res.json()) as { jobs?: AshbyJob[] };
+  return (body.jobs ?? []).map((j) => {
+    const slug = `company:ab:${token}:${j.id}`;
+    const loc = j.location ?? "";
+    return {
+      id: slug,
+      slug,
+      title: j.title,
+      company: name,
+      location: loc,
+      remote: /remote/i.test(loc),
+      employmentType: (j.employmentType ?? "").toLowerCase().replace(/\s+/g, "-"),
+      postedAt: j.publishedAt ?? new Date().toISOString(),
+      url: j.jobUrl ?? j.applyUrl ?? "",
+      description: j.descriptionHtml ?? j.descriptionPlain ?? "",
+      tags: [j.department ?? ""].filter(Boolean) as string[],
+      provider: "company" as const,
+    };
+  });
+}
+
+const COMPANY_BOARDS_TTL = 30 * 60 * 1000;
+async function fetchCompanyBoards(countrySlug: string | undefined): Promise<NormalizedJob[]> {
+  const { boardsForCountry } = await import("./job-company-boards");
+  const boards = boardsForCountry(countrySlug);
+  const key = `cb:${countrySlug ?? "all"}:${boards.map((b) => b.boardToken).join(",")}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < COMPANY_BOARDS_TTL) return hit.data;
+
+  const results = await Promise.allSettled(
+    boards.map((b) => {
+      if (b.boardType === "greenhouse") return fetchGreenhouseBoard(b.boardToken, b.name);
+      if (b.boardType === "lever") return fetchLeverBoard(b.boardToken, b.name);
+      return fetchAshbyBoard(b.boardToken, b.name);
+    }),
+  );
+  const merged: NormalizedJob[] = [];
+  for (const r of results) {
+    if (r.status === "fulfilled") merged.push(...r.value);
+  }
+  cache.set(key, { at: Date.now(), data: merged });
+  return merged;
+}
+
+
+
+
+
 const SearchSchema = z.object({
   query: z.string().max(200).optional(),
   location: z.string().max(200).optional(),
@@ -446,6 +817,12 @@ export const searchJobs = createServerFn({ method: "POST" })
     const useAdzuna = true;
     const useHimalayas = !profile || profile.remoteOnly || !profile.adzunaCovered || wantsRemote;
     const useRemoteJobs = useHimalayas;
+    // The free remote bundle (Remotive/RemoteOK/Jobicy/WWR) is global-remote
+    // by nature — enable wherever Himalayas/RemoteJobs are enabled.
+    const useRemoteBundle = useHimalayas;
+    // Company boards are always worth fetching: they're cached 30 min and
+    // post-filtered by countrySlug so non-matching boards return nothing.
+    const useCompanyBoards = true;
 
     const globalFeedQuery = profile && !profile.adzunaCovered
       ? (data.query ? `${data.query} ${profile.locationKeyword ?? profile.label}` : (profile.locationKeyword ?? profile.label))
@@ -455,7 +832,7 @@ export const searchJobs = createServerFn({ method: "POST" })
       : data.location;
 
     const empty: NormalizedJob[] = [];
-    const [an1, an2, adz1, adz2, him1, rj1] = await Promise.all([
+    const [an1, an2, adz1, adz2, him1, rj1, rmtv, rok, jcy, wwr, cb] = await Promise.all([
       useArbeitnow ? fetchArbeitnowPage(page).catch(() => empty) : Promise.resolve(empty),
       useArbeitnow ? fetchArbeitnowPage(page + 1).catch(() => empty) : Promise.resolve(empty),
       useAdzuna ? fetchAdzunaPage(country, page, {
@@ -466,6 +843,11 @@ export const searchJobs = createServerFn({ method: "POST" })
       }).catch(() => empty) : Promise.resolve(empty),
       useHimalayas ? fetchHimalayasPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
       useRemoteJobs ? fetchRemoteJobsPage(page, { query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchRemotivePage({ query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchRemoteOK().catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchJobicy({ query: globalFeedQuery }).catch(() => empty) : Promise.resolve(empty),
+      useRemoteBundle ? fetchWWR().catch(() => empty) : Promise.resolve(empty),
+      useCompanyBoards ? fetchCompanyBoards(data.countrySlug).catch(() => empty) : Promise.resolve(empty),
     ]);
 
     // Country allow-list: drop non-Adzuna jobs whose location/description doesn't match this country.
@@ -474,6 +856,9 @@ export const searchJobs = createServerFn({ method: "POST" })
       if (!profile || profile.remoteOnly) return true;
       // Adzuna results are already country-scoped; trust them.
       if (j.provider === "adzuna") return true;
+      // Company boards already scoped to country via boardsForCountry(); the
+      // "global" remote-first set is always allowed through.
+      if (j.provider === "company") return true;
       if (!aliases.length) return true;
       const hay = `${j.location} ${j.description.slice(0, 400)} ${j.tags.join(" ")}`.toLowerCase();
       return aliases.some((a) => hay.includes(a));
@@ -485,6 +870,11 @@ export const searchJobs = createServerFn({ method: "POST" })
       [...adz1, ...adz2].filter(inCountry),
       [...him1].filter(inCountry),
       [...rj1].filter(inCountry),
+      rmtv.filter(inCountry),
+      rok.filter(inCountry),
+      jcy.filter(inCountry),
+      wwr.filter(inCountry),
+      cb.filter(inCountry),
     ];
     const seen = new Set<string>();
     const merged: NormalizedJob[] = [];
