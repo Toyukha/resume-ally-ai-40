@@ -285,7 +285,10 @@ async function fetchRemoteJobsPage(
   } catch (err) {
     console.error("[remotejobs] fetch failed", err);
     return [];
+  }
 }
+
+
 
 // ───── Remotive ─────
 type RemotiveJob = {
