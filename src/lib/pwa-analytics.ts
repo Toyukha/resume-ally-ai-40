@@ -5,6 +5,7 @@ export type PwaEvent =
   | "prompt_accepted"
   | "prompt_dismissed"
   | "ios_hint_shown"
+  | "ios_hint_expanded"
   | "ios_hint_dismissed"
   | "installed"
   | "first_dashboard_visit_installed";
