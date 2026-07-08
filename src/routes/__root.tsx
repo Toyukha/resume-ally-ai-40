@@ -65,8 +65,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "google-site-verification", content: "rB7Ap5LymVR8XCym6BiTkIr17uwjWbkvf-xHGbNXRcM" },
+      { name: "theme-color", content: "#0b0620" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Career Boost" },
+      { name: "application-name", content: "Career Boost" },
+
       { title: "Career Boost — AI Resume Optimizer" },
       { name: "description", content: "Career Boost is your AI career coach—optimize your CV, beat ATS systems, generate cover letters, and land more interviews." },
       { property: "og:site_name", content: "Career Boost" },
