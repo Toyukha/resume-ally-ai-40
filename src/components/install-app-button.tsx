@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Share, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackPwaEvent } from "@/lib/pwa-analytics";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
