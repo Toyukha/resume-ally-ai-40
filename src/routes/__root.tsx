@@ -168,6 +168,8 @@ function RootComponent() {
       <Outlet />
       <Toaster richColors position="top-right" />
       <AiChatWidget />
+      <InstallAppButton />
+
     </QueryClientProvider>
   );
 }
