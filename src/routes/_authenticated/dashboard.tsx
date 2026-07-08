@@ -21,6 +21,7 @@ import {
 import { refreshSubscriptionStatus } from "@/lib/flutterwave.functions";
 import { extractTextFromFile } from "@/lib/extract-text";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPwaEvent } from "@/lib/pwa-analytics";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -37,6 +38,21 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const search = Route.useSearch();
   const justUpgraded = search.upgraded === 1 || search.checkout === "success";
+
+  // Track the first dashboard visit that happens from an installed PWA
+  // (standalone display mode). Fires once per browser via localStorage flag.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const KEY = "cb_pwa_first_dash_logged";
+    if (window.localStorage.getItem(KEY)) return;
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (!standalone) return;
+    window.localStorage.setItem(KEY, String(Date.now()));
+    void trackPwaEvent("first_dashboard_visit_installed");
+  }, []);
+
   const [resumeText, setResumeText] = useState("");
   const [resumeFile, setResumeFile] = useState<string>("");
   const [resumeBlob, setResumeBlob] = useState<File | null>(null);
