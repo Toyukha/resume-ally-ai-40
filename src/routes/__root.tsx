@@ -11,6 +11,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AiChatWidget } from "@/components/ai-chat-widget";
+import { InstallAppButton } from "@/components/install-app-button";
+
 
 
 import appCss from "../styles.css?url";
@@ -63,8 +65,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "google-site-verification", content: "rB7Ap5LymVR8XCym6BiTkIr17uwjWbkvf-xHGbNXRcM" },
+      { name: "theme-color", content: "#0b0620" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Career Boost" },
+      { name: "application-name", content: "Career Boost" },
+
       { title: "Career Boost — AI Resume Optimizer" },
       { name: "description", content: "Career Boost is your AI career coach—optimize your CV, beat ATS systems, generate cover letters, and land more interviews." },
       { property: "og:site_name", content: "Career Boost" },
@@ -79,6 +88,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -86,6 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&family=Epilogue:wght@400;500;600;700&display=swap",
       },
     ],
+
     scripts: [
       {
         type: "application/ld+json",
@@ -154,6 +168,8 @@ function RootComponent() {
       <Outlet />
       <Toaster richColors position="top-right" />
       <AiChatWidget />
+      <InstallAppButton />
+
     </QueryClientProvider>
   );
 }
