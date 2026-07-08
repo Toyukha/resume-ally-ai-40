@@ -37,13 +37,19 @@ export async function trackPwaEvent(event: PwaEvent): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const { data } = await supabase.auth.getSession();
-    await supabase.from("pwa_events").insert({
-      event,
-      platform: detectPlatform(),
-      user_agent: window.navigator.userAgent.slice(0, 500),
-      session_id: getSessionId(),
-      user_id: data.session?.user?.id ?? null,
-    });
+    // pwa_events is written from the client with anon-insert RLS; types.ts
+    // may not include it yet, so cast through unknown to bypass the typed client.
+    await (supabase as unknown as {
+      from: (t: string) => { insert: (row: Record<string, unknown>) => Promise<unknown> };
+    })
+      .from("pwa_events")
+      .insert({
+        event,
+        platform: detectPlatform(),
+        user_agent: window.navigator.userAgent.slice(0, 500),
+        session_id: getSessionId(),
+        user_id: data.session?.user?.id ?? null,
+      });
   } catch {
     // swallow — analytics must not break UX
   }
