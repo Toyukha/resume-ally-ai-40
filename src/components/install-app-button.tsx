@@ -217,10 +217,12 @@ export function InstallAppButton() {
     <>
       {/* Tappable teaser card */}
       <div className="fixed inset-x-3 bottom-3 z-50 md:hidden">
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={openIosSheet}
-          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/95 p-3 text-left shadow-2xl backdrop-blur-xl active:scale-[0.99] transition"
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openIosSheet(); } }}
+          className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background/95 p-3 text-left shadow-2xl backdrop-blur-xl active:scale-[0.99] transition cursor-pointer"
           aria-label="Show how to install Career Boost on iPhone"
         >
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-hero shadow-glow">
@@ -240,7 +242,7 @@ export function InstallAppButton() {
           >
             <X className="h-4 w-4" />
           </button>
-        </button>
+        </div>
       </div>
 
       {/* Full-screen walkthrough sheet */}
