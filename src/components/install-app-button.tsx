@@ -41,6 +41,8 @@ export function InstallAppButton() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const promptShownRef = useRef(false);
+  const iosShownRef = useRef(false);
 
   useEffect(() => {
     if (isStandalone()) {
@@ -52,10 +54,15 @@ export function InstallAppButton() {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
+      if (!promptShownRef.current) {
+        promptShownRef.current = true;
+        void trackPwaEvent("prompt_shown");
+      }
     };
     const onInstalled = () => {
       setDeferred(null);
       setInstalled(true);
+      void trackPwaEvent("installed");
     };
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
@@ -63,7 +70,13 @@ export function InstallAppButton() {
     // iOS Safari: show the manual hint after a short delay if nothing captured.
     let iosTimer: number | undefined;
     if (isIosSafari()) {
-      iosTimer = window.setTimeout(() => setShowIosHint(true), 3500);
+      iosTimer = window.setTimeout(() => {
+        setShowIosHint(true);
+        if (!iosShownRef.current) {
+          iosShownRef.current = true;
+          void trackPwaEvent("ios_hint_shown");
+        }
+      }, 3500);
     }
 
     return () => {
@@ -75,6 +88,8 @@ export function InstallAppButton() {
 
   const dismiss = () => {
     window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    if (deferred) void trackPwaEvent("prompt_dismissed");
+    if (showIosHint) void trackPwaEvent("ios_hint_dismissed");
     setDeferred(null);
     setShowIosHint(false);
   };
@@ -82,7 +97,8 @@ export function InstallAppButton() {
   const install = async () => {
     if (!deferred) return;
     await deferred.prompt();
-    await deferred.userChoice;
+    const choice = await deferred.userChoice;
+    void trackPwaEvent(choice.outcome === "accepted" ? "prompt_accepted" : "prompt_dismissed");
     setDeferred(null);
   };
 
