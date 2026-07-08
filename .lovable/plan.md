@@ -1,65 +1,80 @@
-# Add Free Job Sources: Remote Bundle + Curated Company Boards
+# Turn Career Boost into a Mobile App
 
-Expand `searchJobs` with two new provider groups. No API keys required. Skip Google Careers (no public API, ToS-disallowed).
+Two-phase plan: ship an installable **PWA** now so users can add Career Boost to their home screen on Android and iOS today, then wrap it with **Capacitor** later to publish to Google Play and the App Store.
 
-## Scope
+---
 
-### Group A — Free remote bundle (3 new providers)
-Add to `src/lib/jobs.functions.ts` alongside existing Arbeitnow/Adzuna/Himalayas/RemoteJobs:
+## Phase 1 — Installable PWA (ship now)
 
-1. **Remotive** — `https://remotive.com/api/remote-jobs` (free, no key, JSON)
-2. **RemoteOK** — `https://remoteok.com/api` (free, no key, JSON; first element is metadata, skip it)
-3. **Jobicy** — `https://jobicy.com/api/v2/remote-jobs` (free, no key, JSON)
-4. **WeWorkRemotely** — `https://weworkremotely.com/categories/remote-programming-jobs.rss` + sibling category RSS feeds (parse XML server-side)
+Goal: user visits the site on their phone → gets an "Install app" prompt (Android) or uses "Add to Home Screen" (iOS) → launches Career Boost with an app icon, splash screen, and no browser chrome.
 
-Each gets its own `fetch<Source>Page()` with 10-min in-memory cache mirroring the existing pattern. New provider type values added to `NormalizedJob.provider` union: `"remotive" | "remoteok" | "jobicy" | "wwr"`.
+### 1. Web App Manifest
+Create `public/manifest.webmanifest` with:
+- name: "Career Boost", short_name: "Career Boost"
+- theme_color + background_color from the site's brand tokens
+- `display: "standalone"`, `start_url: "/dashboard"`, `scope: "/"`
+- icon set: 192, 512, and 512 maskable (generated from the existing brand asset)
+- `apple-touch-icon` for iOS home screen
 
-### Group B — Per-company boards (curated list)
-New file `src/lib/job-company-boards.ts` with a curated list:
+### 2. Head tags (in `src/routes/__root.tsx`)
+- `<link rel="manifest" href="/manifest.webmanifest">`
+- `<meta name="theme-color">`
+- `<link rel="apple-touch-icon">` + `apple-mobile-web-app-capable`, `apple-mobile-web-app-title`
 
-**African tech (fixes Nigeria/Ghana/Kenya gap):**
-- Flutterwave, Paystack, Andela, Kuda, Moniepoint, Interswitch, Carry1st, mPharma, Yellow Card, Chipper Cash, Moove, Jumia
+### 3. Install prompt UX
+- Small "Install app" button in the navbar (mobile only) that fires the captured `beforeinstallprompt` event on Android/Chrome.
+- iOS Safari doesn't support the prompt API — show a one-time bottom sheet with the "Share → Add to Home Screen" instructions when a user visits on iOS Safari.
 
-**Global remote-first:**
-- GitLab, Automattic, Zapier, Buffer, Doist, Toptal, Deel, Remote.com
+### 4. Native-like features that work in a PWA (no store needed)
 
-Each entry: `{ name, country, boardType: "greenhouse" | "lever" | "ashby", boardToken }`.
+| Feature | How |
+|---|---|
+| **Push notifications** | Web Push via a dedicated `firebase-messaging-sw.js` service worker + FCM. Works on Android + desktop today; works on iOS 16.4+ **only after** the user installs the PWA to home screen. Store the FCM token per user, send from our existing server functions. |
+| **Camera / photo upload for CV** | `<input type="file" accept="image/*,application/pdf" capture="environment">` on the resume upload screen — opens the native camera picker. Zero native code. |
+| **Biometric login (Face ID / fingerprint)** | WebAuthn passkeys via `navigator.credentials.create/get`. Register a passkey after email+password login; subsequent logins use Face ID / Touch ID / Android biometrics. Requires adding a `webauthn_credentials` table + two server functions (register + verify) on Lovable Cloud. |
 
-New fetchers in `jobs.functions.ts`:
-- `fetchGreenhouseBoard(token)` → `https://boards-api.greenhouse.io/v1/boards/{token}/jobs`
-- `fetchLeverBoard(token)` → `https://api.lever.co/v0/postings/{token}?mode=json`
-- `fetchAshbyBoard(token)` → `https://api.ashbyhq.com/posting-api/job-board/{token}` (public endpoint, no auth needed for posting-api — does NOT need the Ashby connector gateway)
+### 5. What we deliberately skip in Phase 1
+- No app-shell service worker / offline caching (per Lovable PWA rules — users didn't ask for offline, and offline SWs cause preview breakage). Push worker only.
+- No cache-busting hacks — Lovable hosting handles that.
 
-A `fetchAllCompanyBoards(filter)` parallelizes with `Promise.allSettled`, caches 30 min, and tags each job with `provider: "company"` + `company` already populated. Failures of individual companies are swallowed.
+---
 
-### Provider gating updates in `searchJobs`
-- **Nigeria/Ghana/Kenya pages** → include African company boards filtered by `country` match + existing global feeds with location keyword. This is the key win for the user's earlier complaint.
-- **Remote (Global)** → all remote sources enabled.
-- **Other Adzuna countries** → Adzuna stays primary; company boards added when `country` matches.
+## Phase 2 — Capacitor native wrapper (when Play + Apple accounts are ready)
 
-### Country profile additions in `src/lib/job-countries.ts`
-No structural changes — `cityAliases` already filters non-Adzuna jobs through. New providers go through the same `inCountry()` post-filter that's already in place.
+Deferred until you have the developer accounts. When you say go, we'll:
+1. Add Capacitor to the repo (`@capacitor/core`, `@capacitor/android`, `@capacitor/ios`) as a separate build target — the web app stays unchanged.
+2. Point Capacitor at the deployed site URL (or bundle the built assets).
+3. Swap the web push implementation for `@capacitor/push-notifications` (APNs on iOS, FCM on Android) — same server, different token type.
+4. Swap WebAuthn for `capacitor-biometric-authentication` (uses native Keychain / Keystore).
+5. Add app icons + splash screens, configure `capacitor.config.ts` (app id `com.thecareerboost.app`).
+6. Build `.aab` for Play Store, `.ipa` for App Store, submit for review.
 
-## Out of scope (this turn)
-- Reed.co.uk, The Muse, Jooble, Findwork — they need API keys + secret setup; can be added in a follow-up.
-- Google Careers — skipped per your decision.
-- LinkedIn / Indeed / Glassdoor — no usable public API.
-- DB persistence of fetched jobs (still live-fetched + cached in memory).
+Store fees you'll need: Apple Developer $99/yr, Google Play $25 one-time.
+
+---
 
 ## Technical notes
 
-- All HTTP calls already match the Worker runtime constraints (fetch-only, no Node-native deps).
-- WeWorkRemotely RSS will use a tiny regex-based XML parser (no `xml2js` dep — keeps bundle slim and Worker-safe).
-- Round-robin interleave in `searchJobs` extends to the new providers so no single source dominates page 1.
-- Existing `applyFilters` + `inCountry` post-filter handle all new providers without changes — they all produce the same `NormalizedJob` shape.
-- Typecheck-clean: only the `provider` union widens.
+- **Push server**: we already have server functions on Lovable Cloud — add one that accepts an FCM token, stores it against `auth.uid()` in a new `push_tokens` table (RLS: user can only insert/delete their own), and another admin-invoked function that sends notifications via FCM HTTP v1 using a service account secret.
+- **FCM setup requires**: a Firebase project (free), a service account JSON stored as a Lovable Cloud secret, and a VAPID public key exposed as `VITE_FIREBASE_VAPID_KEY`.
+- **WebAuthn**: use `@simplewebauthn/browser` + `@simplewebauthn/server`. RP ID = `thecareerboost.com`. Credentials table stores `credential_id`, `public_key`, `counter`, `user_id`.
+- **iOS PWA push caveat**: Safari only delivers push to *installed* PWAs on iOS 16.4+. First-run iOS users must install to home screen before we can even request notification permission — the install nudge above handles this.
+- **Manifest icons**: generated from the existing Career Boost logo asset; no new design needed.
 
-## Files touched
+---
 
-```
-src/lib/jobs.functions.ts          (+4 remote fetchers, +3 board fetchers, gating updates)
-src/lib/job-company-boards.ts      (NEW — curated company list)
-src/lib/job-countries.ts           (minor — no structural change expected)
-```
+## What ships in Phase 1 (files changed)
 
-No DB migrations, no new secrets, no UI changes.
+- `public/manifest.webmanifest` (new)
+- `public/icon-192.png`, `public/icon-512.png`, `public/icon-512-maskable.png`, `public/apple-touch-icon.png` (new)
+- `public/firebase-messaging-sw.js` (new — push only, not an app-shell SW)
+- `src/routes/__root.tsx` (manifest + apple meta tags)
+- `src/components/install-app-button.tsx` (new)
+- `src/components/ios-install-hint.tsx` (new)
+- `src/components/biometric-setup.tsx` (new — passkey enrollment in account settings)
+- `src/lib/push.functions.ts` (new — register FCM token server fn)
+- `src/lib/webauthn.functions.ts` (new — passkey register + verify server fns)
+- Migration: `push_tokens` table + `webauthn_credentials` table with RLS and GRANTs
+- Secrets: `FIREBASE_SERVICE_ACCOUNT_JSON`, `VITE_FIREBASE_VAPID_KEY`, `FIREBASE_PROJECT_ID` (I'll request these when we implement)
+
+Approve this and I'll build Phase 1.
