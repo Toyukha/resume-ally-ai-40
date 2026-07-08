@@ -11,6 +11,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AiChatWidget } from "@/components/ai-chat-widget";
+import { InstallAppButton } from "@/components/install-app-button";
+
 
 
 import appCss from "../styles.css?url";
