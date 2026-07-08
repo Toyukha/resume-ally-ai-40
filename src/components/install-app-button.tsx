@@ -89,15 +89,27 @@ export function InstallAppButton() {
 
   if (deferred) {
     return (
-      <Button
-        onClick={install}
-        size="sm"
-        className="gap-1.5"
-        aria-label="Install Career Boost as an app"
-      >
-        <Download className="h-4 w-4" />
-        Install app
-      </Button>
+      <div className="fixed inset-x-3 bottom-3 z-50 flex justify-center md:inset-x-auto md:right-4 md:bottom-4">
+        <div className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-border/60 bg-background/95 p-2 pl-4 shadow-2xl backdrop-blur-xl">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-hero shadow-glow">
+            <Download className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <div className="flex-1 text-sm">
+            <p className="font-semibold leading-tight">Install Career Boost</p>
+            <p className="text-xs text-muted-foreground">Use it like a real app.</p>
+          </div>
+          <Button onClick={install} size="sm" className="gap-1.5" aria-label="Install Career Boost as an app">
+            Install
+          </Button>
+          <button
+            onClick={dismiss}
+            aria-label="Dismiss install prompt"
+            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     );
   }
 
