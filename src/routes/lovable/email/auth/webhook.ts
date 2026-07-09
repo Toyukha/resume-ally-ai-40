@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { createHash } from 'crypto'
 import { render } from '@react-email/components'
 import { parseEmailWebhookPayload } from '@lovable.dev/email-js'
 import { WebhookError, verifyWebhookRequest } from '@lovable.dev/webhooks-js'
@@ -10,6 +11,10 @@ import { MagicLinkEmail } from '@/lib/email-templates/magic-link'
 import { RecoveryEmail } from '@/lib/email-templates/recovery'
 import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
+
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input.trim().toLowerCase()).digest('hex')
+}
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your email',
@@ -132,6 +137,12 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
         }
 
         // Build template props from payload.data (HookData structure)
+        const emailHash = payload.data.email ? sha256Hex(payload.data.email) : null
+        const pixelUrl =
+          emailType === 'signup' && emailHash
+            ? `https://${ROOT_DOMAIN}/api/public/hooks/email-pixel?e=${emailHash}&t=signup`
+            : undefined
+
         const templateProps = {
           siteName: SITE_NAME,
           siteUrl: `https://${ROOT_DOMAIN}`,
@@ -141,6 +152,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           email: payload.data.email,
           oldEmail: payload.data.old_email,
           newEmail: payload.data.new_email,
+          pixelUrl,
         }
 
         // Render React Email to HTML and plain text

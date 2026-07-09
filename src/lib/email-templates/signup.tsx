@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Button, Heading, Link, Text } from '@react-email/components'
+import { Button, Heading, Img, Link, Text } from '@react-email/components'
 import { BrandLayout, styles } from './_layout'
 
 interface SignupEmailProps {
@@ -7,6 +7,7 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  pixelUrl?: string
 }
 
 export const SignupEmail = ({
@@ -14,6 +15,7 @@ export const SignupEmail = ({
   siteUrl,
   recipient,
   confirmationUrl,
+  pixelUrl,
 }: SignupEmailProps) => (
   <BrandLayout preview={`Confirm your email for ${siteName}`} siteName={siteName}>
     <Heading style={styles.h1}>Confirm your email</Heading>
@@ -37,6 +39,15 @@ export const SignupEmail = ({
     <Text style={styles.footer}>
       If you didn't create an account, you can safely ignore this email.
     </Text>
+    {pixelUrl ? (
+      <Img
+        src={pixelUrl}
+        alt=""
+        width="1"
+        height="1"
+        style={{ display: 'block', width: '1px', height: '1px', border: 0 }}
+      />
+    ) : null}
   </BrandLayout>
 )
 

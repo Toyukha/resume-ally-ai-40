@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { CountrySelect, guessCountryFromTimezone } from "@/components/country-select";
 import { toast } from "sonner";
+import { trackAuthEvent } from "@/lib/auth-analytics";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -79,8 +80,12 @@ function AuthPage() {
           setLinkError(
             "We couldn't complete your email verification. The link may have expired or already been used.",
           );
+          void trackAuthEvent("verify_callback_failed", {
+            metadata: { reason: error.message ?? "exchange_failed" },
+          });
         } else {
           toast.success("Email verified. Welcome!");
+          void trackAuthEvent("verify_callback_success");
           navigate({ to: "/dashboard", replace: true });
         }
       })();
@@ -92,6 +97,9 @@ function AuthPage() {
         ? "Your verification link has expired. Enter your email below and resend the verification email."
         : "This verification link is no longer valid. Enter your email below and resend the verification email.";
       setLinkError(friendly);
+      void trackAuthEvent("verify_callback_failed", {
+        metadata: { error_code: errorCode, error_description: errorDescription ?? null },
+      });
       cleanUrl();
     }
   }, [navigate]);
@@ -111,6 +119,7 @@ function AuthPage() {
       toast.error("Enter your email above first.");
       return;
     }
+    void trackAuthEvent("resend_verification_clicked", { email });
     setResending(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -120,8 +129,13 @@ function AuthPage() {
     setResending(false);
     if (error) {
       toast.error(error.message);
+      void trackAuthEvent("resend_verification_failed", {
+        email,
+        metadata: { reason: error.message },
+      });
     } else {
       toast.success(`Verification email sent to ${redactEmail(email)}.`);
+      void trackAuthEvent("resend_verification_sent", { email });
       setNeedsConfirm(false);
       setLinkError(null);
       setSignupSentTo(email);
