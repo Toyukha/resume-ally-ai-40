@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { WhatsAppGroupBanner } from "@/components/whatsapp-group-banner";
 
 import { Navbar } from "@/components/navbar";
 import walkthroughVideo from "@/assets/walkthrough.mp4.asset.json";
@@ -104,6 +105,11 @@ function Landing() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* WhatsApp group announcement */}
+      <section className="container mx-auto px-4 pb-8 md:pb-12">
+        <WhatsAppGroupBanner location="landing" />
       </section>
 
       {/* Walkthrough video */}
