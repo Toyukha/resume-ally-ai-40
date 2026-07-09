@@ -163,6 +163,39 @@ export type Database = {
           },
         ]
       }
+      auth_events: {
+        Row: {
+          created_at: string
+          email_hash: string | null
+          event: string
+          id: string
+          metadata: Json
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_hash?: string | null
+          event: string
+          id?: string
+          metadata?: Json
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_hash?: string | null
+          event?: string
+          id?: string
+          metadata?: Json
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       candidate_scores: {
         Row: {
           application_id: string
