@@ -294,12 +294,12 @@ function cell(val: boolean | string | number) {
 }
 
 const COMPARE_ROWS: Array<{ label: string; free: boolean | string | number; pro1: boolean | string | number; pro2: boolean | string | number }> = [
-  { label: "CV Analyses per month", free: "1", pro1: "10", pro2: "20" },
+  { label: "CV Analyses per month", free: "3", pro1: "10", pro2: "20" },
   { label: "ATS Score", free: true, pro1: true, pro2: true },
-  { label: "Strength & Weakness Analysis", free: false, pro1: true, pro2: true },
-  { label: "Missing Keyword Recommendations", free: false, pro1: true, pro2: true },
-  { label: "Optimized Resume Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
-  { label: "Cover Letter Generation", free: false, pro1: "10 / mo", pro2: "20 / mo" },
+  { label: "Strength & Weakness Analysis", free: true, pro1: true, pro2: true },
+  { label: "Missing Keyword Recommendations", free: true, pro1: true, pro2: true },
+  { label: "Optimized Resume Generation", free: "3 / mo", pro1: "10 / mo", pro2: "20 / mo" },
+  { label: "Cover Letter Generation", free: "3 / mo", pro1: "10 / mo", pro2: "20 / mo" },
 
   { label: "Priority Processing", free: false, pro1: false, pro2: true },
 ];
