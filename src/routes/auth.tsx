@@ -46,6 +46,8 @@ function AuthPage() {
   const [country, setCountry] = useState<string>(() => guessCountryFromTimezone());
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkErrorCode, setLinkErrorCode] = useState<string | null>(null);
+  const [linkErrorDescription, setLinkErrorDescription] = useState<string | null>(null);
   const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
