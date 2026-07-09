@@ -132,6 +132,26 @@ export function JobCard({ job, savedId, favorited }: Props) {
               Apply <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </a>
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              const detailUrl = `${window.location.origin}/jobs/detail/${encodeURIComponent(job.slug)}`;
+              const shareText = `${job.title} at ${job.company || "Career Boost"} — ${detailUrl}`;
+              try {
+                await navigator.clipboard.writeText(shareText);
+                toast.success("Job details copied. Join the WhatsApp group to share it.");
+              } catch {
+                toast.error("Could not copy job details.");
+              }
+              trackJobWhatsAppShare("job_card");
+              window.open(WHATSAPP_GROUP_URL, "_blank", "noopener,noreferrer");
+            }}
+            className="gap-1.5 border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 hover:text-[#128C7E]"
+          >
+            <WhatsAppIcon className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Share</span>
+          </Button>
         </div>
       </Card>
       <AnalyzeJobSheet open={analyzeOpen} onOpenChange={setAnalyzeOpen} job={job} />
