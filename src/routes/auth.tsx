@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { CountrySelect, guessCountryFromTimezone } from "@/components/country-select";
 import { toast } from "sonner";
+import { trackAuthEvent } from "@/lib/auth-analytics";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
