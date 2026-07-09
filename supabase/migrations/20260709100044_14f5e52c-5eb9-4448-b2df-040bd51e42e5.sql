@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.companies FROM anon;
+GRANT SELECT (id, name, slug, industry, logo_url, website, description, size, hq_location, plan, created_by, created_at, updated_at) ON public.companies TO anon;
