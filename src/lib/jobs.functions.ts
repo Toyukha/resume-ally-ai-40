@@ -1214,7 +1214,7 @@ export const analyzeJobMatch = createServerFn({ method: "POST" })
         if ((count ?? 0) >= limit) {
           throw new Error(
             effectiveTier === "free"
-              ? "Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more."
+              ? `Free plan limit reached: ${limit} CV analyses per month. Upgrade to Pro to continue.`
               : `Monthly limit reached (${limit} analyses). Upgrade for more capacity.`,
           );
         }
