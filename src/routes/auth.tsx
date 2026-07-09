@@ -222,6 +222,21 @@ function AuthPage() {
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <div className="flex-1">
                   <p className="text-foreground">{linkError}</p>
+                  {(linkErrorCode || linkErrorDescription) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {linkErrorCode && (
+                        <>
+                          Error code:{" "}
+                          <code className="rounded bg-destructive/10 px-1 py-0.5 font-mono text-destructive">
+                            {linkErrorCode}
+                          </code>
+                        </>
+                      )}
+                      {linkErrorDescription && (
+                        <span className="ml-1">— {linkErrorDescription}</span>
+                      )}
+                    </p>
+                  )}
                   <Button
                     type="button"
                     variant="link"
