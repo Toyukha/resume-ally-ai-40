@@ -137,15 +137,53 @@ export function JobCard({ job, savedId, favorited }: Props) {
             variant="outline"
             onClick={async () => {
               const detailUrl = `${window.location.origin}/jobs/detail/${encodeURIComponent(job.slug)}`;
-              const shareText = `${job.title} at ${job.company || "Career Boost"} — ${detailUrl}`;
+              const headline = `${job.title} at ${job.company || "Career Boost"}`;
+              const shareText = `${headline} — ${detailUrl}`;
+
+              // 1) Native share sheet (mobile + supported browsers)
+              if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+                try {
+                  await navigator.share({ title: job.title, text: headline, url: detailUrl });
+                  trackJobWhatsAppShare("job_card", "web_share");
+                  return;
+                } catch (err) {
+                  if (err instanceof Error && err.name === "AbortError") return;
+                  // fall through to desktop path
+                }
+              }
+
+              // 2) Desktop: WhatsApp Web with prefilled text + clipboard safety net
+              let copied = false;
               try {
                 await navigator.clipboard.writeText(shareText);
-                toast.success("Job details copied. Join the WhatsApp group to share it.");
+                copied = true;
               } catch {
-                toast.error("Could not copy job details.");
+                /* clipboard blocked — continue */
               }
-              trackJobWhatsAppShare("job_card");
+
+              const waWebUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+              const opened = window.open(waWebUrl, "_blank", "noopener,noreferrer");
+
+              if (opened) {
+                toast.success("Opening WhatsApp — pick the Career Boost group to share.", {
+                  description: copied ? "Details also copied to your clipboard." : undefined,
+                  action: {
+                    label: "Open group invite",
+                    onClick: () => window.open(WHATSAPP_GROUP_URL, "_blank", "noopener,noreferrer"),
+                  },
+                });
+                trackJobWhatsAppShare("job_card", "whatsapp_web");
+                return;
+              }
+
+              // 3) Final fallback
               window.open(WHATSAPP_GROUP_URL, "_blank", "noopener,noreferrer");
+              toast(
+                copied
+                  ? "Job details copied. Paste them in the WhatsApp group."
+                  : "Couldn't prefill — copy the job details from the page and paste in the group.",
+              );
+              trackJobWhatsAppShare("job_card", "group_invite");
             }}
             className="gap-1.5 border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 hover:text-[#128C7E]"
           >
