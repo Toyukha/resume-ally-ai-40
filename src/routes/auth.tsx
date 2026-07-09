@@ -46,6 +46,8 @@ function AuthPage() {
   const [country, setCountry] = useState<string>(() => guessCountryFromTimezone());
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkErrorCode, setLinkErrorCode] = useState<string | null>(null);
+  const [linkErrorDescription, setLinkErrorDescription] = useState<string | null>(null);
   const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
@@ -80,6 +82,8 @@ function AuthPage() {
           setLinkError(
             "We couldn't complete your email verification. The link may have expired or already been used.",
           );
+          setLinkErrorCode("exchange_failed");
+          setLinkErrorDescription(error.message ?? null);
           void trackAuthEvent("verify_callback_failed", {
             metadata: { reason: error.message ?? "exchange_failed" },
           });
@@ -95,8 +99,12 @@ function AuthPage() {
     if (errorCode) {
       const friendly = /expired/i.test(errorCode) || /expired/i.test(errorDescription ?? "")
         ? "Your verification link has expired. Enter your email below and resend the verification email."
+        : /access_denied/i.test(errorCode)
+        ? "Access denied for this verification link. Enter your email below and resend the verification email."
         : "This verification link is no longer valid. Enter your email below and resend the verification email.";
       setLinkError(friendly);
+      setLinkErrorCode(errorCode);
+      setLinkErrorDescription(errorDescription ?? null);
       void trackAuthEvent("verify_callback_failed", {
         metadata: { error_code: errorCode, error_description: errorDescription ?? null },
       });
@@ -214,6 +222,21 @@ function AuthPage() {
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <div className="flex-1">
                   <p className="text-foreground">{linkError}</p>
+                  {(linkErrorCode || linkErrorDescription) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {linkErrorCode && (
+                        <>
+                          Error code:{" "}
+                          <code className="rounded bg-destructive/10 px-1 py-0.5 font-mono text-destructive">
+                            {linkErrorCode}
+                          </code>
+                        </>
+                      )}
+                      {linkErrorDescription && (
+                        <span className="ml-1">— {linkErrorDescription}</span>
+                      )}
+                    </p>
+                  )}
                   <Button
                     type="button"
                     variant="link"
