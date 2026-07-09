@@ -1,43 +1,36 @@
-Add a reusable WhatsApp group announcement card to the landing page and sign-up page. The card uses the WhatsApp brand green, links directly to the provided group invite, opens in a new tab, and tracks clicks with the existing analytics helper.
+Add a WhatsApp share button to each job card so users can easily share jobs to the WhatsApp group. The button copies the job details to the clipboard and opens the WhatsApp group invite link in a new tab.
 
 ### User choices gathered
-- **Placement**: After the hero on the landing page; at the top of the auth card on the sign-up page.
-- **Dismissal**: Always visible (no dismiss control).
-- **Design style**: WhatsApp green brand (#25D366).
-- **Icon**: WhatsApp logo SVG (reuse the existing logo from the codebase).
-- **Link type**: Direct link to the user-provided WhatsApp group invite URL.
-- **Open target**: New tab.
-- **Analytics**: Track clicks.
-- **Card size**: Compact card (not full-width banner).
-- **Heading text**: "Join our WhatsApp group to stay updated on jobs and announcements." (plural form).
-- **Subtext**: Add a one-line subtext — "Get instant alerts for new opportunities and platform updates."
-- **Button label**: "Join on WhatsApp".
-- **Animation**: Fade in and slide up on page load, using the existing `animate-fade-in` utility.
+- **Share destination**: WhatsApp group invite link (`https://chat.whatsapp.com/IgutFNzG4xXAMSCoo6bpcf`).
+- **Share content**: Title + company + Career Boost job detail page link.
+- **Share placement**: On each job card in the job list.
+- **Clipboard copy**: Yes — copy the job details to the clipboard, then open the group invite link.
 
 ### Implementation plan
 
-1. **Create a reusable component** at `src/components/whatsapp-group-banner.tsx`.
-   - Wrap the WhatsApp logo SVG in a small circle icon on the left.
-   - Use WhatsApp green (#25D366) as the card background with white text/button.
-   - Apply the existing `Card` component and `Button` component (with custom override for the green-on-white button).
-   - Add a CTA linking to `https://chat.whatsapp.com/IgutFNzG4xXAMSCoo6bpcf` with `target="_blank"` and `rel="noopener noreferrer"`.
-   - On click, call the existing analytics helper to record a `whatsapp_group_join` event with a `location` property (e.g. `landing` or `auth`).
-   - Apply `animate-fade-in` to the card root.
-   - Keep it compact, centered, and responsive.
+1. **Extend the WhatsApp analytics helper** in `src/lib/whatsapp.ts`.
+   - Add a new `trackJobWhatsAppShare(location: string)` function that records a `job_share_whatsapp` event with a `location` property (e.g. `job_card`) for analytics.
 
-2. **Add the card to the landing page** (`src/routes/index.tsx`).
-   - Insert the component right after the hero section and before the walkthrough section.
-   - Pass `location="landing"` to the analytics prop.
+2. **Create a small share utility** (or inline it in the job card) to:
+   - Build a shareable text string from a job: `"<title> at <company> — <detail-link>"`.
+   - Copy the text to the clipboard via `navigator.clipboard.writeText()`.
+   - Open the WhatsApp group invite URL in a new tab.
+   - Show a toast: "Job details copied. Join the WhatsApp group to share it." (or similar).
+   - Fall back silently if the clipboard write fails.
 
-3. **Add the card to the auth page** (`src/routes/auth.tsx`).
-   - Insert the component at the top of the auth card, above the welcome header and sign-in/sign-up tabs.
-   - Pass `location="auth"` to the analytics prop.
+3. **Update the `JobCard` component** (`src/components/jobs/job-card.tsx`).
+   - Import a WhatsApp/share icon and the new tracker.
+   - Add a small WhatsApp-styled icon button to the existing action button row (next to Analyze Match, Details, and Apply).
+   - The button uses the WhatsApp brand color (#25D366) for easy recognition.
+   - On click, it calls the share utility with the job data.
 
-4. **Verify** by checking the landing page and auth page in the preview.
-   - Confirm the card renders, opens the correct WhatsApp link in a new tab, and animates in on load.
-   - Confirm no TypeScript or build errors.
+4. **Verify** the job listing page renders correctly and the share button works.
+   - Build passes with no TypeScript errors.
+   - Clicking the button copies the text and opens the WhatsApp group link in a new tab.
+   - Toast feedback appears.
 
 ### Technical notes
 - No new dependencies are required.
-- The component will use the existing `Card` and `Button` primitives plus the existing `animate-fade-in` animation class.
-- Analytics will reuse the existing `trackWhatsAppClick` or `trackEvent` helper (or the closest equivalent if the helper name differs in the codebase).
+- The existing `toast` helper from `sonner` is used for feedback.
+- The job detail page URL is built from the same slug pattern the Details button uses: `/jobs/detail/{slug}`.
+- The share button is added only to the job card component, so it appears wherever JobCard is used in the job list.
