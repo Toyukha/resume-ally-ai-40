@@ -82,6 +82,8 @@ function AuthPage() {
           setLinkError(
             "We couldn't complete your email verification. The link may have expired or already been used.",
           );
+          setLinkErrorCode("exchange_failed");
+          setLinkErrorDescription(error.message ?? null);
           void trackAuthEvent("verify_callback_failed", {
             metadata: { reason: error.message ?? "exchange_failed" },
           });
