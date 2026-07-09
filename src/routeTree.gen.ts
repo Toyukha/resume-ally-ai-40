@@ -44,6 +44,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicHooksUsageAlertsRouteImport } from './routes/api/public/hooks/usage-alerts'
 import { Route as ApiPublicHooksProcessAnalysisJobsRouteImport } from './routes/api/public/hooks/process-analysis-jobs'
 import { Route as ApiPublicHooksFlutterwaveRouteImport } from './routes/api/public/hooks/flutterwave'
+import { Route as ApiPublicHooksEmailPixelRouteImport } from './routes/api/public/hooks/email-pixel'
 import { Route as AuthenticatedJobsDetailSplatRouteImport } from './routes/_authenticated/jobs.detail.$'
 import { Route as AuthenticatedJobsCountryCountryRouteImport } from './routes/_authenticated/jobs.country.$country'
 
@@ -228,6 +229,12 @@ const ApiPublicHooksFlutterwaveRoute =
     path: '/api/public/hooks/flutterwave',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEmailPixelRoute =
+  ApiPublicHooksEmailPixelRouteImport.update({
+    id: '/api/public/hooks/email-pixel',
+    path: '/api/public/hooks/email-pixel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedJobsDetailSplatRoute =
   AuthenticatedJobsDetailSplatRouteImport.update({
     id: '/detail/$',
@@ -272,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/jobs/': typeof AuthenticatedJobsIndexRoute
   '/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
+  '/api/public/hooks/email-pixel': typeof ApiPublicHooksEmailPixelRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -308,6 +316,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof AuthenticatedJobsIndexRoute
   '/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
+  '/api/public/hooks/email-pixel': typeof ApiPublicHooksEmailPixelRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -348,6 +357,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
   '/_authenticated/jobs/country/$country': typeof AuthenticatedJobsCountryCountryRoute
   '/_authenticated/jobs/detail/$': typeof AuthenticatedJobsDetailSplatRoute
+  '/api/public/hooks/email-pixel': typeof ApiPublicHooksEmailPixelRoute
   '/api/public/hooks/flutterwave': typeof ApiPublicHooksFlutterwaveRoute
   '/api/public/hooks/process-analysis-jobs': typeof ApiPublicHooksProcessAnalysisJobsRoute
   '/api/public/hooks/usage-alerts': typeof ApiPublicHooksUsageAlertsRoute
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/jobs/'
     | '/jobs/country/$country'
     | '/jobs/detail/$'
+    | '/api/public/hooks/email-pixel'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/jobs/country/$country'
     | '/jobs/detail/$'
+    | '/api/public/hooks/email-pixel'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -463,6 +475,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs/'
     | '/_authenticated/jobs/country/$country'
     | '/_authenticated/jobs/detail/$'
+    | '/api/public/hooks/email-pixel'
     | '/api/public/hooks/flutterwave'
     | '/api/public/hooks/process-analysis-jobs'
     | '/api/public/hooks/usage-alerts'
@@ -484,6 +497,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiPublicHooksEmailPixelRoute: typeof ApiPublicHooksEmailPixelRoute
   ApiPublicHooksFlutterwaveRoute: typeof ApiPublicHooksFlutterwaveRoute
   ApiPublicHooksProcessAnalysisJobsRoute: typeof ApiPublicHooksProcessAnalysisJobsRoute
   ApiPublicHooksUsageAlertsRoute: typeof ApiPublicHooksUsageAlertsRoute
@@ -739,6 +753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFlutterwaveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/email-pixel': {
+      id: '/api/public/hooks/email-pixel'
+      path: '/api/public/hooks/email-pixel'
+      fullPath: '/api/public/hooks/email-pixel'
+      preLoaderRoute: typeof ApiPublicHooksEmailPixelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/jobs/detail/$': {
       id: '/_authenticated/jobs/detail/$'
       path: '/detail/$'
@@ -835,6 +856,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiPublicHooksEmailPixelRoute: ApiPublicHooksEmailPixelRoute,
   ApiPublicHooksFlutterwaveRoute: ApiPublicHooksFlutterwaveRoute,
   ApiPublicHooksProcessAnalysisJobsRoute:
     ApiPublicHooksProcessAnalysisJobsRoute,
