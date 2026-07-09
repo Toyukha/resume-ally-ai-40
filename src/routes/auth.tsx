@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { Sparkles, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Sparkles, Mail, Lock, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,76 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function redactEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return "your email";
+  const shown = local.slice(0, Math.min(3, local.length));
+  return `${shown}${"*".repeat(Math.max(1, local.length - shown.length))}@${domain}`;
+}
+
+function authRedirectUrl(): string {
+  if (typeof window === "undefined") return "https://thecareerboost.com/auth";
+  return `${window.location.origin}/auth`;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [country, setCountry] = useState<string>(() => guessCountryFromTimezone());
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+
+  // Handle the confirm-link callback (?code=... or #error=...)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const errorCode =
+      url.searchParams.get("error_code") ||
+      hashParams.get("error_code") ||
+      url.searchParams.get("error") ||
+      hashParams.get("error");
+    const errorDescription =
+      url.searchParams.get("error_description") ||
+      hashParams.get("error_description");
+
+    const cleanUrl = () => {
+      const cleaned = new URL(window.location.href);
+      ["code", "error", "error_code", "error_description", "state"].forEach((k) =>
+        cleaned.searchParams.delete(k),
+      );
+      window.history.replaceState({}, "", cleaned.pathname + cleaned.search);
+    };
+
+    if (code) {
+      (async () => {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        cleanUrl();
+        if (error) {
+          setLinkError(
+            "We couldn't complete your email verification. The link may have expired or already been used.",
+          );
+        } else {
+          toast.success("Email verified. Welcome!");
+          navigate({ to: "/dashboard", replace: true });
+        }
+      })();
+      return;
+    }
+
+    if (errorCode) {
+      const friendly = /expired/i.test(errorCode) || /expired/i.test(errorDescription ?? "")
+        ? "Your verification link has expired. Enter your email below and resend the verification email."
+        : "This verification link is no longer valid. Enter your email below and resend the verification email.";
+      setLinkError(friendly);
+      cleanUrl();
+    }
+  }, [navigate]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -42,12 +106,43 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
+  const resendVerification = useCallback(async () => {
+    if (!email) {
+      toast.error("Enter your email above first.");
+      return;
+    }
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: authRedirectUrl() },
+    });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`Verification email sent to ${redactEmail(email)}.`);
+      setNeedsConfirm(false);
+      setLinkError(null);
+      setSignupSentTo(email);
+    }
+  }, [email]);
+
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setNeedsConfirm(false);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast.error(error.message);
+    if (!error) return;
+    const msg = error.message || "";
+    if (/email not confirmed/i.test(msg) || /confirm/i.test(msg)) {
+      setNeedsConfirm(true);
+    } else if (/invalid login credentials/i.test(msg)) {
+      toast.error("Wrong email or password.");
+    } else {
+      toast.error(msg);
+    }
   };
 
   const signUp = async (e: React.FormEvent) => {
@@ -61,13 +156,17 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: "https://thecareerboost.com/auth",
+        emailRedirectTo: authRedirectUrl(),
         data: { country_code: country },
       },
     });
     setLoading(false);
-    if (error) toast.error(error.message);
-    else toast.success("Check your email to confirm your account.");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSignupSentTo(email);
+    setLinkError(null);
   };
 
 
@@ -92,6 +191,52 @@ function AuthPage() {
               <h1 className="font-display text-2xl font-bold">Welcome to Career Boost</h1>
               <p className="mt-1 text-sm text-muted-foreground">Sign in to start optimizing</p>
             </div>
+
+            {linkError && (
+              <div
+                role="alert"
+                className="mb-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div className="flex-1">
+                  <p className="text-foreground">{linkError}</p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-destructive"
+                    onClick={resendVerification}
+                    disabled={resending}
+                  >
+                    {resending ? "Sending…" : "Resend verification email"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {signupSentTo && (
+              <div
+                role="status"
+                className="mb-4 flex gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm"
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="flex-1">
+                  <p className="text-foreground">
+                    Check <strong>{redactEmail(signupSentTo)}</strong> for a link to confirm your account.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Didn&apos;t get it?{" "}
+                    <button
+                      type="button"
+                      onClick={resendVerification}
+                      disabled={resending}
+                      className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60"
+                    >
+                      {resending ? "Sending…" : "Resend"}
+                    </button>
+                  </p>
+                </div>
+              </div>
+            )}
 
             <Tabs defaultValue="signin">
               <TabsList className="grid h-11 w-full grid-cols-2">
@@ -124,6 +269,28 @@ function AuthPage() {
                       Forgot password?
                     </button>
                   </div>
+                  {needsConfirm && (
+                    <div
+                      role="alert"
+                      className="flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+                    >
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                      <div className="flex-1">
+                        <p className="text-foreground">
+                          We haven&apos;t verified this email yet. Check your inbox for the confirmation link, or resend it.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0"
+                          onClick={resendVerification}
+                          disabled={resending}
+                        >
+                          {resending ? "Sending…" : "Resend verification email"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign in"}
                   </Button>

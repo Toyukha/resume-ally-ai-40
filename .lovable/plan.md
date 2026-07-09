@@ -1,29 +1,65 @@
-## Fix: iOS install card feels unresponsive
+## Goal
 
-### Problem
-On iOS, Safari does not expose a programmatic install API — apps can only be added to the Home Screen manually via Share → Add to Home Screen. Our current iOS hint is a passive info card: the only interactive element is the small `X` dismiss button. Tapping the card body does nothing, which reads as "broken" (exactly what you experienced on iOS 11).
+Stop users landing in the "Email not verified" dead end after clicking the verification link. Make the confirmation callback robust and give stuck users a one-click way to resend the email.
 
-Also worth noting: iOS 11 has very limited PWA support (proper support landed in 11.3, and modern manifest features assume iOS 16+). Install-to-Home-Screen itself does work on 11.3+, but the experience is bare-bones.
+## What's happening today
 
-### Fix
-Make the iOS card obviously actionable and self-explanatory:
+- Email delivery is healthy (all recent signup emails were delivered).
+- 3 users in the last 30 days signed up and never got confirmed — they clicked the link but confirmation didn't complete, and there's no recovery path in the UI.
+- `src/routes/auth.tsx` hardcodes `emailRedirectTo: "https://thecareerboost.com/auth"` and the `/auth` page only reads the session; it doesn't process a PKCE `?code=…` callback or surface Supabase error params like `otp_expired` / `access_denied`.
+- The sign-in form shows the raw "Email not confirmed" toast with no action.
 
-1. **Tap-to-expand**: tapping the card opens a full instruction sheet (modal / bottom sheet) with a large, numbered visual walkthrough:
-   - Step 1: Tap the Share icon (with screenshot-style illustration of Safari's bottom bar)
-   - Step 2: Scroll and tap "Add to Home Screen"
-   - Step 3: Tap "Add" in the top-right
-2. **Clear affordance**: add a "Show me how" button inside the card so it visibly looks tappable, not just informational.
-3. **Browser guard**: if the user is on iOS but NOT Safari (Chrome/Firefox/in-app browser), show a different message telling them to open the site in Safari — installing from other iOS browsers is impossible.
-4. **iOS-version note**: if UA reports iOS < 11.3, show a short "update iOS to install" message instead of the walkthrough (prevents another dead-end tap).
-5. **Analytics**: add `ios_hint_expanded` event so we can see how often people actually open the instructions.
+## Changes (frontend only, no schema/backend changes)
 
-### Files touched
-- `src/components/install-app-button.tsx` — expand iOS branch into tap-to-open sheet with walkthrough, add Safari + iOS-version detection.
-- `src/lib/pwa-analytics.ts` — add `ios_hint_expanded` to the event union.
+### 1. Make `emailRedirectTo` origin-aware
 
-### Verification
-- Playwright with iPhone Safari UA: card visible, tapping card opens the walkthrough sheet, dismiss still works, `ios_hint_shown` + `ios_hint_expanded` events fire.
-- Playwright with iPhone Chrome (CriOS) UA: shows the "open in Safari" variant.
-- Real-device sanity check via the published URL `https://thecareerboost.com` on your iOS 11 device.
+In `src/routes/auth.tsx` `signUp`:
 
-No backend or business-logic changes.
+- Use `${window.location.origin}/auth` instead of a hardcoded host, so users on `thecareerboost.com`, `www.thecareerboost.com`, or a preview URL are redirected back to the same origin they signed up from.
+- Same treatment for the "Resend" call added below.
+
+### 2. Handle the confirm-link callback on `/auth`
+
+Add a `useEffect` on mount that:
+
+- Reads `window.location.hash` and `window.location.search`.
+- If `?code=…` is present, call `supabase.auth.exchangeCodeForSession(code)`; on success, clear the query and navigate to `/dashboard`; on failure show a friendly error.
+- If the hash or query carries `error` / `error_code` / `error_description` (e.g. `otp_expired`, `access_denied`), render an inline alert on the sign-in card: "Your verification link expired or was already used. Enter your email and click Resend verification email."
+- After handling, strip the sensitive params from the URL with `history.replaceState` so a reload doesn't retry the exchange.
+
+### 3. Add "Resend verification email"
+
+- New small handler that calls `supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: '${origin}/auth' } })`.
+- Surface it in two places:
+  - Inline in the "link expired" alert from step 2.
+  - Under the sign-in form when the sign-in error message is "Email not confirmed" (detect on the message from `signInWithPassword`).
+- Show a success toast when the resend succeeds.
+
+### 4. Improve the sign-in error UX
+
+Replace the generic `toast.error(error.message)` with a small branch:
+
+- `Email not confirmed` → set local `needsConfirm=true`, show inline "We haven't verified this email yet — resend verification email?" with a button that calls the resend handler above.
+- `Invalid login credentials` → keep the toast but use friendlier copy ("Wrong email or password").
+- Anything else → existing toast.
+
+### 5. Signup success copy
+
+After a successful `signUp`, replace the current toast with an inline confirmation panel on the auth card: "Check bsh***@gmail.com for a link to confirm your account. Didn't get it? Resend." The Resend button calls the same handler from step 3.
+
+## Files touched
+
+- `src/routes/auth.tsx` — all UI/logic changes above.
+- No new files, no server functions, no DB migrations, no email-template edits.
+
+## Verification
+
+- Drive `/auth` via Playwright: submit signup with a throwaway address, confirm the success panel + Resend button render and Resend triggers a new pending row in `email_send_log` for `signup`.
+- Simulate the expired-link path by opening `/auth#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired` and confirm the inline alert + Resend button appear and the hash is cleared afterwards.
+- Sign in with an unconfirmed account and confirm the inline "resend verification" CTA appears instead of a dead-end toast.
+- Query `auth.users` after each attempt to confirm `email_confirmed_at` gets set on a fresh click of a valid new link.
+
+## Out of scope
+
+- No changes to the auth webhook, email templates, queue, or DB — those are already working.
+- Supabase Site URL / Additional Redirect URLs allow-list: I'll note in the final message that `https://thecareerboost.com/auth`, `https://www.thecareerboost.com/auth`, and the preview host must all be listed in the Auth redirect allow-list; if any are missing, `/verify` will refuse to confirm regardless of our client fixes.
