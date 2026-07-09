@@ -1,36 +1,28 @@
-Add a WhatsApp share button to each job card so users can easily share jobs to the WhatsApp group. The button copies the job details to the clipboard and opens the WhatsApp group invite link in a new tab.
+## Problem
 
-### User choices gathered
-- **Share destination**: WhatsApp group invite link (`https://chat.whatsapp.com/IgutFNzG4xXAMSCoo6bpcf`).
-- **Share content**: Title + company + Career Boost job detail page link.
-- **Share placement**: On each job card in the job list.
-- **Clipboard copy**: Yes — copy the job details to the clipboard, then open the group invite link.
+WhatsApp group invite links (`chat.whatsapp.com/...`) cannot carry a prefilled message — WhatsApp intentionally does not support text prefill for group invites. That's why the current button opens the group but the details don't appear in the compose box. Only `wa.me/?text=...` (1:1 chats) and the native OS share sheet can prefill text.
 
-### Implementation plan
+## Fix
 
-1. **Extend the WhatsApp analytics helper** in `src/lib/whatsapp.ts`.
-   - Add a new `trackJobWhatsAppShare(location: string)` function that records a `job_share_whatsapp` event with a `location` property (e.g. `job_card`) for analytics.
+Change the share handler in `src/components/jobs/job-card.tsx` to use a tiered approach that actually gets the text in front of WhatsApp:
 
-2. **Create a small share utility** (or inline it in the job card) to:
-   - Build a shareable text string from a job: `"<title> at <company> — <detail-link>"`.
-   - Copy the text to the clipboard via `navigator.clipboard.writeText()`.
-   - Open the WhatsApp group invite URL in a new tab.
-   - Show a toast: "Job details copied. Join the WhatsApp group to share it." (or similar).
-   - Fall back silently if the clipboard write fails.
+1. **Mobile / supported browsers → Web Share API** (`navigator.share`)
+   - Opens the OS share sheet; user picks WhatsApp → picks the group → the title + company + link are prefilled in the compose box. This is the real "share to a WhatsApp group with details" flow.
+   - Payload: `{ title, text: "<title> at <company>", url: detailUrl }`.
+   - Silently ignore `AbortError` (user cancelled).
 
-3. **Update the `JobCard` component** (`src/components/jobs/job-card.tsx`).
-   - Import a WhatsApp/share icon and the new tracker.
-   - Add a small WhatsApp-styled icon button to the existing action button row (next to Analyze Match, Details, and Apply).
-   - The button uses the WhatsApp brand color (#25D366) for easy recognition.
-   - On click, it calls the share utility with the job data.
+2. **Desktop fallback (no `navigator.share`) → WhatsApp Web with prefilled text**
+   - Open `https://web.whatsapp.com/send?text=<encoded title + company + detail link>` in a new tab. WhatsApp Web opens with the message prefilled; the user picks the group from their chat list and hits send. Also copy the same text to the clipboard as a safety net so they can paste if needed.
+   - Show toast: "Opening WhatsApp — pick the Career Boost group to share." Include a secondary toast action "Open group invite" that points at `WHATSAPP_GROUP_URL` for users not yet in the group.
 
-4. **Verify** the job listing page renders correctly and the share button works.
-   - Build passes with no TypeScript errors.
-   - Clicking the button copies the text and opens the WhatsApp group link in a new tab.
-   - Toast feedback appears.
+3. **Final fallback (clipboard blocked too)** → open the group invite link and toast "Couldn't prefill — paste the job details in the group."
 
-### Technical notes
-- No new dependencies are required.
-- The existing `toast` helper from `sonner` is used for feedback.
-- The job detail page URL is built from the same slug pattern the Details button uses: `/jobs/detail/{slug}`.
-- The share button is added only to the job card component, so it appears wherever JobCard is used in the job list.
+Analytics: keep the existing `trackJobWhatsAppShare("job_card")` call; add a `method` label (`"web_share" | "whatsapp_web" | "group_invite"`) so we can see which path users take.
+
+## Verify
+
+- Desktop preview: click Share → new tab opens `web.whatsapp.com/send?text=...` with the job title, company, and detail link prefilled; clipboard also contains the same text; toast appears.
+- Mobile viewport (Playwright with a mobile UA that exposes `navigator.share`): click Share → native share sheet is invoked with the correct payload (verified by stubbing `navigator.share` and asserting the args).
+- No changes to any other file; behaviour on the job detail page and saved-jobs page is unchanged because they render the same `JobCard`.
+
+No new dependencies. Only `src/components/jobs/job-card.tsx` (and a small `method` param addition in `src/lib/whatsapp.ts`) change.
