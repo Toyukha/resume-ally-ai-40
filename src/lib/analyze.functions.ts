@@ -219,7 +219,7 @@ export const analyzeResume = createServerFn({ method: "POST" })
         if (countError) throw new Error(`Unable to verify plan usage: ${countError.message}`);
         if ((count ?? 0) >= limit) {
           if (status.effectiveTier === "free") {
-            throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more analyses.");
+            throw new Error(`Free plan limit reached: ${limit} CV analyses per month. Upgrade to Pro to continue.`);
           }
           throw new Error(`Monthly limit reached (${limit} analyses). Upgrade to a higher plan for more capacity.`);
         }
