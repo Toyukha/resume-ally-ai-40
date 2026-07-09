@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CountrySelect, guessCountryFromTimezone } from "@/components/country-select";
 import { toast } from "sonner";
 import { trackAuthEvent } from "@/lib/auth-analytics";
+import { WhatsAppGroupBanner } from "@/components/whatsapp-group-banner";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -206,6 +207,8 @@ function AuthPage() {
 
         <div className="flex flex-1 items-center justify-center py-8">
           <Card className="w-full max-w-md p-8 shadow-elegant">
+            <WhatsAppGroupBanner location="auth" variant="vertical" className="mb-6" />
+
             <div className="mb-6 text-center">
               <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-hero shadow-glow">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
