@@ -420,7 +420,7 @@ export const enqueueAnalysis = createServerFn({ method: "POST" })
           .gte("created_at", monthStart.toISOString());
         if ((count ?? 0) >= limit) {
           if (status.effectiveTier === "free") {
-            throw new Error("Free plan limit reached: 1 CV analysis per month. Upgrade to Pro for more analyses.");
+            throw new Error(`Free plan limit reached: ${limit} CV analyses per month. Upgrade to Pro to continue.`);
           }
           throw new Error(`Monthly limit reached (${limit} analyses). Upgrade to a higher plan for more capacity.`);
         }
