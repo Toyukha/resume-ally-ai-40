@@ -36,3 +36,18 @@ export function trackWhatsAppGroupClick(location: string) {
   }
 }
 
+export function trackJobWhatsAppShare(location: string) {
+  try {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "job_share_whatsapp", {
+        event_category: "engagement",
+        event_label: location,
+      });
+    }
+    // eslint-disable-next-line no-console
+    console.log("[Analytics] Job WhatsApp share:", { location, timestamp: new Date().toISOString() });
+  } catch {
+    // Silently fail if analytics is unavailable
+  }
+}
+
