@@ -97,8 +97,12 @@ function AuthPage() {
     if (errorCode) {
       const friendly = /expired/i.test(errorCode) || /expired/i.test(errorDescription ?? "")
         ? "Your verification link has expired. Enter your email below and resend the verification email."
+        : /access_denied/i.test(errorCode)
+        ? "Access denied for this verification link. Enter your email below and resend the verification email."
         : "This verification link is no longer valid. Enter your email below and resend the verification email.";
       setLinkError(friendly);
+      setLinkErrorCode(errorCode);
+      setLinkErrorDescription(errorDescription ?? null);
       void trackAuthEvent("verify_callback_failed", {
         metadata: { error_code: errorCode, error_description: errorDescription ?? null },
       });
