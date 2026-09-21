@@ -25,10 +25,10 @@ function baseProps(data: AuthEmailHookData) {
     siteUrl: `https://${ROOT_DOMAIN}`,
     recipient: data.email,
     confirmationUrl: data.url,
-    token: data.token,
+    token: data.token ?? '',
     email: data.email,
-    oldEmail: data.old_email,
-    newEmail: data.new_email,
+    oldEmail: data.old_email ?? '',
+    newEmail: data.new_email ?? '',
   }
 }
 
