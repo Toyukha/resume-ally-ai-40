@@ -26,7 +26,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Career Boost" }] }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { upgraded?: 1; checkout?: "success" } => ({
     upgraded: s.upgraded === 1 || s.upgraded === "1" ? 1 : undefined,
     checkout: s.checkout === "success" ? ("success" as const) : undefined,
   }),
